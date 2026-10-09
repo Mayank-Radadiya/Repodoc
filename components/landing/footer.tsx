@@ -1,3 +1,5 @@
+"use client";
+
 import { ShieldCheck, GitBranch } from "lucide-react";
 
 const PRODUCT_LINKS = [
@@ -14,8 +16,6 @@ const RESOURCE_LINKS = [
 ];
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
-
   return (
     <footer className="border-t border-slate-200/80 bg-slate-50/60 pt-16 pb-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -88,7 +88,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200/80 pt-8 sm:flex-row">
           <p className="text-xs text-slate-500 font-light">
-            © {currentYear} RepoLens. Built for engineers who care about defensible standards.
+            © 2026 RepoLens. Built for engineers who care about defensible standards.
           </p>
 
           <div className="flex items-center gap-6">
