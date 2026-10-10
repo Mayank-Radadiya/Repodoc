@@ -1,192 +1,192 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "motion/react";
 import {
   Sparkles,
   ChevronRight,
-  ShieldCheck,
-  GitPullRequest,
-  Award,
   ArrowRight,
+  Terminal,
+  ShieldCheck,
   CheckCircle2,
+  ExternalLink,
 } from "lucide-react";
-import { CandyLink } from "./candy-button";
+import { ReflectShader } from "@/components/originkit/ui/reflect-shader";
+import { SAMPLE_REPOS_PROFILES } from "./sample-report";
+import { RepoAuditProfile } from "./types";
 
-const AUDIT_MODES = [
-  { id: "audit", label: "100-Pt Audit", Icon: ShieldCheck },
-  { id: "badge", label: "Shields Badge", Icon: Award },
-  { id: "pr", label: "Atomic PR", Icon: GitPullRequest },
-] as const;
+interface HeroProps {
+  selectedRepo?: RepoAuditProfile;
+  onSelectRepo?: (repo: RepoAuditProfile) => void;
+}
 
-const SAMPLE_REPOS = [
-  "github.com/facebook/react",
-  "github.com/astral-sh/uv",
-  "github.com/shadcn-ui/ui",
-  "github.com/sample/atlas-cli",
-];
-
-export function Hero() {
-  const [selectedMode, setSelectedMode] = useState<string>("audit");
-  const [repoInput, setRepoInput] = useState<string>(SAMPLE_REPOS[3]);
+export function Hero({
+  selectedRepo: controlledRepo,
+  onSelectRepo,
+}: HeroProps = {}) {
+  const [internalRepo, setInternalRepo] = useState<RepoAuditProfile>(
+    SAMPLE_REPOS_PROFILES[0]
+  );
+  const selectedRepo = controlledRepo || internalRepo;
+  const [customUrl, setCustomUrl] = useState(selectedRepo.fullName);
   const [isAuditing, setIsAuditing] = useState(false);
-  const reduceMotion = useReducedMotion();
 
-  const { scrollY } = useScroll();
-  const radius = useTransform(scrollY, [0, 260], [0, 32]);
-  const inset = useTransform(scrollY, [0, 260], [0, 14]);
+  const handleSelect = (repo: RepoAuditProfile) => {
+    setInternalRepo(repo);
+    onSelectRepo?.(repo);
+    setCustomUrl(repo.fullName);
+  };
 
-  const frameStyle = reduceMotion
-    ? undefined
-    : {
-        borderBottomLeftRadius: radius,
-        borderBottomRightRadius: radius,
-        marginLeft: inset,
-        marginRight: inset,
-      };
-
-  const handleSimulateAudit = () => {
+  const handleAuditClick = () => {
     setIsAuditing(true);
     setTimeout(() => {
       setIsAuditing(false);
-      const el = document.getElementById("observatory");
+      const el = document.getElementById("cockpit");
       if (el) {
         el.scrollIntoView({ behavior: "smooth" });
       }
-    }, 600);
+    }, 450);
   };
 
   return (
-    <main id="hero">
-      {/* Full-bleed photo panel */}
-      <motion.section
-        style={frameStyle}
-        className="relative isolate flex min-h-[96svh] flex-col justify-center overflow-hidden pt-36 pb-36 lg:pt-44 lg:pb-44"
-      >
-        <Image
-          src="/landing/repository-landscape.png"
-          alt=""
-          aria-hidden="true"
-          fill
-          priority
-          sizes="100vw"
-          className="-z-20 object-cover object-center [filter:saturate(1.45)_contrast(1.14)_brightness(1.06)]"
+    <section className="relative isolate min-h-[92svh] flex flex-col justify-center overflow-hidden pt-28 pb-20 lg:pt-36 lg:pb-28">
+      {/* ── WebGL Reflect Shader Canvas Background ── */}
+      <div className="absolute inset-0 -z-30 overflow-hidden pointer-events-auto">
+        <ReflectShader
+          background="#06080d"
+          tint="#38bdf8"
+          speed={32}
+          brightness={75}
+          thickness={16}
+          chromatic={8}
+          bandGap={22}
+          zoom={310}
+          hover={85}
+          className="h-full w-full"
         />
+      </div>
 
-        {/* Scrims for contrast */}
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(70%_45%_at_50%_30%,rgba(3,17,48,0.30)_0%,rgba(3,17,48,0.10)_55%,transparent_80%)]" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-48 bg-gradient-to-b from-slate-950/30 via-slate-950/8 to-transparent" />
+      {/* ── Scrim overlays for text legibility & atmosphere ── */}
+      <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_50%_40%,rgba(6,8,13,0.55)_0%,rgba(6,8,13,0.88)_70%,#06080d_100%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-36 bg-gradient-to-b from-[#06080d] via-[#06080d]/60 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-36 bg-gradient-to-t from-[#06080d] via-[#06080d]/60 to-transparent" />
 
-        <div className="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          {/* Eyebrow pill */}
-          <a
-            href="#how-it-works"
-            className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/25 bg-white/15 py-2 pr-2.5 pl-3 text-xs font-medium text-white backdrop-blur-md transition-colors hover:bg-white/25 sm:gap-3 sm:pr-3 sm:pl-4 sm:text-sm"
-          >
-            <Sparkles size={15} className="shrink-0 text-sky-200" />
-            <span className="h-4 w-px shrink-0 bg-white/30" />
-            <span className="truncate">
-              Single-roundtrip Git tree traversal — 100-point defensible audit
-            </span>
-            <ChevronRight size={15} className="shrink-0 opacity-70" />
-          </a>
+      {/* ── Hero Content Container ── */}
+      <div className="relative mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8">
+        {/* Eyebrow Pill */}
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 py-1.5 pr-3 pl-3.5 text-xs font-medium text-slate-200 backdrop-blur-md transition-colors hover:border-white/20 hover:bg-white/10 sm:gap-2.5 sm:text-sm">
+          <Sparkles className="size-3.5 text-sky-400 shrink-0" />
+          <span className="h-3.5 w-px bg-white/20 shrink-0" />
+          <span className="truncate">
+            Single-roundtrip Git tree traversal • Defensible Rubric v1.0
+          </span>
+          <ChevronRight className="size-3.5 text-slate-400 shrink-0" />
+        </div>
 
-          {/* Headline in Space Grotesk */}
-          <h1 className="font-display mx-auto mt-8 max-w-4xl text-[2rem] leading-[1.12] font-normal tracking-[-0.03em] text-white [text-shadow:0_1px_2px_rgba(3,17,48,0.7),0_3px_18px_rgba(3,17,48,0.55)] sm:mt-10 sm:text-5xl lg:text-[4.25rem]">
-            From git clone to defensible audit in seconds.
-          </h1>
+        {/* Display Headline */}
+        <h1 className="font-display mx-auto mt-7 max-w-4xl text-3xl font-semibold tracking-[-0.035em] text-white sm:text-5xl lg:text-[4rem] lg:leading-[1.1]">
+          From public URL to defensible audit in seconds.
+        </h1>
 
-          <p className="mx-auto mt-5 max-w-2xl text-base font-light text-slate-100/90 [text-shadow:0_1px_4px_rgba(3,17,48,0.7)] sm:text-lg">
-            No vanity word counts. Parse markdown ASTs, verify required hygiene,
-            embed dynamic shields.io health badges, and fix gaps in one reviewable PR.
-          </p>
+        {/* Subtitle */}
+        <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed font-normal text-slate-300 sm:text-lg">
+          No vanity word counts. Parse markdown ASTs, verify required hygiene,
+          embed dynamic shields.io health badges, and fix gaps in one reviewable PR.
+        </p>
 
-          {/* Prompt card */}
-          <div className="mx-auto mt-10 w-full max-w-2xl rounded-[22px] bg-white/25 p-1 shadow-[var(--shadow-overlay)] ring-1 ring-white/40 backdrop-blur-md sm:mt-12">
-            <div className="rounded-[18px] bg-slate-950/90 p-4 text-left select-none sm:p-5">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                <span className="font-mono text-xs font-semibold tracking-wider text-slate-400 uppercase">
-                  Target GitHub Repository
+        {/* ── Interactive Command Bar ── */}
+        <div id="hero-command" className="mx-auto mt-10 w-full max-w-2xl">
+          <div className="rounded-2xl border border-white/14 bg-[#0b0f17]/90 p-2 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl ring-1 ring-white/5 sm:p-2.5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              {/* Terminal URL Input */}
+              <div className="relative flex flex-1 items-center rounded-xl border border-white/8 bg-black/40 px-3.5 py-2.5">
+                <Terminal className="size-4 text-slate-400 shrink-0 mr-2.5" />
+                <span className="font-mono text-xs text-slate-500 select-none mr-1 hidden sm:inline">
+                  https://
                 </span>
-                <span className="flex items-center gap-1.5 font-mono text-[11px] text-emerald-400">
-                  <span className="inline-block size-2 rounded-full bg-emerald-400 animate-pulse" />
-                  API ready
-                </span>
-              </div>
-
-              {/* Repo input field */}
-              <div className="mt-3 flex items-center gap-2">
                 <input
                   type="text"
-                  value={repoInput}
-                  onChange={(e) => setRepoInput(e.target.value)}
-                  className="w-full bg-transparent font-mono text-sm text-white placeholder-slate-500 focus:outline-none sm:text-base"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
                   placeholder="github.com/owner/repository"
+                  className="w-full bg-transparent font-mono text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none sm:text-sm"
+                  aria-label="GitHub repository address"
                 />
               </div>
 
-              {/* Mode selectors & CTA */}
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-800/60 pt-4">
-                <div className="flex items-center gap-1 rounded-full bg-white/[0.06] p-1">
-                  {AUDIT_MODES.map(({ id, label, Icon }) => {
-                    const isActive = selectedMode === id;
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => setSelectedMode(id)}
-                        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                          isActive
-                            ? "bg-white/15 text-white shadow-xs"
-                            : "text-slate-400 hover:text-slate-200"
+              {/* Action Button */}
+              <button
+                type="button"
+                onClick={handleAuditClick}
+                disabled={isAuditing}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-xs font-semibold text-slate-950 shadow-md transition-all hover:bg-slate-200 active:scale-[0.98] disabled:opacity-75 sm:text-sm"
+              >
+                {isAuditing ? (
+                  <>
+                    <span className="size-3.5 rounded-full border-2 border-slate-950 border-t-transparent animate-spin" />
+                    <span>Auditing Tree...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Run Audit</span>
+                    <ArrowRight className="size-4" />
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Quick-select Repository Chips */}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-1.5 border-t border-white/6 px-1.5 pt-3">
+              <span className="font-mono text-[11px] font-medium text-slate-400 select-none">
+                Sample audits:
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {SAMPLE_REPOS_PROFILES.map((repo) => {
+                  const isSelected = selectedRepo.id === repo.id;
+                  return (
+                    <button
+                      key={repo.id}
+                      type="button"
+                      onClick={() => handleSelect(repo)}
+                      className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-mono text-[11px] transition-all ${
+                        isSelected
+                          ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-300 shadow-[0_0_12px_rgba(34,197,94,0.15)]"
+                          : "border-white/8 bg-white/4 text-slate-400 hover:border-white/16 hover:bg-white/8 hover:text-slate-200"
+                      }`}
+                    >
+                      <span className="truncate">{repo.fullName}</span>
+                      <span
+                        className={`rounded px-1 text-[10px] ${
+                          repo.totalScore >= 90
+                            ? "bg-emerald-500/20 text-emerald-300"
+                            : "bg-amber-500/20 text-amber-300"
                         }`}
                       >
-                        <Icon size={13} className="shrink-0" />
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <CandyLink
-                    href="#observatory"
-                    onClick={handleSimulateAudit}
-                    className="w-full gap-2 px-5 py-2 text-sm sm:w-auto"
-                  >
-                    {isAuditing ? "Auditing Tree…" : "Run Audit"}
-                    <ArrowRight size={15} className="shrink-0" />
-                  </CandyLink>
-                </div>
+                        {repo.totalScore}/100
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Quick trust metrics */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-white/80 [text-shadow:0_1px_2px_rgba(3,17,48,0.6)] sm:gap-8 sm:text-sm">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 size={15} className="text-emerald-300" />
-              Single-roundtrip Git tree traversal
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 size={15} className="text-emerald-300" />
-              Defensible v1.0 Rubric
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 size={15} className="text-emerald-300" />
-              1-Click Atomic PR via Git Data API
-            </span>
+        {/* Feature Signals */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 sm:gap-8 sm:text-sm">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="size-4 text-emerald-400" />
+            <span>&lt;1ms Git Tree set lookups</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="size-4 text-emerald-400" />
+            <span>Standard Shields.io API</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="size-4 text-emerald-400" />
+            <span>Zero-quota ETag caching</span>
           </div>
         </div>
-      </motion.section>
-    </main>
+      </div>
+    </section>
   );
 }
-
-export default Hero;
