@@ -1,9 +1,6 @@
-export type CategoryId =
-  | "documentation"
-  | "hygiene"
-  | "testing_ci"
-  | "community"
-  | "security";
+import type { CategoryId } from "@/src/lib/types";
+
+export type { CategoryId } from "@/src/lib/types";
 
 export interface SampleCheck {
   id: string;

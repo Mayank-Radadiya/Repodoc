@@ -55,7 +55,7 @@
   - **Acceptance:** A shadcn `<Button>` renders on the page without errors
   - **Depends on:** 1.0.1
 
-- [ ] **1.0.3 — Set up Prisma with SQLite for local dev**
+- [x] **1.0.3 — Set up Prisma with SQLite for local dev**
   - Install `prisma` + `@prisma/client`
   - Create `prisma/schema.prisma` with the schema from `idea.md` (use `sqlite` provider for dev)
   - Add `DATABASE_URL="file:./dev.db"` to `.env` (gitignored)
@@ -65,7 +65,7 @@
   - **Acceptance:** `npx prisma studio` opens and shows empty `User` and `RepoReport` tables
   - **Depends on:** 1.0.1
 
-- [ ] **1.0.4 — Set up Vitest**
+- [x] **1.0.4 — Set up Vitest**
   - Install `vitest` and `@testing-library/react` (for later UI tests)
   - Create `vitest.config.ts` with path aliases matching `tsconfig.json`
   - Add `"test": "vitest"` and `"test:run": "vitest run"` scripts to `package.json`
@@ -73,7 +73,7 @@
   - **Acceptance:** `pnpm test:run` passes
   - **Depends on:** 1.0.1
 
-- [ ] **1.0.5 — Create project directory structure**
+- [x] **1.0.5 — Create project directory structure**
   - Create the following directory skeleton (empty `.gitkeep` or index files):
     ```
     src/

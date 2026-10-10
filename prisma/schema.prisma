@@ -1,0 +1,36 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String       @id @default(cuid())
+  githubId       String       @unique
+  username       String
+  avatarUrl      String?
+  installationId Int?         // GitHub App installation ID
+  reports        RepoReport[]
+  createdAt      DateTime     @default(now())
+}
+
+model RepoReport {
+  id            String   @id @default(cuid())
+  shareId       String   @unique // Generated via nanoid(8) in application logic
+  owner         String
+  repo          String
+  defaultBranch String   @default("main")
+  healthScore   Int
+  rubricVersion String   @default("1.0.0")
+  breakdown     Json     // Category scores & detailed check results with evidence
+  etag          String?  // GitHub tree ETag for conditional caching
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([owner, repo])
+}
