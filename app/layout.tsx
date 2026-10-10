@@ -40,7 +40,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${spaceGrotesk.variable} ${geistMono.variable} antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-white text-slate-900 antialiased">
+      <body className="min-h-full flex flex-col bg-[#06080d] text-slate-100 selection:bg-emerald-500/20 selection:text-emerald-300 antialiased">
         {children}
       </body>
     </html>
