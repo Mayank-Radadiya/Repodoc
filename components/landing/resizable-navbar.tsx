@@ -242,14 +242,14 @@ export const NavbarLogo = () => {
   return (
     <Link
       href="/"
-      aria-label="RepoLens home"
+      aria-label="Repodoc home"
       className="relative z-20 mr-4 flex shrink-0 transform-gpu items-center gap-2.5 rounded-lg px-2 py-1 text-sm font-normal"
     >
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#005FD6] to-[#209BFF] text-white shadow-sm">
         <ShieldCheck size={18} strokeWidth={2.4} />
       </div>
       <span className="wordmark font-display text-lg font-bold tracking-tight text-slate-900 transition-colors md:text-xl">
-        RepoLens
+        Repodoc
       </span>
     </Link>
   );

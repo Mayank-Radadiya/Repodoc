@@ -1,4 +1,4 @@
-# RepoLens Landing Page Redesign — Design Specification
+# Repodoc Landing Page Redesign — Design Specification
 
 **Date:** 2026-10-10  
 **Status:** Approved  
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary & Design Vision
 
-RepoLens is an engineering-first repository governance, health audit, and automated remediation tool. Its primary differentiation is **defensible evidence** (no superficial word counts) and **atomic remediation** (fixing missing licenses, .gitignore, and CI in a single commit via the low-level Git Data API).
+Repodoc is an engineering-first repository governance, health audit, and automated remediation tool. Its primary differentiation is **defensible evidence** (no superficial word counts) and **atomic remediation** (fixing missing licenses, .gitignore, and CI in a single commit via the low-level Git Data API).
 
 The new landing page replaces generic SaaS tropes with a **Minimalist High-Density Darkroom** aesthetic inspired by the craftsmanship of `DaemonDoc`. It combines deep graphite backgrounds, hairline architectural borders, phosphor-green and cyan telemetry accents, terminal-grade typography, and a live **Dual-Mode Inspector Cockpit**.
 
@@ -44,7 +44,7 @@ The new landing page replaces generic SaaS tropes with a **Minimalist High-Densi
 
 ### 3.1 Translucent Engineering Navigation (`LandingNavigation`)
 - Sticky blurred header with hairline bottom border (`backdrop-blur-md bg-[#06080d]/80 border-b border-white/5`).
-- RepoLens brand mark with phosphor status pip (`● v1.0 Ready`).
+- Repodoc brand mark with phosphor status pip (`● v1.0 Ready`).
 - Anchor navigation links: `Audit Cockpit`, `How It Works`, `100-Pt Rubric`, `Shields Badge`, `Remediation`, `FAQ`.
 - GitHub repository counter pill + "Start Audit" primary button.
 
@@ -113,7 +113,7 @@ An authentic Mac window frame with traffic light controls (`red`, `yellow`, `gre
 ### 3.8 Developer Truths & FAQ (`FaqSection`)
 - Accessible accordion addressing:
   - Why not rely on line or word counts?
-  - How does RepoLens differ from OpenSSF Scorecard and GitHub community profiles?
+  - How does Repodoc differ from OpenSSF Scorecard and GitHub community profiles?
   - How does rate limit caching work (ETag `304 Not Modified`)?
   - Does it support monorepos?
   - How are permissions handled for forks vs direct repo access?

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The retained design reference is a separate project.
+    "DaemonDoc/**",
   ]),
 ]);
 

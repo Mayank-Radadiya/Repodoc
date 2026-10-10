@@ -1,14 +1,14 @@
-# RepoLens Landing Page Redesign Implementation Plan
+# Repodoc Landing Page Redesign Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Completely redesign the RepoLens landing page to achieve the visual fidelity, interaction craft, typography, responsive behavior, and component architecture of `DaemonDoc/seo-client`, tailored to RepoLens's repository auditing, health scoring, and 1-click atomic PR remediation.
+**Goal:** Completely redesign the Repodoc landing page to achieve the visual fidelity, interaction craft, typography, responsive behavior, and component architecture of `DaemonDoc/seo-client`, tailored to Repodoc's repository auditing, health scoring, and 1-click atomic PR remediation.
 
 **Architecture:** Component modularization following DaemonDoc's patterns: dynamic resizable capsule navbar with spring transitions, scroll-driven hero frame with background panel, interactive repository audit input bar, live audit observatory, 3-step blueprint grid with dashed crosslines, interactive platform bento grid with glowing SVG circuits (`LineSvg`, `StraightLine`, `PulseBorderIcon`), 6-card capabilities grid, interactive fix playground, animated FAQ accordions, and polished footer.
 
 **Tech Stack:** Next.js 16.4 (App Router, Turbopack), React 19, Tailwind CSS v4, `motion/react`, `lucide-react`, `Space_Grotesk` + `Inter` + `Geist_Mono`.
 
-**Spec:** `docs/superpowers/specs/2026-10-10-repolens-landing-page-redesign.md`
+**Spec:** `docs/superpowers/specs/2026-10-10-repodoc-landing-page-redesign.md`
 
 ## Global Constraints
 - Target project uses Next.js 16.4 App Router and Tailwind CSS v4.
@@ -106,13 +106,13 @@
 - Create: `components/landing/ecosystem-strip.tsx`
 
 - [ ] **Step 1: Implement `HeroObservatory`**
-  - macOS browser window chrome with traffic lights and `repolens.dev/report/atlas-cli` address bar.
+  - macOS browser window chrome with traffic lights and `repodoc.dev/report/atlas-cli` address bar.
   - Interactive health gauge displaying 80/100 score, categorized breakdown pills, and shields.io badge preview snippet.
   - Quick action buttons to toggle rubric views.
 
 - [ ] **Step 2: Implement `EcosystemStrip`**
   - Clean cards showing supported language manifests (TypeScript, Rust, Python, Go, Java, Docker).
-  - Clarifying note: *"RepoLens adapts to project types: libraries are never penalized for missing application files."*
+  - Clarifying note: *"Repodoc adapts to project types: libraries are never penalized for missing application files."*
 
 - [ ] **Step 3: Verify lint and build**
   Run: `bun run lint`
@@ -221,10 +221,10 @@
 - [ ] **Step 1: Implement `faq-section.tsx`**
   - 5-col / 7-col split layout matching DaemonDoc.
   - Accordion with Motion `AnimatePresence`, smooth height transitions, and animated plus/minus indicator.
-  - Answers specific to RepoLens (tree traversal, license compliance, shields endpoint, etc.).
+  - Answers specific to Repodoc (tree traversal, license compliance, shields endpoint, etc.).
 
 - [ ] **Step 2: Implement `footer.tsx`**
-  - Clean footer with RepoLens branding, rubric version indicator, navigation links, and GitHub link.
+  - Clean footer with Repodoc branding, rubric version indicator, navigation links, and GitHub link.
 
 - [ ] **Step 3: Verify lint**
   Run: `bun run lint`
@@ -267,5 +267,5 @@
 - [ ] **Step 4: Commit final landing page assembly**
   ```bash
   git add app/page.tsx
-  git commit -m "feat(landing): complete redesign of RepoLens landing page based on DaemonDoc"
+  git commit -m "feat(landing): complete redesign of Repodoc landing page based on DaemonDoc"
   ```

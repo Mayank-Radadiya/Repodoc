@@ -1,4 +1,4 @@
-# Specification: RepoLens Landing Page Redesign
+# Specification: Repodoc Landing Page Redesign
 
 **Date:** 2026-10-10  
 **Status:** Approved  
@@ -9,9 +9,9 @@
 
 ## 1. Executive Summary & Goals
 
-Redesign the RepoLens landing page to replicate the visual caliber, interaction craft, typography, responsive behavior, and architectural precision demonstrated in `DaemonDoc/seo-client`. 
+Redesign the Repodoc landing page to replicate the visual caliber, interaction craft, typography, responsive behavior, and architectural precision demonstrated in `DaemonDoc/seo-client`. 
 
-Rather than adopting a superficial skin, this redesign adapts DaemonDoc's foundational design patterns to RepoLens's specific mission:
+Rather than adopting a superficial skin, this redesign adapts DaemonDoc's foundational design patterns to Repodoc's specific mission:
 - **Instant GitHub Repository Auditing:** Single-roundtrip Git tree traversal (`GET /git/trees/{sha}?recursive=1`).
 - **Defensible 100-Point Scoring Rubric (v1.0):** 5 categorized, evidence-backed pillars replacing vanity word counts.
 - **Dynamic Shields.io Endpoint Badges:** Standard JSON endpoint (`/api/badge/[owner]/[repo]`).
@@ -44,7 +44,7 @@ Rather than adopting a superficial skin, this redesign adapts DaemonDoc's founda
 - **Behavior:** Fixed `z-50` bar across the top.
 - **Threshold Transformation:** When scroll offset <= 100px, spans full width with white text floating over the landscape photo. When scroll > 100px, smoothly transitions into a floating 60% width pill with `bg-white/95`, border, and `shadow-[0_1px_0_rgba(0,0,0,0.04),0_4px_20px_rgba(34,42,53,0.10)]`.
 - **Interactive Elements:**
-  - Logo with RepoLens mark + Space Grotesk wordmark.
+  - Logo with Repodoc mark + Space Grotesk wordmark.
   - Hover pill indicator using `motion.div layoutId="nav-hovered"`.
   - Links: *How it works*, *Rubric & Bento*, *Fix Playground*, *FAQ*.
   - Right CTA: High-gloss `CandyLink` to sample audit.
@@ -63,16 +63,16 @@ Rather than adopting a superficial skin, this redesign adapts DaemonDoc's founda
 - **Interactive Repository Prompt Bar:** Dark glass container (`bg-slate-950/90`, `ring-1 ring-white/40 backdrop-blur-md`) with simulated repo input (`github.com/facebook/react`), audit mode pills (*Full Audit*, *Atomic PR*, *Shield Badge*), and instant "Run Audit" CandyButton.
 
 ### 3.4 Live Repository Observatory (`HeroObservatory`)
-- Browser chrome mockup with macOS traffic lights (`bg-red-400`, `bg-amber-400`, `bg-emerald-400`) and URL pill `repolens.dev/report/atlas-cli`.
+- Browser chrome mockup with macOS traffic lights (`bg-red-400`, `bg-amber-400`, `bg-emerald-400`) and URL pill `repodoc.dev/report/atlas-cli`.
 - Interactive audit cockpit:
   - Real-time animated score gauge (80/100, dynamic SVG stroke arc).
   - Categorized summary chips: Documentation (25/25), Hygiene (15/20), Testing & CI (10/25), Community (15/15), Security (15/15).
-  - Shields.io badge preview snippet: `[![Repo Health](https://repolens.dev/api/badge/sample/atlas-cli)]`.
+  - Shields.io badge preview snippet: `[![Repo Health](https://repodoc.dev/api/badge/sample/atlas-cli)]`.
   - Quick action buttons to toggle inspection view.
 
 ### 3.5 Project-Type Manifest Strip (`EcosystemStrip`)
 - Visual strip with cards representing supported manifests: TypeScript/Node (`package.json`), Python (`setup.py` / `pyproject.toml`), Rust (`Cargo.toml`), Go (`go.mod`), Java (`pom.xml`), Docker (`Dockerfile`).
-- Explanatory copy: *"RepoLens adapts to project types: libraries are never penalized for missing application files."*
+- Explanatory copy: *"Repodoc adapts to project types: libraries are never penalized for missing application files."*
 
 ### 3.6 3-Step Blueprint Grid (`Steps`)
 - Centered grid with dashed blueprint intersection lines:
@@ -110,14 +110,14 @@ Rather than adopting a superficial skin, this redesign adapts DaemonDoc's founda
 - Split 5-col / 7-col layout matching DaemonDoc.
 - Animated Motion accordion answering:
   - How does single-roundtrip tree traversal work?
-  - Does RepoLens overwrite existing repository files?
+  - Does Repodoc overwrite existing repository files?
   - How is health scored without vanity word counts?
   - How do dynamic shields.io badges work?
   - What GitHub permissions are required?
   - Can I customize the 100-point rubric for internal teams?
 
 ### 3.11 Footer (`Footer`)
-- Polished footer with RepoLens branding, product links, rubric version note, shields.io integration badge, and GitHub repository link.
+- Polished footer with Repodoc branding, product links, rubric version note, shields.io integration badge, and GitHub repository link.
 
 ---
 

@@ -1,7 +1,7 @@
-# RepoLens Landing Page Redesign — Architecture & Design Spec
+# Repodoc Landing Page Redesign — Architecture & Design Spec
 
 ## 1. Executive Summary & Goals
-This document specifies the complete, ground-up redesign of the **RepoLens** landing page. The goal is to elevate RepoLens from an ordinary marketing page into a top-tier, art-directed developer tool experience on par with Linear, Raycast, and DaemonDoc.
+This document specifies the complete, ground-up redesign of the **Repodoc** landing page. The goal is to elevate Repodoc from an ordinary marketing page into a top-tier, art-directed developer tool experience on par with Linear, Raycast, and DaemonDoc.
 
 ### Core Value Proposition
 - **Single-Roundtrip Git Tree Traversal:** Resolves 90%+ of repository presence checks in a single recursive API call (`GET /git/trees/{sha}?recursive=1`), executing in-memory set lookups in `<1ms`.

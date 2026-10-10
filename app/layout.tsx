@@ -19,11 +19,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RepoLens — Repository Intelligence & Automated Health Remediation",
+  title: "Repodoc — Repository Intelligence & Automated Health Remediation",
   description:
     "Instant 100-point repository health audit with defensible evidence, dynamic shields.io badge, and 1-click atomic PR remediation in a single commit.",
   openGraph: {
-    title: "RepoLens — Repository Intelligence & Automated Health Remediation",
+    title: "Repodoc — Repository Intelligence & Automated Health Remediation",
     description:
       "Instant 100-point repository health audit with defensible evidence, dynamic shields.io badge, and 1-click atomic PR remediation in a single commit.",
     type: "website",

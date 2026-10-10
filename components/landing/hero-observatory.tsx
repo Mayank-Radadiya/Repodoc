@@ -32,7 +32,7 @@ export function HeroObservatory() {
 
   const handleCopyBadge = () => {
     navigator.clipboard.writeText(
-      "[![Repo Health](https://img.shields.io/endpoint?url=https://repolens.dev/api/badge/sample/atlas-cli)](https://repolens.dev/report/sample/atlas-cli)",
+      "[![Repo Health](https://img.shields.io/endpoint?url=https://repodoc.dev/api/badge/sample/atlas-cli)](https://repodoc.dev/report/sample/atlas-cli)",
     );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -69,7 +69,7 @@ export function HeroObservatory() {
               </div>
               <div className="flex items-center gap-1.5 rounded-md bg-white px-4 py-1 font-mono text-xs text-slate-500 shadow-xs border border-slate-200/60">
                 <Lock size={11} className="text-slate-400" />
-                repolens.dev/report/sample/atlas-cli
+                repodoc.dev/report/sample/atlas-cli
               </div>
               <div className="flex items-center gap-2 font-mono text-xs text-slate-400">
                 <span className="inline-block size-2 rounded-full bg-emerald-500" />

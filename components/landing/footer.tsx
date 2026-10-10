@@ -27,7 +27,7 @@ export function Footer() {
                 <ShieldCheck size={18} strokeWidth={2.4} />
               </div>
               <span className="font-display text-xl font-bold tracking-tight text-slate-900">
-                RepoLens
+                Repodoc
               </span>
             </div>
 
@@ -88,7 +88,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200/80 pt-8 sm:flex-row">
           <p className="text-xs text-slate-500 font-light">
-            © 2026 RepoLens. Built for engineers who care about defensible standards.
+            © 2026 Repodoc. Built for engineers who care about defensible standards.
           </p>
 
           <div className="flex items-center gap-6">

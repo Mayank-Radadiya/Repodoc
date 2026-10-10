@@ -11,14 +11,14 @@ import { FaqSection } from "@/components/landing/faq-section";
 import { Footer } from "@/components/landing/footer";
 
 export const metadata: Metadata = {
-  title: "RepoLens — Repository Intelligence & Automated Health Remediation",
+  title: "Repodoc — Repository Intelligence & Automated Health Remediation",
   description:
     "Generate a 100-point repository health audit with defensible evidence, dynamic shields.io badge, and 1-click atomic PR remediation in a single commit.",
   keywords:
     "repository audit, code health, shields.io badge, GitHub automation, repository intelligence, defensible rubric, atomic pull request, git data api, open source hygiene",
   openGraph: {
     type: "website",
-    title: "RepoLens — Repository Intelligence & Automated Health Remediation",
+    title: "Repodoc — Repository Intelligence & Automated Health Remediation",
     description:
       "Generate a 100-point repository health audit with defensible evidence, dynamic shields.io badge, and 1-click atomic PR remediation in a single commit.",
   },
