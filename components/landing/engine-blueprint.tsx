@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  GitFork,
-  Search,
-  GitPullRequest,
-  CheckCircle2,
-  Terminal,
-  Cpu,
-  Layers,
-  Sparkles,
-} from "lucide-react";
+import { Cpu } from "lucide-react";
 
 const BLUEPRINT_STEPS = [
   {

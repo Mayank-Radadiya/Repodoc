@@ -1,117 +1,133 @@
 "use client";
 
-import { ShieldCheck, GitBranch } from "lucide-react";
-
-const PRODUCT_LINKS = [
-  { label: "Interactive Observatory", href: "#observatory" },
-  { label: "Scoring Rubric v1.0", href: "#rubric" },
-  { label: "Platform Bento", href: "#features" },
-  { label: "Fix Playground", href: "#fix-playground" },
-];
-
-const RESOURCE_LINKS = [
-  { label: "GitHub Repository", href: "https://github.com/Mayank-Radadiya/Repodoc" },
-  { label: "Shields.io Documentation", href: "https://shields.io/badges/endpoint-badge" },
-  { label: "SPDX License List", href: "https://spdx.org/licenses/" },
-];
+import { ShieldCheck } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="border-t border-slate-200/80 bg-slate-50/60 pt-16 pb-12">
+    <footer className="border-t border-white/8 bg-[#040609] py-14 text-slate-400">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-12 pb-14 md:grid-cols-12 lg:gap-16">
-          {/* Brand Column (6 cols) */}
-          <div className="flex flex-col gap-4 md:col-span-6">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#005FD6] to-[#209BFF] text-white shadow-xs">
-                <ShieldCheck size={18} strokeWidth={2.4} />
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-4 lg:grid-cols-5">
+          {/* Brand & Systems Status */}
+          <div className="space-y-4 md:col-span-2">
+            <div className="flex items-center gap-2.5 text-white">
+              <div className="flex size-7 items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+                <ShieldCheck className="size-4" />
               </div>
-              <span className="font-display text-xl font-bold tracking-tight text-slate-900">
+              <span className="font-display text-base font-bold tracking-tight text-white">
                 Repodoc
               </span>
             </div>
 
-            <p className="max-w-sm text-sm font-light leading-relaxed text-slate-600">
-              The defensible repository governance platform. 100-point audits,
-              transparent AST evidence, dynamic Shields.io badges, and 1-click atomic PR remediation.
+            <p className="max-w-sm text-xs leading-relaxed text-slate-400">
+              Repository intelligence, defensible health auditing, and 1-click atomic PR remediation powered by low-level Git Data APIs.
             </p>
 
-            <div className="mt-2 flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 font-mono text-xs text-slate-600 shadow-2xs">
-                <GitBranch size={12} className="text-[#005FD6]" />
-                Rubric v1.0 Standard
+            <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px]">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300">
+                <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                API: Operational
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-slate-400">
+                Rubric v1.0
               </span>
             </div>
           </div>
 
-          {/* Product Links (3 cols) */}
-          <div className="md:col-span-3">
-            <h4 className="mb-4 font-mono text-xs font-semibold tracking-wider text-slate-900 uppercase">
+          {/* Product Column */}
+          <div className="space-y-3">
+            <span className="font-mono text-xs font-semibold uppercase tracking-wider text-slate-200">
               Product
-            </h4>
-            <ul className="space-y-3">
-              {PRODUCT_LINKS.map((link) => (
-                <li key={link.label}>
-                  <a
-                    href={link.href}
-                    className="text-sm font-light text-slate-600 transition-colors hover:text-[#005FD6]"
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
+            </span>
+            <ul className="space-y-2 text-xs">
+              <li>
+                <a href="#cockpit" className="hover:text-white transition-colors">
+                  Audit Cockpit
+                </a>
+              </li>
+              <li>
+                <a href="#blueprint" className="hover:text-white transition-colors">
+                  Git Tree Engine
+                </a>
+              </li>
+              <li>
+                <a href="#rubric" className="hover:text-white transition-colors">
+                  100-Point Rubric
+                </a>
+              </li>
+              <li>
+                <a href="#badge-studio" className="hover:text-white transition-colors">
+                  Shields.io Badge API
+                </a>
+              </li>
+              <li>
+                <a href="#remediation" className="hover:text-white transition-colors">
+                  Atomic Remediation
+                </a>
+              </li>
             </ul>
           </div>
 
-          {/* Resources & Open Source (3 cols) */}
-          <div className="md:col-span-3">
-            <h4 className="mb-4 font-mono text-xs font-semibold tracking-wider text-slate-900 uppercase">
-              Standards & Git
-            </h4>
-            <ul className="space-y-3">
-              {RESOURCE_LINKS.map((link) => (
-                <li key={link.label}>
-                  <a
-                    href={link.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm font-light text-slate-600 transition-colors hover:text-[#005FD6]"
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
+          {/* Engineering Column */}
+          <div className="space-y-3">
+            <span className="font-mono text-xs font-semibold uppercase tracking-wider text-slate-200">
+              Specifications
+            </span>
+            <ul className="space-y-2 text-xs">
+              <li>
+                <span className="text-slate-300 font-mono">/api/badge/:owner/:repo</span>
+              </li>
+              <li>
+                <span className="text-slate-300 font-mono">schemaVersion: 1</span>
+              </li>
+              <li>
+                <span className="text-slate-300 font-mono">ETag 304 Caching</span>
+              </li>
+              <li>
+                <span className="text-slate-300 font-mono">POST /git/blobs</span>
+              </li>
+              <li>
+                <span className="text-slate-300 font-mono">POST /git/trees</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Connect Column */}
+          <div className="space-y-3">
+            <span className="font-mono text-xs font-semibold uppercase tracking-wider text-slate-200">
+              Open Source
+            </span>
+            <ul className="space-y-2 text-xs">
+              <li>
+                <a
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors inline-flex items-center gap-1.5"
+                >
+                  <svg className="size-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                  </svg>
+                  <span>GitHub Repository</span>
+                </a>
+              </li>
+              <li>
+                <span className="text-slate-400">License: MIT</span>
+              </li>
+              <li>
+                <span className="text-slate-400">Zero data retention</span>
+              </li>
             </ul>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200/80 pt-8 sm:flex-row">
-          <p className="text-xs text-slate-500 font-light">
-            © 2026 Repodoc. Built for engineers who care about defensible standards.
-          </p>
-
-          <div className="flex items-center gap-6">
-            <a
-              href="https://github.com/Mayank-Radadiya/Repodoc"
-              target="_blank"
-              rel="noreferrer"
-              className="text-slate-400 hover:text-slate-700 transition-colors"
-              aria-label="GitHub Repository"
-            >
-              <svg className="size-5" fill="currentColor" viewBox="0 0 24 24">
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                />
-              </svg>
-            </a>
-          </div>
+        <div className="mt-12 flex flex-col items-center justify-between border-t border-white/6 pt-6 text-xs text-slate-500 sm:flex-row">
+          <span>&copy; 2026 Repodoc. Defensible engineering standards for repositories.</span>
+          <span className="mt-2 sm:mt-0 font-mono text-[11px]">
+            Single-roundtrip Git tree traversal engine
+          </span>
         </div>
       </div>
     </footer>
   );
 }
-
-export default Footer;

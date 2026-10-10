@@ -6,9 +6,7 @@ import {
   ChevronRight,
   ArrowRight,
   Terminal,
-  ShieldCheck,
   CheckCircle2,
-  ExternalLink,
 } from "lucide-react";
 import { ReflectShader } from "@/components/originkit/ui/reflect-shader";
 import { SAMPLE_REPOS_PROFILES } from "./sample-report";

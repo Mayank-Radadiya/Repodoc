@@ -6,7 +6,6 @@ import {
   Lock,
   ShieldCheck,
   GitPullRequest,
-  CheckCircle2,
   Terminal,
 } from "lucide-react";
 import { RepoAuditProfile } from "./types";

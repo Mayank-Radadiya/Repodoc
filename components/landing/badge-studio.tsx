@@ -6,9 +6,6 @@ import {
   Copy,
   Check,
   Terminal,
-  ExternalLink,
-  Sparkles,
-  Code,
 } from "lucide-react";
 
 export function BadgeStudio() {

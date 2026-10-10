@@ -8,14 +8,10 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  Award,
   FileCode,
-  Shield,
-  Layers,
   Sparkles,
-  ExternalLink,
 } from "lucide-react";
-import { RepoAuditProfile, RubricCheckItem } from "./types";
+import { RepoAuditProfile } from "./types";
 import { RUBRIC_CATEGORIES } from "./sample-report";
 
 interface AuditViewProps {

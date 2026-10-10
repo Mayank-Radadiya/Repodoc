@@ -8,10 +8,8 @@ import {
   FileCode,
   Check,
   Copy,
-  ExternalLink,
-  Sparkles,
 } from "lucide-react";
-import { RepoAuditProfile, DiffFileItem } from "./types";
+import { RepoAuditProfile } from "./types";
 
 interface DiffViewProps {
   repo: RepoAuditProfile;

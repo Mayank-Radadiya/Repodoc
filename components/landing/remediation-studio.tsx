@@ -4,12 +4,6 @@ import { useState } from "react";
 import {
   GitPullRequest,
   Check,
-  Shield,
-  FileCode,
-  Terminal,
-  Settings,
-  Sparkles,
-  GitBranch,
 } from "lucide-react";
 
 const LICENSES = [

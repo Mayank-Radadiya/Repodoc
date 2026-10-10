@@ -9,7 +9,6 @@ import {
   Users,
   Lock,
   GitPullRequest,
-  Check,
 } from "lucide-react";
 import { CategoryId } from "./types";
 import { RUBRIC_CATEGORIES } from "./sample-report";

@@ -137,16 +137,19 @@ export default function ShaderGroupSwitcher(props: ShaderGroupSwitcherProps) {
         tint,
         hover,
     })
-    live.current = {
-        speed,
-        brightness,
-        thickness,
-        chromatic,
-        bandGap,
-        zoom,
-        tint,
-        hover,
-    }
+
+    React.useEffect(() => {
+        live.current = {
+            speed,
+            brightness,
+            thickness,
+            chromatic,
+            bandGap,
+            zoom,
+            tint,
+            hover,
+        }
+    }, [speed, brightness, thickness, chromatic, bandGap, zoom, tint, hover])
 
     const ptr = React.useRef({
         tx: 0,
