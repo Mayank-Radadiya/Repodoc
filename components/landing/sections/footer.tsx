@@ -11,7 +11,7 @@ export function Footer() {
           {/* Brand Column (6 cols) */}
           <div className="flex flex-col gap-4 md:col-span-6">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#005FD6] to-[#209BFF] text-white shadow-xs">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-[#005FD6] to-[#209BFF] text-white shadow-xs">
                 <ShieldCheck size={18} strokeWidth={2.4} />
               </div>
               <span className="font-display text-xl font-bold tracking-tight text-slate-900">

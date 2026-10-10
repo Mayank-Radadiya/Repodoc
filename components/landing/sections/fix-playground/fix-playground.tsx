@@ -103,7 +103,7 @@ export function FixPlayground() {
                       duration: reduceMotion ? 0 : 0.45,
                       ease: [0.22, 1, 0.36, 1],
                     }}
-                    className="h-full rounded-full bg-gradient-to-r from-[#005FD6] to-[#209BFF]"
+                    className="h-full rounded-full bg-linear-to-r from-[#005FD6] to-[#209BFF]"
                   />
                 </div>
               </div>

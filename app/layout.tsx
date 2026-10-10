@@ -39,8 +39,9 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${spaceGrotesk.variable} ${geistMono.variable} antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-[#06080d] text-slate-100 selection:bg-emerald-500/20 selection:text-emerald-300 antialiased">
+      <body className="min-h-full flex flex-col bg-white text-slate-900 antialiased">
         {children}
       </body>
     </html>

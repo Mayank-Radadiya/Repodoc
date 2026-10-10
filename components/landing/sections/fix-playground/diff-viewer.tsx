@@ -48,7 +48,7 @@ export function DiffViewer({
       </div>
 
       {/* Diff Content */}
-      <div className="p-4 sm:p-6 font-mono text-xs overflow-x-auto max-h-[480px]">
+      <div className="p-4 sm:p-6 font-mono text-xs overflow-x-auto max-h-120">
         {preview ? (
           <div>
             <div className="text-slate-500 mb-3 border-b border-slate-800/80 pb-2">

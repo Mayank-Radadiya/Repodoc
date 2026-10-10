@@ -49,7 +49,7 @@ export function Hero() {
             idle={0.25}
             clickRipple={true}
             intro={true}
-            className="w-full h-full [filter:saturate(1.45)_contrast(1.14)_brightness(1.06)]"
+            className="w-full h-full filter-[saturate(1.45)_contrast(1.14)_brightness(1.06)]"
           />
         </div>
 
@@ -61,12 +61,12 @@ export function Hero() {
           priority
           unoptimized
           sizes="100vw"
-          className="-z-30 object-cover object-center [filter:saturate(1.45)_contrast(1.14)_brightness(1.06)]"
+          className="-z-30 object-cover object-center filter-[saturate(1.45)_contrast(1.14)_brightness(1.06)]"
         />
 
         {/* Scrims for contrast */}
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(70%_45%_at_50%_30%,rgba(3,17,48,0.30)_0%,rgba(3,17,48,0.10)_55%,transparent_80%)]" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-48 bg-gradient-to-b from-slate-950/30 via-slate-950/8 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-48 bg-linear-to-b from-slate-950/30 via-slate-950/8 to-transparent" />
 
         <div className="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
           {/* Eyebrow pill */}

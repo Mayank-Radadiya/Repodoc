@@ -22,7 +22,7 @@ export function HeroPromptCard() {
   };
 
   return (
-    <div className="mx-auto mt-10 w-full max-w-2xl rounded-[22px] bg-white/25 p-1 shadow-[var(--shadow-overlay)] ring-1 ring-white/40 backdrop-blur-md sm:mt-12">
+    <div className="mx-auto mt-10 w-full max-w-2xl rounded-[22px] bg-white/25 p-1 shadow-(--shadow-overlay) ring-1 ring-white/40 backdrop-blur-md sm:mt-12">
       <div className="rounded-[18px] bg-slate-950/90 p-4 text-left select-none sm:p-5">
         <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
           <span className="font-mono text-xs font-semibold tracking-wider text-slate-400 uppercase">
@@ -47,7 +47,7 @@ export function HeroPromptCard() {
 
         {/* Mode selectors & CTA */}
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-800/60 pt-4">
-          <div className="flex items-center gap-1 rounded-full bg-white/[0.06] p-1">
+          <div className="flex items-center gap-1 rounded-full bg-white/6 p-1">
             {AUDIT_MODES.map(({ id, label, Icon }) => {
               const isActive = selectedMode === id;
               return (

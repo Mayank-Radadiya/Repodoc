@@ -6,7 +6,7 @@ export interface FindingsListProps {
 
 export function FindingsList({ fixed }: FindingsListProps) {
   return (
-    <div className="mt-4 flex flex-col gap-2.5 max-h-[320px] overflow-y-auto pr-1">
+    <div className="mt-4 flex flex-col gap-2.5 max-h-80 overflow-y-auto pr-1">
       {/* Gaps / Remediations */}
       {!fixed && (
         <>

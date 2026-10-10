@@ -32,7 +32,7 @@ export function HeroObservatory() {
         {/* Browser Chrome Container */}
         <div className="relative mx-auto">
           {/* Subtle ambient glow */}
-          <div className="animate-pulse-slow absolute -inset-1 top-0 right-0 left-0 rounded-2xl bg-gradient-to-r from-[#209BFF] to-[#54A1FD] opacity-20 blur-xl" />
+          <div className="animate-pulse-slow absolute -inset-1 top-0 right-0 left-0 rounded-2xl bg-linear-to-r from-[#209BFF] to-[#54A1FD] opacity-20 blur-xl" />
 
           <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
             {/* Window title bar */}

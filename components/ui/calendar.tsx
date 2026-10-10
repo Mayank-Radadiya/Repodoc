@@ -47,7 +47,7 @@ export function Calendar({
     range_middle: "range-middle",
     range_start: "range-start",
     today:
-      "*:after:pointer-events-none *:after:absolute *:after:bottom-1 *:after:start-1/2 *:after:z-1 *:after:size-[3px] *:after:-translate-x-1/2 *:after:rounded-full *:after:bg-primary [&[data-selected]:not(.range-middle)>*]:after:bg-background [&[data-disabled]>*]:after:bg-foreground/30",
+      "*:after:pointer-events-none *:after:absolute *:after:bottom-1 *:after:inset-s-1/2 *:after:z-1 *:after:size-0.75 *:after:-translate-x-1/2 *:after:rounded-full *:after:bg-primary [&[data-selected]:not(.range-middle)>*]:after:bg-background [&[data-disabled]>*]:after:bg-foreground/30",
     week_number:
       "size-(--cell-size) p-0 text-xs font-medium text-muted-foreground/72",
     weekday:
