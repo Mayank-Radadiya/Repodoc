@@ -114,16 +114,17 @@
 
 ### 1.1 — GitHub Service
 
-- [ ] **1.1.1 — Implement `fetchDefaultBranch(owner, repo)`**
+- [x] **1.1.1 — Implement `fetchDefaultBranch(owner, repo)`**
   - In `src/lib/github/client.ts`
   - Calls `GET /repos/{owner}/{repo}` → extracts `default_branch`
   - Accepts optional `token` param for authenticated requests
   - Returns `{ defaultBranch: string, description: string | null, topics: string[] }`
   - Throws typed error on 404 (repo not found) or rate limit (403)
   - **Acceptance:** Unit test with mocked fetch (or integration test against a known repo)
+  - **Verified:** Repository endpoint, optional token + env fallback, `{defaultBranch, description, topics}` mapping, and typed 404/rate-limit errors covered by mocked tests. `npm run test:run` (107 passed; 1 opt-in live test skipped), `npm run lint`, and `npx tsc --noEmit --incremental false` pass.
   - **Depends on:** 1.0.6
 
-- [ ] **1.1.2 — Implement `fetchRepoTree(owner, repo, sha)`**
+- [x] **1.1.2 — Implement `fetchRepoTree(owner, repo, sha)`**
   - In `src/lib/github/client.ts`
   - Calls `GET /repos/{owner}/{repo}/git/trees/{sha}?recursive=1`
   - Accepts optional `etag` param → sends `If-None-Match` header
@@ -131,14 +132,16 @@
   - On `304 Not Modified` → returns `{ notModified: true }` with no tree data
   - Detects `truncated: true` and logs a warning (no fallback in Phase 1)
   - **Acceptance:** Unit test with mocked responses for: success, 304, truncated, 404, 403
+  - **Verified:** Normalized nested entries, optional sizes, SHA/ref inputs, ETag/304 handling, truncation, malformed responses, HTTP errors, and rate limits covered by mocked tests. `bun run test:run` (100 passed; 1 opt-in live test skipped), `bun run lint`, and `tsc --noEmit --incremental false` pass.
   - **Depends on:** 1.0.6, 1.1.1
 
-- [ ] **1.1.3 — Implement `GitHubService` facade**
+- [x] **1.1.3 — Implement `GitHubService` facade**
   - In `src/lib/github/service.ts`
   - Combines `fetchDefaultBranch` + `fetchRepoTree` into a single `getRepoData(owner, repo, cachedEtag?)` method
   - Returns `{ defaultBranch, description, topics, tree, treeSha, etag, truncated }`
   - Handles the `304` path: returns `null` tree when cache is fresh
   - **Acceptance:** Integration test calling `getRepoData("torvalds", "linux")` returns a valid tree (or similar stable public repo)
+  - **Verified:** Typed client delegation, unchanged error propagation, tree normalization, and fresh metadata on 304 covered by unit tests. `bun run test:run` (107 passed; live test skipped by default), `bun run lint`, and `tsc --noEmit --incremental false` pass. Separate `RUN_GITHUB_INTEGRATION=1 bun run test:run src/lib/github/__tests__/service.integration.test.ts` passes against `octocat/Hello-World`, including ETag revalidation.
   - **Depends on:** 1.1.1, 1.1.2
 
 ---
@@ -147,67 +150,76 @@
 
 > **Design principle:** Every check is a pure function `(tree: Set<string>, metadata: RepoMetadata) → CheckResult`. Zero network calls. All checks are individually unit-testable.
 
-- [ ] **1.2.1 — Implement tree-to-set utility**
+- [x] **1.2.1 — Implement tree-to-set utility**
   - In `src/lib/scoring/utils.ts`
   - `buildPathSet(tree: TreeEntry[]): Set<string>` — lowercased paths for case-insensitive matching
   - `findFile(paths: Set<string>, candidates: string[]): string | null` — returns first match from candidate list
   - `findFilesInDir(paths: Set<string>, dirPrefix: string, extension?: string): string[]`
   - **Acceptance:** Unit tests for case-insensitive matching, directory filtering
+  - **Verified:** Pure tree-to-set transformations, lowercased case-insensitivity, candidate priority preservation, directory prefixing with slash and case normalization, and extension filtering covered by unit tests (31 tests in `src/lib/scoring/__tests__/utils.test.ts`). `bun run test:run` (139 passed; 1 opt-in live test skipped), `bun run lint`, and `tsc --noEmit --incremental false` pass.
   - **Depends on:** 1.0.6
 
-- [ ] **1.2.2 — Implement Documentation checks (25 pts)**
+- [x] **1.2.2 — Implement Documentation checks (25 pts)**
   - In `src/lib/scoring/checks/documentation.ts`
   - `checkReadmePresence(paths)` → 8 pts — checks for `README.md`, `readme.md`, `README`, etc.
   - `checkReadmeHeadings(tree, paths)` → 10 pts — fetches README blob content, parses markdown headings, checks for `Installation`/`Setup` AND `Usage`/`Quickstart` (case-insensitive). **Note:** This is the ONE check that needs file content, not just tree presence. Accept raw README content as a parameter to keep the function pure.
   - `checkArchitectureDescription(tree, paths)` → 4 pts — checks for headings like `Architecture`, `Overview`, `Design`, `How it works` in README
   - `checkContributing(paths)` → 3 pts — checks for `CONTRIBUTING.md`
   - **Acceptance:** Unit tests for each check covering pass/fail scenarios, edge cases (no README, README without headings, etc.)
+  - **Verified:** All four documentation checks, individual and aggregated scoring up to 25 pts, Markdown heading parser (ATX, Setext, HTML, code fence stripping), case-insensitive path lookups, actionable remediation objects, and edge cases covered by unit tests (41 tests in `src/lib/scoring/checks/__tests__/documentation.test.ts`). `bun run test:run` (325 passed; 1 opt-in live test skipped), `bun run lint`, and `npx tsc --noEmit` pass.
   - **Depends on:** 1.2.1
 
-- [ ] **1.2.3 — Implement Project Hygiene checks (20 pts)**
+- [x] **1.2.3 — Implement Project Hygiene checks (20 pts)**
   - In `src/lib/scoring/checks/hygiene.ts`
   - `checkLicense(paths)` → 10 pts — checks for `LICENSE`, `LICENSE.md`, `LICENSE.txt`, `LICENCE`, `COPYING`
   - `checkGitignore(paths)` → 5 pts — checks for `.gitignore`
   - `checkCodeOfConduct(paths)` → 5 pts — checks for `CODE_OF_CONDUCT.md`
   - **Acceptance:** Unit tests, including edge cases like `licence` (British spelling)
+  - **Verified:** Pure hygiene evaluations for license (including British spelling `LICENCE`, `COPYING`, and nested `.github/` variants with required user prompt), root `.gitignore`, and code of conduct (root, `.github/`, and `docs/`) covered by unit tests (23 tests in `src/lib/scoring/checks/__tests__/hygiene.test.ts`). `npm run test:run` (162 passed; 1 opt-in live test skipped), `npm run lint`, and `npx tsc --noEmit` pass.
   - **Depends on:** 1.2.1
 
-- [ ] **1.2.4 — Implement Testing & CI checks (25 pts)**
+- [x] **1.2.4 — Implement Testing & CI checks (25 pts)**
   - In `src/lib/scoring/checks/testing.ts`
   - `checkCIWorkflow(paths)` → 15 pts — checks for any `.yml`/`.yaml` file under `.github/workflows/`
   - `checkTestDirectory(paths)` → 10 pts — checks for `test/`, `tests/`, `__tests__/`, `spec/`, `*_test.go`, `*_test.rs`, `test_*.py`, or `"test"` script in `package.json` (pass manifest content as param)
   - **Acceptance:** Unit tests for various language ecosystems
+  - **Verified:** Automated CI workflow detection (15 pts) and testing infrastructure detection (10 pts) for Go, Rust, Python, Ruby, and JS/TS ecosystems covered by 38 unit tests in `src/lib/scoring/checks/__tests__/testing.test.ts`. Verified pure functions, strict typing, 25-point cap, non-execution disclaimers in evidence, and actionable remediation. `npm run test:run` (325 passed; 1 opt-in live test skipped), `npm run lint`, and `npx tsc --noEmit --incremental false` pass.
   - **Depends on:** 1.2.1
 
-- [ ] **1.2.5 — Implement Community & Metadata checks (15 pts)**
+- [x] **1.2.5 — Implement Community & Metadata checks (15 pts)**
   - In `src/lib/scoring/checks/community.ts`
   - `checkIssueTemplates(paths)` → 4 pts — checks for files in `.github/ISSUE_TEMPLATE/` or `.github/ISSUE_TEMPLATE.md`
   - `checkPRTemplate(paths)` → 4 pts — checks for `.github/PULL_REQUEST_TEMPLATE.md` or `.github/PULL_REQUEST_TEMPLATE/`
   - `checkRepoMetadata(description, topics)` → 7 pts — checks that description is non-empty (4 pts) and at least 1 topic exists (3 pts)
   - **Acceptance:** Unit tests
+  - **Verified:** Issue templates (4 pts), pull request templates (4 pts), and repository metadata (7 pts; 4 pts description + 3 pts topics) implemented with pure functions, strict typing, actionable remediations, and full rubric compliance. Unit tests cover presence, missing indicators, root vs nested paths, empty trees, metadata variations, and determinism (42 tests in `src/lib/scoring/checks/__tests__/community.test.ts`). `npm run test:run` (325 passed; 1 opt-in live test skipped), `npm run lint`, and `npx tsc --noEmit` pass cleanly.
   - **Depends on:** 1.2.1
 
-- [ ] **1.2.6 — Implement Security Baseline checks (15 pts)**
+- [x] **1.2.6 — Implement Security Baseline checks (15 pts)**
   - In `src/lib/scoring/checks/security.ts`
   - `checkSecurityPolicy(paths)` → 10 pts — checks for `SECURITY.md` or `.github/SECURITY.md`
   - `checkDependencyScanning(paths)` → 5 pts — checks for `.github/dependabot.yml`, `.github/dependabot.yaml`, `renovate.json`, `.renovaterc`, `.renovaterc.json`
   - **Acceptance:** Unit tests
+  - **Verified:** Security policy (`SECURITY.md`, `.github/SECURITY.md`) and automated dependency scanning (`.github/dependabot.yml`, `.github/dependabot.yaml`, `renovate.json`, `.renovaterc`, `.renovaterc.json`) checks implemented with strict typing, candidate prioritization, case-insensitivity, deep content validation support, deterministic scoring capped at 15 pts, and actionable remediation instructions (automated for security policy, manual for dependency scanning). Covered by 42 unit tests in `src/lib/scoring/checks/__tests__/security.test.ts`. `npm run test:run` (324 passed; 1 opt-in live test skipped), `npm run lint`, and `npx tsc --noEmit` pass.
   - **Depends on:** 1.2.1
 
-- [ ] **1.2.7 — Implement `ScoringEngine.run()` orchestrator**
+- [x] **1.2.7 — Implement `ScoringEngine.run()` orchestrator**
   - In `src/lib/scoring/engine.ts`
   - Accepts `{ paths: Set<string>, readmeContent?: string, manifestContent?: string, description?: string, topics?: string[] }`
   - Runs all check functions, collects `CheckResult[]`
   - Computes `healthScore` as sum of `pointsAwarded`
   - Returns `AuditReport` object
   - **Acceptance:** Unit test with a synthetic tree that scores exactly 100/100, and another that scores 0/100. Verify total never exceeds 100.
+  - **Verified:** Pure orchestrator calls documentation (25 pts), project hygiene (20 pts), testing/CI (25 pts), community/metadata (15 pts), and security baseline (15 pts) aggregators once each with supplied data and zero network calls. Preserves all 14 check results, evidence, remediation, IDs, and category order; duplicate IDs and invalid numerical results throw rather than being silently discarded. Sums `pointsAwarded` without rescaling or rounding, with defensive per-check/category caps and [0, 100] bounds. Populates every `AuditReport` field using `RUBRIC_VERSION` and canonical UTC ISO timestamps. Fail-fast validation rejects malformed supplied path sources, optional field types, and timestamps before running checks; category errors propagate unchanged. Covered by 92 orchestrator tests, including 100/100 and 0/100 fixtures, exact rubric allocations, partial credit, all supported input formats, input preservation, source precedence, determinism, and timestamp validation. `bun run test:run src/lib/scoring` passes (309 tests); `bun run test:run` passes (511 tests; 1 opt-in live integration test skipped); `./node_modules/.bin/tsc --noEmit --incremental false` and `bun run lint` pass. Existing Vite configuration compatibility warning remains outside this task's scope.
   - **Depends on:** 1.2.2, 1.2.3, 1.2.4, 1.2.5, 1.2.6
 
-- [ ] **1.2.8 — Implement README content fetcher**
+- [x] **1.2.8 — Implement README content fetcher**
   - In `src/lib/github/client.ts`
   - `fetchFileContent(owner, repo, sha): Promise<string>` — fetches blob content via `GET /repos/{owner}/{repo}/git/blobs/{sha}` (base64 decode)
   - Used by the audit API to fetch README content for heading analysis (task 1.2.2)
   - **Acceptance:** Unit test with mocked base64 response
+  - **Verified:** Implemented `fetchFileContent(owner, repo, sha, token)` via `GET /repos/{owner}/{repo}/git/blobs/{sha}` with base64-to-UTF-8 decoding, multi-byte Unicode/emoji support, wrapped linebreaks, and strict typed error mapping. Implemented `findReadmeEntry(tree)` resolving candidate priority across root, `.github/`, and `docs/` case-insensitively for Git blobs. Implemented `fetchReadmeContent(owner, repo, treeOrSha, token)` and integrated `GitHubService.fetchFileContent` / `GitHubService.getReadmeContent` / `GitHubService.fetchReadmeContent` facade methods. Covered by unit tests in `src/lib/github/__tests__/client.test.ts` (179 passed) and `src/lib/github/__tests__/service.test.ts` (20 passed). Full test suite passes (443 passed, 1 skipped); `npm run lint` and `npx tsc --noEmit` pass with zero errors and zero warnings.
+
   - **Depends on:** 1.0.6
 
 ---
