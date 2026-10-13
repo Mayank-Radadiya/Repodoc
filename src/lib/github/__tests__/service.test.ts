@@ -190,8 +190,29 @@ describe("GitHubService client delegation", () => {
       etag: '"new"',
       truncated: false,
     });
-    expect(metadataSpy).toHaveBeenCalledExactlyOnceWith("owner", "repo");
-    expect(treeSpy).toHaveBeenCalledExactlyOnceWith("owner", "repo", "release/docs", cachedEtag);
+    expect(metadataSpy).toHaveBeenCalledExactlyOnceWith("owner", "repo", undefined);
+    expect(treeSpy).toHaveBeenCalledExactlyOnceWith("owner", "repo", "release/docs", cachedEtag, undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("forwards an explicit token to both metadata and tree clients", async () => {
+    const repoMetadata: client.GitHubRepoMetadata = {
+      defaultBranch: "release/docs",
+      description: null,
+      topics: [],
+    };
+    const metadataSpy = vi.spyOn(client, "fetchDefaultBranch").mockResolvedValue(repoMetadata);
+    const treeSpy = vi.spyOn(client, "fetchRepoTree").mockResolvedValue({
+      tree: treeResponse.tree,
+      sha: treeResponse.sha,
+      etag: '"new"',
+      truncated: false,
+      notModified: false,
+    });
+
+    await GitHubService.getRepoData("owner", "repo", undefined, "token-1");
+    expect(metadataSpy).toHaveBeenCalledExactlyOnceWith("owner", "repo", "token-1");
+    expect(treeSpy).toHaveBeenCalledExactlyOnceWith("owner", "repo", "release/docs", undefined, "token-1");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -205,7 +226,7 @@ describe("GitHubService client delegation", () => {
     const treeSpy = vi.spyOn(client, "fetchRepoTree");
 
     await expect(GitHubService.getRepoData("owner", "repo")).rejects.toBe(error);
-    expect(metadataSpy).toHaveBeenCalledExactlyOnceWith("owner", "repo");
+    expect(metadataSpy).toHaveBeenCalledExactlyOnceWith("owner", "repo", undefined);
     expect(treeSpy).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -224,8 +245,8 @@ describe("GitHubService client delegation", () => {
     const treeSpy = vi.spyOn(client, "fetchRepoTree").mockRejectedValue(error);
 
     await expect(GitHubService.getRepoData("owner", "repo", '"cached"')).rejects.toBe(error);
-    expect(metadataSpy).toHaveBeenCalledExactlyOnceWith("owner", "repo");
-    expect(treeSpy).toHaveBeenCalledExactlyOnceWith("owner", "repo", metadata.default_branch, '"cached"');
+    expect(metadataSpy).toHaveBeenCalledExactlyOnceWith("owner", "repo", undefined);
+    expect(treeSpy).toHaveBeenCalledExactlyOnceWith("owner", "repo", metadata.default_branch, '"cached"', undefined);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

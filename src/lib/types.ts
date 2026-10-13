@@ -36,6 +36,10 @@ export interface AuditReport {
   generatedAt: string;
 }
 
+export interface PersistedAuditReport extends AuditReport {
+  shareId: string;
+}
+
 export interface TreeEntry {
   path: string;
   mode: "100644" | "100755" | "040000" | "160000" | "120000";
@@ -61,4 +65,10 @@ export interface BadgeResponse {
   label: string;
   message: string;
   color: "brightgreen" | "green" | "yellow" | "orange" | "red";
+  isError?: boolean;
+}
+
+export interface ParsedGitHubUrl {
+  owner: string;
+  repo: string;
 }

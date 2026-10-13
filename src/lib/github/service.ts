@@ -22,10 +22,10 @@ export const GitHubService = {
    * On 304, tree, treeSha, and truncated are null and the cached ETag is retained;
    * callers must reuse their cached tree. Client errors propagate unchanged.
    */
-  async getRepoData(owner: string, repo: string, cachedEtag?: string): Promise<GitHubRepoData> {
-    const metadata = await fetchDefaultBranch(owner, repo);
+  async getRepoData(owner: string, repo: string, cachedEtag?: string, token?: string): Promise<GitHubRepoData> {
+    const metadata = await fetchDefaultBranch(owner, repo, token);
     // GitHub accepts a branch ref in the tree endpoint, avoiding a separate ref lookup.
-    const result = await fetchRepoTree(owner, repo, metadata.defaultBranch, cachedEtag);
+    const result = await fetchRepoTree(owner, repo, metadata.defaultBranch, cachedEtag, token);
 
     if (result.notModified) {
       return {

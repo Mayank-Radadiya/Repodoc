@@ -141,7 +141,7 @@
   - Returns `{ defaultBranch, description, topics, tree, treeSha, etag, truncated }`
   - Handles the `304` path: returns `null` tree when cache is fresh
   - **Acceptance:** Integration test calling `getRepoData("torvalds", "linux")` returns a valid tree (or similar stable public repo)
-  - **Verified:** Typed client delegation, unchanged error propagation, tree normalization, and fresh metadata on 304 covered by unit tests. `bun run test:run` (107 passed; live test skipped by default), `bun run lint`, and `tsc --noEmit --incremental false` pass. Separate `RUN_GITHUB_INTEGRATION=1 bun run test:run src/lib/github/__tests__/service.integration.test.ts` passes against `octocat/Hello-World`, including ETag revalidation.
+  - **Verified:** Typed client delegation, unchanged error propagation, tree normalization, fresh metadata on 304, and optional token passthrough (`getRepoData(owner, repo, cachedEtag?, token?)` → both clients) covered by unit tests. `bun run test:run` (107 passed; live test skipped by default), `bun run lint`, and `tsc --noEmit --incremental false` pass. Separate `RUN_GITHUB_INTEGRATION=1 bun run test:run src/lib/github/__tests__/service.integration.test.ts` passes against `octocat/Hello-World`, including ETag revalidation.
   - **Depends on:** 1.1.1, 1.1.2
 
 ---
@@ -226,23 +226,25 @@
 
 ### 1.3 — Audit API Route
 
-- [ ] **1.3.1 — Implement `POST /api/audit` route**
-  - In `src/app/api/audit/route.ts`
+- [x] **1.3.1 — Implement `POST /api/audit` route**
+  - In `app/api/audit/route.ts` (the active root `app/` directory takes precedence over `src/app/`)
   - Request body: `{ owner: string, repo: string }`
   - Validates input (reject empty, sanitize: strip `github.com/` prefix if pasted as URL)
   - Calls `GitHubService.getRepoData()` → gets tree + metadata
   - Finds README in tree → calls `fetchFileContent()` for heading analysis
   - Calls `ScoringEngine.run()` with tree paths + README content + metadata
-  - Returns `AuditReport` JSON (do NOT persist to DB yet — that's task 1.5.1)
+  - Returns `AuditReport` JSON (persisted to DB + `shareId` since task 1.5.1; the original no-persistence note above is superseded)
   - Returns proper HTTP error codes: 400 (bad input), 404 (repo not found), 429 (rate limited)
   - **Acceptance:** `curl` against local dev server with a real repo returns valid scored JSON
+  - **Verified:** Implemented strict JSON/input validation, GitHub prefix and repository URL normalization with matching-owner validation, fresh tree/metadata fetching, prioritized README discovery, concurrent README/root `package.json` blob fetching, and real scoring with no database persistence. Returns safe JSON errors for invalid input (400), missing resources (404), rate limits with available `Retry-After` timing (429), incomplete trees/other GitHub failures (502), and unexpected internal failures (500). All 79 route tests pass; `bun run test:run` passes (623 tests, 1 opt-in live test skipped); `./node_modules/.bin/tsc --noEmit --incremental false` and `bun run lint` pass. `curl` against the local dev server audits `octocat/Hello-World` successfully (HTTP 200, default branch `master`, 12/100, 14 checks with valid evidence/timestamp and matching score sum); owner mismatch returns HTTP 400. Root `package.json` lookup is case-insensitive in both the route and `auditRepository`. `bun run build -- --webpack` passes and includes `/api/audit`; default `bun run build` fails with a Turbopack CSS-processing port-permission panic in this sandbox, including on retry with elevated permissions.
   - **Depends on:** 1.1.3, 1.2.7, 1.2.8
 
-- [ ] **1.3.2 — Add URL parsing utility**
+- [x] **1.3.2 — Add URL parsing utility**
   - In `src/lib/utils.ts`
   - `parseGitHubUrl(input: string): { owner: string, repo: string } | null`
   - Handles: `owner/repo`, `github.com/owner/repo`, `https://github.com/owner/repo`, `https://github.com/owner/repo/tree/main`, trailing slashes
   - **Acceptance:** Unit tests covering all formats above, plus invalid inputs
+  - **Verified:** Implemented `parseGitHubUrl` and `ParsedGitHubUrl` in `src/lib/utils.ts` and re-exported via root `lib/utils.ts` and `src/lib/types.ts`. Handles shorthand `owner/repo`, domain-prefixed URLs, HTTP/HTTPS schemes, deep links (`tree`, `blob`, `issues`, `pulls`), SSH/Git protocols (`git@github.com:`, `ssh://`, `git://`), `.git` suffixes, query parameters, hash fragments, whitespace trimming, and invalid/non-GitHub inputs. Covered by 33 unit tests in `src/lib/__tests__/utils.test.ts`. Full test suite passes (544 passed, 1 skipped); `npm run lint`, `npx tsc --noEmit`, and `npm run build` pass with zero errors.
   - **Depends on:** 1.0.6
 
 ---
@@ -250,31 +252,35 @@
 ### 1.4 — Badge Endpoint
 
 - [ ] **1.4.1 — Implement `GET /api/badge/[owner]/[repo]` route**
-  - In `src/app/api/badge/[owner]/[repo]/route.ts`
+  - In `app/api/badge/[owner]/[repo]/route.ts` (the active root `app/` directory takes precedence over `src/app/`)
   - Runs audit (or reads from cache — simplified: run fresh audit for MVP)
   - Returns `BadgeResponse` JSON with correct `schemaVersion: 1`
   - Sets `Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400`
   - Color logic per thresholds in `idea.md`
   - **Acceptance:** `curl` returns valid shields.io JSON; passing URL to `https://img.shields.io/endpoint?url=...` renders a badge
+  - **Verified locally:** Preserved the fresh-audit endpoint with asynchronous Next.js route parameters, Shields.io JSON, the five color thresholds, and the exact success caching header. Malformed URI encoding now returns safe 400 badge JSON without invoking the audit; all error responses explicitly use `Cache-Control: no-store`. Added coverage for invalid/missing coordinates, encoded traversal/separators, exact success contracts and threshold boundaries, safe errors, and Retry-After precedence/reset/invalid timing. `bun run test:run app/api/badge/__tests__/route.test.ts src/lib/__tests__/badge.test.ts src/lib/__tests__/audit.test.ts` passes (87 tests); `bun run test:run` passes (732 tests, 1 opt-in live integration test skipped); `bun run lint` and `./node_modules/.bin/tsc --noEmit --incremental false` pass. `bun run build` encounters the previously documented Turbopack CSS-processing port-permission panic in this sandbox; `bun run build -- --webpack` passes and includes the dynamic badge route. Local curl against the production server for `octocat/Hello-World` returns HTTP 200 with `schemaVersion: 1`, label `repo health`, message `12/100`, color `red`, JSON content type, and the exact success cache header. Malformed encoded input returns HTTP 400 with safe error badge JSON and `Cache-Control: no-store`.
+  - **Pending acceptance:** Public Shields.io rendering remains unverified and is deferred to deployment task 1.7.4 by agreement. Leave this task unchecked until the deployed endpoint renders through `https://img.shields.io/endpoint?url=...`.
   - **Depends on:** 1.3.1
 
 ---
 
 ### 1.5 — Database Persistence & Caching
 
-- [ ] **1.5.1 — Add report persistence to audit route**
+- [x] **1.5.1 — Add report persistence to audit route**
   - After scoring, save/upsert `RepoReport` in database
   - Generate `shareId` via `nanoid(8)`
   - Store `breakdown` as JSON, store `etag` for conditional caching
   - On re-audit of the same `owner/repo`: send cached ETag → on `304`, return cached report
   - **Acceptance:** Two successive audits of the same repo: first hits GitHub API, second returns `304` cached result. Both return the same `shareId`.
+  - **Verified (2026-10-13):** Revalidated the existing persistence implementation without replacement code or database changes. Case-normalized compound repository uniqueness and atomic Prisma upserts store full report JSON/ETags with eight-character `nanoid` share IDs, bounded uniqueness retries, and preservation of share IDs and user associations. The audit route revalidates usable current-rubric snapshots with `If-None-Match`; GitHub `304` returns HTTP 200 with the identical saved report and skips blob fetching, scoring, and writes. Missing ETags and invalid/outdated snapshots refresh without conditional headers; database failures return safe 500 errors. `bun run test:run app/api/audit/__tests__/route.test.ts src/lib/__tests__/reports.integration.test.ts` passes (101 tests), covering successive audits, real JSON round trips, concurrent creation, share-ID collisions, and failure paths. `bun run test:run` passes (732 tests, 1 opt-in live test skipped); `./node_modules/.bin/tsc --noEmit --incremental false` and `bun run lint` pass. `bun run build` reproduces the sandbox port-permission panic during Turbopack CSS processing; `bun run build -- --webpack` passes and includes the dynamic `/api/audit` route. Final diff review found no task-specific defects or whitespace errors. The report lookup endpoint remains task 1.5.2.
   - **Depends on:** 1.0.3, 1.3.1
 
-- [ ] **1.5.2 — Implement `GET /api/report/[shareId]` route**
-  - In `src/app/api/report/[shareId]/route.ts`
+- [x] **1.5.2 — Implement `GET /api/report/[shareId]` route**
+  - In `app/api/report/[shareId]/route.ts` (the active root `app/` directory takes precedence over `src/app/`)
   - Looks up `RepoReport` by `shareId`
   - Returns full report JSON (or 404)
   - **Acceptance:** After an audit, the returned `shareId` can be used to fetch the same report
+  - **Verified (2026-10-13):** Added a share-ID lookup using Prisma's unique index and the existing public report decoder, plus a GET handler with asynchronous Next.js route parameters. Returns the complete persisted audit JSON unchanged (including evidence, remediation, original timestamp, and share ID), JSON 404 for absent/malformed IDs, and safe JSON 500 for database failures or invalid stored reports. All responses use `Cache-Control: no-store`; lookup performs no GitHub requests, scoring, or writes and excludes database IDs, user associations, and ETags. Valid older-rubric snapshots and reports without ETags remain readable. Added 20 route/SQLite integration tests, including POST audit → GET identical report, case-sensitive IDs, malformed IDs without database queries, and error paths. `bun run test:run` passes (752 tests; 1 opt-in live GitHub integration test skipped); `./node_modules/.bin/tsc --noEmit --incremental false`, `bun run lint`, and `git diff --check` pass. `bun run build` reproduces the existing sandbox port-permission panic during Turbopack CSS processing; `bun run build -- --webpack` passes and registers the dynamic `/api/report/[shareId]` route.
   - **Depends on:** 1.5.1
 
 ---

@@ -32,5 +32,5 @@ model RepoReport {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  @@index([owner, repo])
+  @@unique([owner, repo])
 }
