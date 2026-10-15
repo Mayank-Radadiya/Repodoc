@@ -19,11 +19,21 @@ export interface Ecosystem {
 }
 
 export interface StepItem {
+  id?: "traverse" | "evaluate" | "remediate";
+  stepNumber?: string;
+  stepEyebrow?: string;
   Icon: LucideIcon;
   title: string;
   desc: string;
   badge: string;
   iconClass: string;
+  method?: "GET" | "AUDIT" | "POST";
+  endpoint?: string;
+  latencyBenchmark?: string;
+  metricValue?: string;
+  metricLabel?: string;
+  highlights?: string[];
+  payloadSummary?: string;
 }
 
 export interface CapabilityItem {

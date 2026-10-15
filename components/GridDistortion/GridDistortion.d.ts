@@ -4,7 +4,15 @@ export interface GridDistortionProps {
   /**
    * Image to distort. It covers the container.
    */
-  imageSrc: string;
+  imageSrc?: string;
+  /**
+   * Text to render and distort on a transparent canvas.
+   */
+  text?: string;
+  /**
+   * Called when texture is loaded and ready.
+   */
+  onReady?: () => void;
   /**
    * Number of cells across. Rows follow the container so cells stay square.
    * Default: 15

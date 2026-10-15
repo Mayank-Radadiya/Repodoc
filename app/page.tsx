@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+import GridDistortion from "@/components/GridDistortion";
 import {
   Footer,
   Hero,
@@ -76,7 +77,25 @@ function SectionSlot({ minHeight }: { minHeight: string }) {
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen bg-white text-slate-900 selection:bg-blue-100 selection:text-blue-900">
+    <div className="relative min-h-screen text-slate-900 selection:bg-blue-100 selection:text-blue-900">
+      {/* Full-Page Background WebGL Grid Distortion */}
+      <div className="fixed inset-0 -z-50 pointer-events-none overflow-hidden">
+        <GridDistortion
+          imageSrc="/landing/bg-hero.jpeg"
+          grid={18}
+          radius={0.22}
+          strength={0.16}
+          relaxation={0.96}
+          mode="drag"
+          softness={0.12}
+          chroma={0.06}
+          idle={0.25}
+          clickRipple={true}
+          intro={true}
+          className="w-full h-full filter-[saturate(1.45)_contrast(1.14)_brightness(1.06)]"
+        />
+      </div>
+
       {/* Skip link for accessibility */}
       <a
         href="#main-content"
@@ -92,26 +111,29 @@ export default function Home() {
         {/* Hero Section with Scroll Inset Frame */}
         <Hero />
 
-        {/* Interactive Observatory Cockpit */}
-        <HeroObservatory />
+        {/* Below-the-fold sections with frosted glass backing */}
+        <div className="relative bg-white/85 backdrop-blur-2xl border-t border-white/30 shadow-2xl">
+          {/* Interactive Observatory Cockpit */}
+          <HeroObservatory />
 
-        {/* Project-Type Manifest Strip */}
-        <EcosystemStrip />
+          {/* Project-Type Manifest Strip */}
+          <EcosystemStrip />
 
-        {/* 3-Step Blueprint Grid */}
-        <Steps />
+          {/* 3-Step Blueprint Grid */}
+          <Steps />
 
-        {/* Platform Bento Grid with Animated SVG Circuits */}
-        <PlatformBento />
+          {/* Platform Bento Grid with Animated SVG Circuits */}
+          <PlatformBento />
 
-        {/* 6-Card Deep-Tech Capabilities */}
-        <Capabilities />
+          {/* 6-Card Deep-Tech Capabilities */}
+          <Capabilities />
 
-        {/* Interactive Fix-with-PR Playground */}
-        <FixPlayground />
+          {/* Interactive Fix-with-PR Playground */}
+          <FixPlayground />
 
-        {/* FAQ Accordion */}
-        <FaqSection />
+          {/* FAQ Accordion */}
+          <FaqSection />
+        </div>
       </main>
 
       {/* Engineering Footer */}

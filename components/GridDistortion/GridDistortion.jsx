@@ -28,8 +28,8 @@ vec2 fieldAt(ivec2 cell) {
   return texelFetch(uField, clamp(cell, ivec2(0), ivec2(uGrid) - 1), 0).rg;
 }
 
-vec3 sampleImage(vec2 uv) {
-  return texture(uImage, (uv - 0.5) * uCover + 0.5).rgb;
+vec4 sampleImage(vec2 uv) {
+  return texture(uImage, (uv - 0.5) * uCover + 0.5);
 }
 
 void main() {
@@ -47,12 +47,12 @@ void main() {
   );
   vec2 shift = mix(blocky, soft, uSoftness);
   float spread = uChroma * 0.35;
-  vec3 color = vec3(
-    sampleImage(uv - shift * (1.0 + spread)).r,
-    sampleImage(uv - shift).g,
-    sampleImage(uv - shift * (1.0 - spread)).b
-  );
-  outColor = vec4(color * uReveal, uReveal);
+  vec4 cCenter = sampleImage(uv - shift);
+  float r = sampleImage(uv - shift * (1.0 + spread)).r;
+  float b = sampleImage(uv - shift * (1.0 - spread)).b;
+  vec3 color = vec3(r, cCenter.g, b);
+  float alpha = cCenter.a * uReveal;
+  outColor = vec4(color * alpha, alpha);
 }`;
 
 const MODES = ['drag', 'push', 'swirl'];
@@ -80,6 +80,8 @@ const compile = (gl, type, source) => {
 
 const GridDistortion = ({
   imageSrc,
+  text,
+  onReady,
   grid = 15,
   radius = 0.18,
   strength = 0.15,
@@ -352,7 +354,86 @@ const GridDistortion = ({
       raf = requestAnimationFrame(frame);
     };
 
-    const load = src => {
+    const offscreenCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+
+    const renderText = (targetCanvas, textContent) => {
+      const ctx = targetCanvas.getContext('2d');
+      if (!ctx) return;
+      const w = targetCanvas.width;
+      const h = targetCanvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const cssWidth = w / dpr;
+      let fontSizeCss = 32;
+      if (cssWidth >= 1024) {
+        fontSizeCss = 68;
+      } else if (cssWidth >= 640) {
+        fontSizeCss = 48;
+      }
+      const fontSize = fontSizeCss * dpr;
+      const lineHeight = fontSize * 1.15;
+
+      ctx.font = `400 ${fontSize}px "Space Grotesk", system-ui, sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.shadowColor = 'rgba(3, 17, 48, 0.75)';
+      ctx.shadowBlur = 16 * dpr;
+      ctx.shadowOffsetY = 3 * dpr;
+
+      const words = textContent.trim().split(/\s+/);
+      const lines = [];
+      let currentLine = words[0];
+      const maxLineWidth = w * 0.96;
+
+      for (let i = 1; i < words.length; i++) {
+        const testLine = currentLine + ' ' + words[i];
+        if (ctx.measureText(testLine).width <= maxLineWidth) {
+          currentLine = testLine;
+        } else {
+          lines.push(currentLine);
+          currentLine = words[i];
+        }
+      }
+      lines.push(currentLine);
+
+      const totalHeight = lines.length * lineHeight;
+      const startY = Math.max(0, (h - totalHeight) / 2);
+
+      lines.forEach((line, idx) => {
+        ctx.fillText(line, w / 2, startY + idx * lineHeight);
+      });
+    };
+
+    const updateTextTexture = () => {
+      if (!alive || !offscreenCanvas || !canvas) return;
+      offscreenCanvas.width = canvas.width;
+      offscreenCanvas.height = canvas.height;
+      renderText(offscreenCanvas, text);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, imageTexture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, offscreenCanvas);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      state.imageAspect = canvas.width / Math.max(1, canvas.height);
+      layout();
+      if (settingsRef.current.intro && !reduce) scramble();
+      state.loaded = true;
+      onReady?.();
+      wake();
+    };
+
+    const load = (src, textValue) => {
+      if (textValue) {
+        updateTextTexture();
+        if (typeof document !== 'undefined' && document.fonts) {
+          document.fonts.ready.then(() => {
+            if (alive) updateTextTexture();
+          });
+        }
+        return;
+      }
       const request = ++state.request;
       if (!src) return;
       const image = new Image();
@@ -369,7 +450,12 @@ const GridDistortion = ({
         layout();
         if (settingsRef.current.intro && !reduce) scramble();
         state.loaded = true;
+        onReady?.();
         wake();
+      };
+      image.onerror = (err) => {
+        if (!alive || request !== state.request) return;
+        console.warn(`GridDistortion failed to load image from "${src}"`, err);
       };
       image.src = src;
     };
@@ -406,6 +492,16 @@ const GridDistortion = ({
       state.height = Math.max(1, root.clientHeight);
       canvas.width = Math.round(state.width * dpr);
       canvas.height = Math.round(state.height * dpr);
+      if (text && state.loaded && offscreenCanvas) {
+        offscreenCanvas.width = canvas.width;
+        offscreenCanvas.height = canvas.height;
+        renderText(offscreenCanvas, text);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, imageTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, offscreenCanvas);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        state.imageAspect = canvas.width / Math.max(1, canvas.height);
+      }
       layout();
       if (!raf) {
         compose(settingsRef.current);
@@ -448,8 +544,8 @@ const GridDistortion = ({
   }, []);
 
   useEffect(() => {
-    controlRef.current?.load(imageSrc);
-  }, [imageSrc]);
+    controlRef.current?.load(imageSrc, text);
+  }, [imageSrc, text]);
 
   useEffect(() => {
     controlRef.current?.wake();

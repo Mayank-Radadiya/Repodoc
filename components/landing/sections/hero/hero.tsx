@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import Image from "next/image";
 import {
   motion,
@@ -8,12 +9,13 @@ import {
   useTransform,
 } from "motion/react";
 import { Sparkles, ChevronRight, CheckCircle2 } from "lucide-react";
-import GridDistortion from "@/components/GridDistortion";
+import { SvgTextFilter } from "../../ui/svg-text-filter";
 import { HeroPromptCard } from "./hero-prompt-card";
 import { TRUST_METRICS } from "../../data/hero";
 
 export function Hero() {
   const reduceMotion = useReducedMotion();
+  const headlineRef = useRef<HTMLHeadingElement | null>(null);
 
   const { scrollY } = useScroll();
   const radius = useTransform(scrollY, [0, 260], [0, 32]);
@@ -35,33 +37,15 @@ export function Hero() {
         style={frameStyle}
         className="relative isolate flex min-h-[96svh] flex-col justify-center overflow-hidden pt-36 pb-36 lg:pt-44 lg:pb-44"
       >
-        {/* Interactive WebGL Grid Distortion background */}
-        <div className="absolute inset-0 -z-20 overflow-hidden pointer-events-none">
-          <GridDistortion
-            imageSrc="https://assets.watermelon.sh/bg-hero-39.avif"
-            grid={16}
-            radius={0.2}
-            strength={0.16}
-            relaxation={0.96}
-            mode="drag"
-            softness={0.12}
-            chroma={0.06}
-            idle={0.25}
-            clickRipple={true}
-            intro={true}
-            className="w-full h-full filter-[saturate(1.45)_contrast(1.14)_brightness(1.06)]"
-          />
-        </div>
-
+        {/* Fallback image behind scrims */}
         <Image
-          src="https://assets.watermelon.sh/bg-hero-39.avif"
+          src="/landing/bg-hero.jpeg"
           alt=""
           aria-hidden="true"
           fill
           priority
-          unoptimized
           sizes="100vw"
-          className="-z-30 object-cover object-center filter-[saturate(1.45)_contrast(1.14)_brightness(1.06)]"
+          className="-z-30 object-cover object-center filter-[saturate(1.45)_contrast(1.14)_brightness(1.06)] opacity-0 md:opacity-0"
         />
 
         {/* Scrims for contrast */}
@@ -82,8 +66,24 @@ export function Hero() {
             <ChevronRight size={15} className="shrink-0 opacity-70" />
           </a>
 
-          {/* Headline in Space Grotesk */}
-          <h1 className="font-display mx-auto mt-8 max-w-4xl text-[2rem] leading-[1.12] font-normal tracking-[-0.03em] text-white [text-shadow:0_1px_2px_rgba(3,17,48,0.7),0_3px_18px_rgba(3,17,48,0.55)] sm:mt-10 sm:text-5xl lg:text-[4.25rem]">
+          {/* Interactive SVG Displacement Filter on Live DOM */}
+          {!reduceMotion && (
+            <SvgTextFilter
+              targetRef={headlineRef}
+              filterId="dom-grid-distortion"
+              maxScale={26}
+              relaxation={0.92}
+            />
+          )}
+
+          {/* Headline in Space Grotesk with SVG Displacement Filter */}
+          <h1
+            ref={headlineRef}
+            style={{
+              filter: reduceMotion ? undefined : "url(#dom-grid-distortion)",
+            }}
+            className="font-display mx-auto mt-8 max-w-4xl text-[2rem] leading-[1.12] font-normal tracking-[-0.03em] text-white [text-shadow:0_1px_2px_rgba(3,17,48,0.7),0_3px_18px_rgba(3,17,48,0.55)] sm:mt-10 sm:text-5xl lg:text-[4.25rem]"
+          >
             From git clone to defensible audit in seconds.
           </h1>
 
