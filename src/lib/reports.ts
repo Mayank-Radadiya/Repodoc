@@ -4,45 +4,12 @@ import { Prisma, type RepoReport } from "@prisma/client";
 import { nanoid } from "nanoid";
 import { prisma } from "@/src/lib/db";
 import { RUBRIC_VERSION } from "@/src/lib/constants";
-import type { AuditReport, CheckResult, PersistedAuditReport } from "@/src/lib/types";
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isCheck(value: unknown): value is CheckResult {
-  if (!isObject(value) || !isObject(value.evidence)) return false;
-  const evidence = value.evidence;
-  const remediation = value.remediation;
-  return typeof value.id === "string" && typeof value.name === "string" &&
-    ["documentation", "hygiene", "testing_ci", "community", "security"].includes(String(value.category)) &&
-    typeof value.passed === "boolean" &&
-    typeof value.pointsAwarded === "number" && Number.isInteger(value.pointsAwarded) &&
-    typeof value.maxPoints === "number" && Number.isInteger(value.maxPoints) &&
-    value.pointsAwarded >= 0 && value.pointsAwarded <= value.maxPoints && value.maxPoints <= 100 &&
-    Array.isArray(evidence.filesChecked) && evidence.filesChecked.every((file) => typeof file === "string") &&
-    typeof evidence.found === "boolean" && typeof evidence.details === "string" &&
-    (remediation === undefined || (isObject(remediation) &&
-      typeof remediation.canAutomate === "boolean" && typeof remediation.targetPath === "string" &&
-      typeof remediation.description === "string" &&
-      (remediation.requiresUserInput === undefined || remediation.requiresUserInput === "license_selection")));
-}
-
-function isReport(value: unknown): value is AuditReport {
-  return isObject(value) && typeof value.owner === "string" && typeof value.repo === "string" &&
-    typeof value.defaultBranch === "string" && value.defaultBranch.length > 0 &&
-    typeof value.rubricVersion === "string" &&
-    typeof value.generatedAt === "string" && Number.isFinite(Date.parse(value.generatedAt)) &&
-    typeof value.healthScore === "number" && Number.isInteger(value.healthScore) &&
-    value.healthScore >= 0 && value.healthScore <= 100 &&
-    Array.isArray(value.checks) && value.checks.length > 0 && value.checks.every(isCheck) &&
-    new Set(value.checks.map((check) => check.id)).size === value.checks.length &&
-    value.checks.reduce((sum, check) => sum + check.pointsAwarded, 0) === value.healthScore;
-}
+import type { AuditReport, PersistedAuditReport } from "@/src/lib/types";
+import { isAuditReport, isRepositoryCoordinates } from "./report-validation";
 
 function decodeReport(row: RepoReport): PersistedAuditReport | null {
   const report = row.breakdown;
-  if (!isReport(report) || !/^[A-Za-z0-9_-]{8}$/.test(row.shareId) ||
+  if (!isAuditReport(report) || !/^[A-Za-z0-9_-]{8}$/.test(row.shareId) ||
     report.owner.toLowerCase() !== row.owner || report.repo.toLowerCase() !== row.repo ||
     report.healthScore !== row.healthScore || report.defaultBranch !== row.defaultBranch ||
     report.rubricVersion !== row.rubricVersion) return null;
@@ -62,6 +29,16 @@ function repositoryKey(owner: string, repo: string) {
 export async function findReportByShareId(shareId: string): Promise<PersistedAuditReport | null> {
   if (shareId.length !== 8 || !/^[A-Za-z0-9_-]{8}$/.test(shareId)) return null;
   const row = await prisma.repoReport.findUnique({ where: { shareId } });
+  if (!row) return null;
+  const report = decodeReport(row);
+  if (!report) throw new Error("Stored repository report is invalid.");
+  return report;
+}
+
+/** Read the latest saved report without imposing audit-cache freshness rules. */
+export async function findReportByRepository(owner: string, repo: string): Promise<PersistedAuditReport | null> {
+  if (!isRepositoryCoordinates(owner, repo)) return null;
+  const row = await prisma.repoReport.findUnique({ where: { owner_repo: repositoryKey(owner, repo) } });
   if (!row) return null;
   const report = decodeReport(row);
   if (!report) throw new Error("Stored repository report is invalid.");

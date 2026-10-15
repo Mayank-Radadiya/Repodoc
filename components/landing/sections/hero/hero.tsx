@@ -68,7 +68,7 @@ export function Hero() {
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(70%_45%_at_50%_30%,rgba(3,17,48,0.30)_0%,rgba(3,17,48,0.10)_55%,transparent_80%)]" />
         <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-48 bg-linear-to-b from-slate-950/30 via-slate-950/8 to-transparent" />
 
-        <div className="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+        <div className="relative mx-auto w-full min-w-0 max-w-7xl px-4 text-center sm:px-6 lg:px-8">
           {/* Eyebrow pill */}
           <a
             href="#how-it-works"

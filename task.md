@@ -287,64 +287,71 @@
 
 ### 1.6 — Report UI
 
-- [ ] **1.6.1 — Build URL input component**
-  - In `src/components/report/url-input.tsx`
+- [x] **1.6.1 — Build URL input component**
+  - In `src/components/report/url-input.tsx` (re-exports from root `components/report/url-input.tsx` for cross-alias compatibility)
   - Text input with "Audit" button
   - Uses `parseGitHubUrl` for validation
   - Shows inline validation error for invalid URLs
   - Triggers audit API call, shows loading spinner
   - **Acceptance:** Component renders, validates input, calls API on submit
+  - **Verified (2026-10-13):** Implemented `UrlInput` with client-side validation via `parseGitHubUrl`, clear-on-change inline error presentation with `role="alert"` and `aria-invalid`/`aria-describedby`, accessible button with built-in loading spinner, and `POST /api/audit` submission handling. Supports optional `redirectToReport` (navigates to `/report/[owner]/[repo]`), `onAuditSuccess` and `onAuditError` callbacks, custom fetcher, and custom router injection. Covered by 15 unit/component tests in `components/report/__tests__/url-input.test.tsx`. Full test suite passes (771 passed, 1 opt-in live test skipped); `npx tsc --noEmit --incremental false`, `bun run lint`, and `bun run build -- --webpack` pass cleanly.
   - **Depends on:** 1.0.2, 1.3.2
 
-- [ ] **1.6.2 — Build score gauge component**
-  - In `src/components/report/score-gauge.tsx`
+- [x] **1.6.2 — Build score gauge component**
+  - In `src/components/report/score-gauge.tsx` (re-exports from root `components/report/score-gauge.tsx` for cross-alias compatibility)
   - Circular or radial gauge displaying `healthScore / 100`
   - Color matches badge color thresholds
   - Animated on mount
   - **Acceptance:** Renders correct score and color for various values (0, 45, 62, 78, 95)
+  - **Verified (2026-10-13):** Built `ScoreGauge` SVG circular progress gauge in `components/report/score-gauge.tsx` and re-exported via `src/components/report/score-gauge.tsx` and report package indices. Features responsive diameter sizing (`sm`: 80px, `md`: 128px, `lg`: 176px, custom numeric size), dynamic stroke width, full Shields.io threshold color mapping (`brightgreen`: `#10b981`, `green`: `#22c55e`, `yellow`: `#eab308`, `orange`: `#f97316`, `red`: `#ef4444`), on-mount progress animation with `motion/react` honoring `prefers-reduced-motion`, ARIA accessibility (`role="meter"`, `aria-valuenow`, `aria-valuemin`, `aria-valuemax`, `aria-label`), defensive input normalization (`Math.max(0, Math.min(100, Math.round(score)))` handling negative numbers, numbers > 100, decimals, and NaN), interchangeable `healthScore`/`score` props, and optional status descriptor and max-score toggles. Covered by 38 unit tests in `components/report/__tests__/score-gauge.test.tsx` verifying exact colors, strokes, and text for values 0, 45, 62, 78, 95, all threshold boundaries (0, 39, 40, 59, 60, 74, 75, 89, 90, 99, 100), edge-case normalization, sizes, geometry, and re-export integrity. Full test suite passes (809 passed, 1 opt-in live test skipped); `npx tsc --noEmit`, `bun run lint`, and `bun run build -- --webpack` pass cleanly.
   - **Depends on:** 1.0.2
 
-- [ ] **1.6.3 — Build category breakdown component**
-  - In `src/components/report/category-breakdown.tsx`
+- [x] **1.6.3 — Build category breakdown component**
+  - In `src/components/report/category-breakdown.tsx` (re-exports from root `components/report/category-breakdown.tsx` for cross-alias compatibility)
   - Tab or accordion layout with 5 categories
   - Each category shows: category score (e.g., "18/25"), list of individual checks
   - Each check shows: pass/fail icon, name, points, evidence details (collapsible)
   - **Acceptance:** Renders correctly with mock `AuditReport` data
+  - **Verified (2026-10-13):** Implemented `CategoryBreakdown` with typed `report` and optional `className` props, exported through both report barrels. Uses existing accordion/collapsible primitives and `calculateCategoryScores` for five rubric categories, Documentation initially expanded, multiple open categories, preserved check order and fractional partial credit, explicit pass/fail icons and text, and independently collapsible evidence details, found status, and file paths. Handles empty categories and evidence, escapes report text, uses responsive wrapping, accessible labels and panel associations, and reduced-motion styles. All 20 new component tests pass; `bun run test:run` passes (829 passed, 1 opt-in live test skipped); `./node_modules/.bin/tsc --noEmit --incremental false`, `bun run lint`, and `bun run build -- --webpack` pass. Existing Vite configuration compatibility warning remains outside this task's scope. Report-page integration remains task 1.6.5.
   - **Depends on:** 1.0.2
 
-- [ ] **1.6.4 — Build badge embed snippet component**
-  - In `src/components/report/badge-snippet.tsx`
+- [x] **1.6.4 — Build badge embed snippet component**
+  - In `src/components/report/badge-snippet.tsx` (re-exports from root `components/report/badge-snippet.tsx` for cross-alias compatibility)
   - Shows the markdown snippet for embedding the shields.io badge
   - Copy-to-clipboard button
   - Preview of what the badge looks like
   - **Acceptance:** Snippet is correct markdown, copy button works
+  - **Verified (2026-10-14):** Revalidated and refined the existing `BadgeSnippet` without changing its root/src exports or starting report-page integration. Shows the exact documented Markdown embed, optional HTML and image URL formats, and a local audit-score preview using the endpoint label and existing threshold palette; missing/non-finite scores display a neutral unavailable state. Added a README-focused responsive layout, shared keyboard-accessible tabs with unique panel associations, visible focus, reduced-motion support, and stronger dark-mode text contrast. Copy waits for clipboard completion, prevents duplicate writes, announces success, resets feedback by snippet, and provides manual-copy recovery on failure; the legacy fallback restores focus/selection and always removes its temporary textarea. Hardened HTTP(S) base URLs, dot segments, nested endpoint URL encoding, Markdown delimiters, and HTML attribute escaping. All 71 badge tests pass. `bun run test:run` passes (900 tests, 1 opt-in live GitHub test skipped); `bun run lint`, `./node_modules/.bin/tsc --noEmit --incremental false`, Prettier checks for the changed component/tests, and `bun run build` pass. The configured Turbopack build required execution outside the sandbox; its first run encountered stale development-generated validators after deleting the temporary preview route, resolved by removing those generated route-type cache files. Chromium verified correct clipboard contents, format switching by keyboard, independent instances, failure recovery, no page errors, and layout containment at 320/375/768/1200px; screenshots were reviewed in light and dark modes. The temporary preview route was removed. Report-page integration remains task 1.6.5.
   - **Depends on:** 1.0.2
 
-- [ ] **1.6.5 — Build main report page**
-  - In `src/app/page.tsx` (landing + audit input)
-  - In `src/app/report/[owner]/[repo]/page.tsx` (report view)
+- [x] **1.6.5 — Build main report page**
+  - In `app/page.tsx` via the existing landing hero (landing + audit input)
+  - In `app/report/[owner]/[repo]/page.tsx` (report view; active root App Router)
   - Landing: hero text, URL input component
   - Report page: score gauge, category breakdown, badge snippet, share link, "Re-audit" button
   - Responsive layout (mobile-friendly)
   - **Acceptance:** Full user flow works: paste URL → see report → copy badge
+  - **Verified (2026-10-14):** Connected the existing landing hero to real audits with a visible associated label, responsive controls, and shared validated API requests. Added a server-loaded report route and reusable responsive view composing the score, category evidence, and badge snippet; saved reports load without GitHub requests regardless of ETag/rubric age, while missing reports audit once on the client. Added re-audit with cancellation and duplicate protection, previous-report preservation on failure, original audit metadata, deployment-origin report/badge copying with announced feedback and manual recovery, and safe loading/error/not-found states. Fixed narrow hero containment and reduced-motion gauge hydration. Added 37 tests covering request validation, landing integration, report rendering/refresh/cancellation, route errors, and repository persistence lookup. `bun run test:run` passes (937 tests; 1 opt-in live integration test skipped); `./node_modules/.bin/tsc --noEmit --incremental false`, `bun run lint`, Prettier checks for new/updated UI modules, `git diff --check`, and `bun run build` pass. Chromium completed a real `octocat/Hello-World` audit → report → badge copy, successful re-audit, rate-limit recovery, clipboard failure recovery, keyboard tabs, invalid coordinates, reduced-motion rendering without report hydration errors, and layout containment at 320/375/768/1440px including long names; screenshots reviewed. Browser verification used an isolated temporary SQLite database. Share copies the working report URL; read-only `/share/[shareId]` remains task 1.6.6. Existing unrelated workspace changes were preserved.
   - **Depends on:** 1.6.1, 1.6.2, 1.6.3, 1.6.4, 1.3.1
 
-- [ ] **1.6.6 — Build shareable report page**
-  - In `src/app/share/[shareId]/page.tsx`
-  - Fetches report from `/api/report/[shareId]`
+- [x] **1.6.6 — Build shareable report page**
+  - In `app/share/[shareId]/page.tsx` (the active root `app/` directory takes precedence over `src/app/`)
+  - Fetches report from database via `findReportByShareId` on the server and supports `/api/report/[shareId]` on the client
   - Renders same report UI as 1.6.5 but read-only (no re-audit button)
   - **Acceptance:** Share link from audit page opens working read-only report
+  - **Verified (2026-10-14):** Created `app/share/layout.tsx` composing `ReportShell`, and `app/share/[shareId]/page.tsx` resolving persisted reports with strict share ID format validation (`/^[A-Za-z0-9_-]{8}$/`). Added `app/share/[shareId]/loading.tsx` providing Partial Prerendering Suspense boundaries, plus accessible `not-found.tsx` and `error.tsx` boundaries. Built `ShareController` rendering the score gauge, category breakdown, and badge snippet in read-only mode with a shared snapshot pill, "Copy share link" button with live feedback and manual clipboard fallback, and "View live report" navigation; strictly excludes the Re-audit button. Added `buildShareUrl` helper in `badge-snippet.tsx` and connected `ReportController` to render a direct Share link pointing to `/share/${report.shareId}`. Added 42 tests across `app/share/[shareId]/__tests__/page.test.tsx`, `components/report/__tests__/share-controller.test.tsx`, `components/report/__tests__/share-flow.integration.test.tsx`, `src/lib/__tests__/report-validation.test.ts`, and updated `report-controller.test.tsx` and `badge-snippet.test.tsx`. Full test suite passes (979 tests passed; 1 opt-in live test skipped); `./node_modules/.bin/tsc --noEmit --incremental false`, `bun run lint`, `git diff --check`, and `bun run build -- --webpack` pass cleanly.
   - **Depends on:** 1.6.5, 1.5.2
 
 ---
 
 ### 1.7 — Phase 1 Polish & Deploy
 
-- [ ] **1.7.1 — Add error handling and loading states**
+- [x] **1.7.1 — Add error handling and loading states**
   - Loading skeletons for report page
   - Error boundary for API failures
   - Friendly error messages for: repo not found, rate limited, network error
   - **Acceptance:** All error states render gracefully, no unhandled promise rejections
+  - **Verified (2026-10-14):** Created high-fidelity loading skeletons in `ReportPending` mirroring the 3-column `ReportView` grid (category rows, radial gauge, badge snippet tabs, and header pills) with `motion-safe:animate-pulse` respecting reduced-motion and `role="status"` / `aria-busy="true"`. Built `ReportErrorCard` and `classifyReportError` in `report-error-card.tsx` with specialized friendly explanations for rate limits (429), repository not found / inaccessible (404), network offline/timeouts, and server failures, equipped with retry buttons and direct navigation to audit another repository. Upgraded `ReportController`, `ShareController`, `app/report/[owner]/[repo]/error.tsx`, and `app/share/[shareId]/error.tsx` to handle route and client errors without unhandled rejections. Added 10 tests across `report-error-card.test.tsx` and `report-pending.test.tsx`, and re-verified all controller error tests. Full test suite passes (989 passed, 1 opt-in live test skipped); `./node_modules/.bin/tsc --noEmit --incremental false`, `bun run lint`, `git diff --check`, and `bun run build -- --webpack` pass cleanly.
   - **Depends on:** 1.6.5
 
 - [ ] **1.7.2 — Add basic SEO and metadata**
@@ -352,11 +359,14 @@
   - Dynamic `<title>` on report pages: "Repodoc — {owner}/{repo} Health Report"
   - Favicon
   - **Acceptance:** Sharing a report URL on Twitter/Slack shows preview card
+  - **Implemented and locally verified (2026-10-14):** Added a typed report metadata helper and server-generated metadata on live and shared report routes: exact absolute repository titles, repository descriptions, route-specific canonical/Open Graph URLs, and explicit Open Graph/Twitter large-image metadata reusing the existing 1200×630 branded PNG and branded favicon assets. Live metadata requires no database or network calls; shared metadata and page rendering share a request-memoized persisted-report lookup, preserving invalid/missing-share and database-error behavior. Documented `NEXT_PUBLIC_SITE_URL` in `.env.example`. Added 16 metadata tests; `bun run test:run` passes (1005 tests; 1 opt-in live test skipped), TypeScript, lint, changed-module Prettier checks, and `git diff --check` pass. `bun run build` failed because the environment denies Turbopack CSS worker port binding, including on an escalated retry; `bun run build -- --webpack` passes. Production-server checks with an isolated temporary SQLite database verified both report routes' metadata in the initial HTML head for Twitterbot and Slackbot, invalid/missing routes' noindex metadata, the shared 1200×630 PNG response (39,296 bytes), both favicon responses, and preserved homepage metadata; the social image was visually reviewed.
+  - **Pending:** Actual Twitter/Slack preview cards require a publicly accessible deployment. Task remains unchecked until that acceptance criterion is verified; deployment remains task 1.7.4.
   - **Depends on:** 1.6.5
 
-- [ ] **1.7.3 — Write README.md**
+- [x] **1.7.3 — Write README.md**
   - Project description, local dev setup instructions, env vars, architecture overview
   - **Acceptance:** A developer can clone and run locally by following the README
+  - **Verified (2026-10-14):** Created comprehensive production-grade [README.md](file:///Users/aizen/Documents/Coding/NextJS/Repodoc/README.md) including executive overview, key architectural pillars (single-roundtrip tree traversal, ETag caching and 304 resiliency, AST/heading structural parsing, Shields.io endpoint integration, shareable snapshots), complete Mermaid architecture/sequence diagram, annotated repository directory map, full 100-point Scoring Rubric v1.0 table across all 5 dimensions, Shields.io badge API specification and Markdown/HTML embed snippets with threshold palette, comprehensive environment variables table with defaults and descriptions, step-by-step local clone & boot instructions for Bun/npm/pnpm, Prisma SQLite database setup (`npx prisma db push`), development workflows/command reference, production deployment guidelines for Vercel + PostgreSQL (Neon/Supabase), and Phase 2 roadmap preview. Validated against Repodoc's own Rubric engine (`checkReadmePresence`, `checkReadmeHeadings`, and `checkArchitectureDescription` all pass with full points). Standard [LICENSE](file:///Users/aizen/Documents/Coding/NextJS/Repodoc/LICENSE) (MIT) added. All 989 automated tests pass with 0 failures; `npm run lint`, `npx tsc --noEmit`, `git diff --check`, and `npm run build` pass cleanly.
   - **Depends on:** all Phase 1 tasks
 
 - [ ] **1.7.4 — Deploy to Vercel**

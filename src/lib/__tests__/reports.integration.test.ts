@@ -9,7 +9,7 @@ import { nanoid } from "nanoid";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/audit/route";
 import { GET } from "@/app/api/report/[shareId]/route";
-import { findCachedReport, findReportByShareId, saveReport } from "@/src/lib/reports";
+import { findCachedReport, findReportByRepository, findReportByShareId, saveReport } from "@/src/lib/reports";
 import { ScoringEngine } from "@/src/lib/scoring/engine";
 import type { AuditReport } from "@/src/lib/types";
 
@@ -87,6 +87,34 @@ afterAll(async () => {
 });
 
 describe("report persistence with SQLite", () => {
+  it("reads the latest report by repository, case-insensitively, without ETag or current rubric", async () => {
+    const saved = await saveReport({ ...report(), rubricVersion: "0.9.0" }, "");
+    const writes = vi.spyOn(prisma.repoReport, "upsert");
+    expect(await findCachedReport("Owner", "Repo")).toBeNull();
+    expect(await findReportByRepository("OWNER", "rEpO")).toEqual(saved);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(writes).not.toHaveBeenCalled();
+    const newer = await saveReport({ ...report(), generatedAt: "2026-10-14T12:00:00.000Z" }, "");
+    expect(await findReportByRepository("owner", "repo")).toEqual(newer);
+  });
+
+  it("distinguishes missing reports, invalid coordinates, and storage failures", async () => {
+    expect(await findReportByRepository("missing", "repository")).toBeNull();
+    const lookup = vi.spyOn(prisma.repoReport, "findUnique");
+    expect(await findReportByRepository("../owner", "repo")).toBeNull();
+    expect(await findReportByRepository("owner", "..")).toBeNull();
+    expect(lookup).not.toHaveBeenCalled();
+    lookup.mockRejectedValueOnce(new Error("Database unavailable"));
+    await expect(findReportByRepository("owner", "repo")).rejects.toThrow("Database unavailable");
+  });
+
+  it("rejects corrupt saved reports rather than treating them as absent", async () => {
+    const saved = await saveReport(report(), "");
+    await prisma.repoReport.update({ where: { shareId: saved.shareId }, data: { breakdown: {} } });
+    await expect(findReportByRepository("owner", "repo")).rejects.toThrow("Stored repository report is invalid.");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("fetches the identical report by share ID after an audit without network calls or writes", async () => {
     githubFresh();
     const auditResponse = await POST(request());

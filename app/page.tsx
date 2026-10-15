@@ -1,30 +1,78 @@
-import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import {
-  LandingNavigation,
-  Hero,
-  HeroObservatory,
-  EcosystemStrip,
-  Steps,
-  PlatformBento,
-  Capabilities,
-  FixPlayground,
-  FaqSection,
   Footer,
+  Hero,
+  LandingNavigation,
 } from "@/components/landing/sections";
 
-export const metadata: Metadata = {
-  title: "Repodoc — Repository Intelligence & Automated Health Remediation",
-  description:
-    "Generate a 100-point repository health audit with defensible evidence, dynamic shields.io badge, and 1-click atomic PR remediation in a single commit.",
-  keywords:
-    "repository audit, code health, shields.io badge, GitHub automation, repository intelligence, defensible rubric, atomic pull request, git data api, open source hygiene",
-  openGraph: {
-    type: "website",
-    title: "Repodoc — Repository Intelligence & Automated Health Remediation",
-    description:
-      "Generate a 100-point repository health audit with defensible evidence, dynamic shields.io badge, and 1-click atomic PR remediation in a single commit.",
-  },
-};
+/**
+ * Below-the-fold sections are code-split with next/dynamic: their HTML is
+ * still server-rendered into the static page (first paint and SEO are
+ * unchanged), but each section's client JS ships as its own chunk that the
+ * browser fetches off the critical path. Only nav + hero stay eager.
+ *
+ * Import the section modules directly instead of the barrel file — a barrel
+ * import would bundle every section into one shared chunk and defeat the
+ * split. Loading fallbacks approximate each section's height so hydrating
+ * chunks in later does not shift layout.
+ */
+const HeroObservatory = dynamic(
+  () =>
+    import("@/components/landing/sections/hero-observatory").then(
+      (m) => m.HeroObservatory,
+    ),
+  { loading: () => <SectionSlot minHeight="44rem" /> },
+);
+
+const EcosystemStrip = dynamic(
+  () =>
+    import("@/components/landing/sections/ecosystem-strip").then(
+      (m) => m.EcosystemStrip,
+    ),
+  { loading: () => <SectionSlot minHeight="12rem" /> },
+);
+
+const Steps = dynamic(
+  () => import("@/components/landing/sections/steps").then((m) => m.Steps),
+  { loading: () => <SectionSlot minHeight="34rem" /> },
+);
+
+const PlatformBento = dynamic(
+  () =>
+    import("@/components/landing/sections/platform-bento").then(
+      (m) => m.PlatformBento,
+    ),
+  { loading: () => <SectionSlot minHeight="46rem" /> },
+);
+
+const Capabilities = dynamic(
+  () =>
+    import("@/components/landing/sections/capabilities").then(
+      (m) => m.Capabilities,
+    ),
+  { loading: () => <SectionSlot minHeight="46rem" /> },
+);
+
+const FixPlayground = dynamic(
+  () =>
+    import("@/components/landing/sections/fix-playground").then(
+      (m) => m.FixPlayground,
+    ),
+  { loading: () => <SectionSlot minHeight="46rem" /> },
+);
+
+const FaqSection = dynamic(
+  () =>
+    import("@/components/landing/sections/faq-section").then(
+      (m) => m.FaqSection,
+    ),
+  { loading: () => <SectionSlot minHeight="38rem" /> },
+);
+
+/** Placeholder that reserves a section's vertical space while its chunk loads. */
+function SectionSlot({ minHeight }: { minHeight: string }) {
+  return <div aria-hidden="true" style={{ minHeight }} />;
+}
 
 export default function Home() {
   return (
