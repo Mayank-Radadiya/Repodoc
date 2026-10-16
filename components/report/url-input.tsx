@@ -2,7 +2,8 @@
 
 import React, { useState, useId, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ArrowUpRight, GitFork } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { cn, parseGitHubUrl, type ParsedGitHubUrl } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,10 @@ export interface UrlInputProps {
   placeholder?: string;
   /** Additional CSS class names for the container form. */
   className?: string;
+  /** Hero presentation with a prominent repository composer. */
+  appearance?: "default" | "hero";
+  /** Repository shortcuts that fill the field without submitting it. */
+  examples?: readonly string[];
   /** Automatically focus the input on mount. */
   autoFocus?: boolean;
   /** Whether the input and submit button are disabled. */
@@ -42,6 +47,8 @@ export function UrlInput({
   initialValue = "",
   placeholder = "e.g. facebook/react or https://github.com/facebook/react",
   className,
+  appearance = "default",
+  examples,
   autoFocus = false,
   disabled = false,
   redirectToReport = true,
@@ -53,8 +60,10 @@ export function UrlInput({
   const [value, setValue] = useState(initialValue);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   const inFlight = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const generatedId = useId();
   const errorId = `${generatedId}-error`;
 
@@ -128,16 +137,21 @@ export function UrlInput({
     <form
       role="search"
       onSubmit={handleSubmit}
-      className={cn("flex flex-col gap-2 w-full", className)}
+      className={cn("flex flex-col gap-2 w-full outline:none", className)}
       aria-busy={isLoading}
+      data-appearance={appearance}
       noValidate
     >
       <label htmlFor={generatedId} className="text-sm font-medium">
         {label}
       </label>
-      <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative min-w-0 flex-1">
+      <div data-slot="repository-field" className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+        <div data-slot="repository-input" className="relative min-w-0 flex-1">
+          {appearance === "hero" && (
+            <GitFork data-slot="repository-icon" size={21} aria-hidden="true" />
+          )}
           <Input
+            ref={inputRef}
             id={generatedId}
             type="text"
             autoCapitalize="none"
@@ -158,14 +172,48 @@ export function UrlInput({
           />
         </div>
         <Button
+          render={appearance === "hero" ? (
+            <motion.button
+              tabIndex={0}
+              whileHover={reduceMotion ? undefined : { scale: 1.015 }}
+              whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 420, damping: 28 }}
+            />
+          ) : undefined}
           type="submit"
           loading={isLoading}
           disabled={disabled || isLoading}
           className="min-h-11 shrink-0"
         >
-          Audit
+          <span data-slot="repository-submit-label">
+            {appearance === "hero" ? "Audit repository" : "Audit"}
+          </span>
+          {appearance === "hero" && <ArrowUpRight aria-hidden="true" />}
         </Button>
       </div>
+      {examples && examples.length > 0 && (
+        <div data-slot="repository-examples" className="flex flex-wrap items-center gap-2">
+          <span className="text-xs">Try a repo</span>
+          {examples.map((example) => {
+            const shorthand = example.replace(/^github\.com\//, "");
+            return (
+              <button
+                key={example}
+                type="button"
+                disabled={disabled || isLoading}
+                onClick={() => {
+                  setValue(shorthand);
+                  setError(null);
+                  inputRef.current?.focus();
+                }}
+                className="min-h-11 cursor-pointer rounded-md px-2 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {shorthand}
+              </button>
+            );
+          })}
+        </div>
+      )}
       {isLoading && (
         <p role="status" className="text-sm">
           Auditing repository…

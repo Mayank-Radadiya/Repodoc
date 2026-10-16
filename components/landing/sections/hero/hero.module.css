@@ -1,0 +1,378 @@
+.hero {
+  --hero-ink: #07152c;
+  --hero-surface: #0d213d;
+  --hero-white: #ffffff;
+  --hero-muted: #bed0e4;
+  --hero-sky: #a5dcff;
+  --hero-mint: #a7f3d0;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 42%, rgb(7 21 44 / 45%), rgb(7 21 44 / 15%) 75%);
+}
+
+.announcement {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid rgb(255 255 255 / 24%);
+  border-radius: 999px;
+  background: rgb(7 21 44 / 30%);
+  color: var(--hero-white);
+  font-size: 12px;
+  line-height: 1.5;
+  backdrop-filter: blur(16px);
+  transition: background 180ms;
+}
+
+.announcement:hover {
+  background: rgb(7 21 44 / 50%);
+}
+
+.headline {
+  max-width: 1040px;
+  margin: 28px auto 0;
+  color: var(--hero-white);
+  font-size: clamp(2.3rem, 5.4vw, 4.75rem);
+  font-weight: 500;
+  line-height: 1.09;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+  filter: url("#dom-grid-distortion");
+  text-shadow: 0 2px 24px rgb(3 17 48 / 28%);
+}
+
+.wordMask {
+  display: inline-block;
+  overflow: clip;
+  vertical-align: top;
+  padding: 0.08em 0.025em 0.12em;
+  margin: -0.08em -0.025em -0.12em;
+  white-space: pre;
+}
+
+.description {
+  max-width: 550px;
+  margin: 22px auto 0;
+  color: #edf4fc;
+  font-size: clamp(1rem, 1.4vw, 1.125rem);
+  font-weight: 400;
+  line-height: 1.7;
+  text-wrap: pretty;
+  text-shadow: 0 1px 8px rgb(3 17 48 / 65%);
+}
+
+.composerEntrance {
+  width: 100%;
+  max-width: 680px;
+  margin: 36px auto 0;
+}
+
+.repositoryForm {
+  gap: 12px;
+  text-align: left;
+}
+
+.repositoryForm label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.repositoryForm [data-slot="repository-field"] {
+  position: relative;
+  isolation: isolate;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 7px;
+  border: 1px solid rgb(255 255 255 / 85%);
+  border-radius: 20px;
+  background: rgb(255 255 255 / 97%);
+  box-shadow: 0 0 0 5px rgb(255 255 255 / 14%), 0 16px 40px -16px rgb(7 21 44 / 40%), inset 0 1px 0 #ffffff;
+  transition: box-shadow 250ms, border-color 250ms;
+}
+
+/* A single glint follows the top edge when the field receives focus. */
+.repositoryForm [data-slot="repository-field"]::after {
+  position: absolute;
+  top: -1px;
+  left: 12%;
+  width: 30%;
+  height: 2px;
+  border-radius: 100%;
+  background: linear-gradient(90deg, transparent, #ffffff 35%, #8dd9ff 65%, transparent);
+  box-shadow: 0 0 8px rgb(141 217 255 / 60%);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+}
+
+.repositoryForm [data-slot="repository-field"]:focus-within {
+  border-color: #bce8ff;
+  box-shadow: 0 0 0 5px rgb(210 240 255 / 24%), 0 18px 44px -16px rgb(7 21 44 / 40%);
+}
+
+.repositoryForm [data-slot="repository-field"]:focus-within::after {
+  animation: input-glint 850ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes input-glint {
+  0% { opacity: 0; transform: translateX(0); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(180%); }
+}
+
+.repositoryForm [data-slot="repository-field"]:has([aria-invalid="true"]) {
+  border-color: #e11d48;
+}
+
+.repositoryForm [data-slot="repository-icon"] {
+  position: absolute;
+  top: 50%;
+  left: 17px;
+  z-index: 1;
+  color: #45556c;
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: color 180ms;
+}
+
+.repositoryForm [data-slot="repository-input"]:focus-within [data-slot="repository-icon"] {
+  color: #0072eb;
+}
+
+.repositoryForm [data-slot="input-control"] {
+  min-height: 58px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.repositoryForm [data-slot="input-control"]::before {
+  box-shadow: none;
+}
+
+.repositoryForm [data-slot="input-control"]:has(:focus-visible) {
+  outline-offset: -3px;
+  box-shadow: none;
+}
+
+.repositoryForm input {
+  height: 58px;
+  padding-inline: 52px 8px;
+  color: #172b47;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+.repositoryForm input::placeholder {
+  color: #77849a;
+  opacity: 1;
+}
+
+.repositoryForm button[type="submit"] {
+  min-height: 54px;
+  padding-inline: 20px;
+  border: 1px solid #0076ee;
+  border-radius: 13px;
+  background: linear-gradient(180deg, #168fff 0%, #0071e5 100%);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%), 0 2px 5px rgb(0 78 170 / 18%);
+  transition: box-shadow 180ms, border-color 180ms;
+}
+
+.repositoryForm button[type="submit"]:hover:not(:disabled) {
+  border-color: #168fff;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 45%), 0 4px 16px rgb(0 114 235 / 30%);
+}
+
+.repositoryForm button[type="submit"]:focus-visible {
+  outline: 2px solid #0053af;
+  outline-offset: 3px;
+}
+
+.repositoryForm button[type="submit"][data-loading] {
+  color: transparent;
+}
+
+.repositoryForm [data-slot="button-loading-indicator"] {
+  color: #ffffff;
+}
+
+.repositoryForm button[type="submit"] > svg:not([data-slot="button-loading-indicator"]) {
+  transition: transform 180ms;
+}
+
+.repositoryForm button[type="submit"]:hover > svg:not([data-slot="button-loading-indicator"]) {
+  transform: translate(2px, -2px);
+}
+
+.repositoryForm [data-slot="repository-examples"] {
+  justify-content: center;
+  gap: 0 6px;
+  color: #f0f6ff;
+  text-shadow: 0 1px 6px rgb(7 21 44 / 65%);
+}
+
+.repositoryForm [data-slot="repository-examples"] > span {
+  color: #e2edfa;
+  font-size: 12px;
+}
+
+.repositoryForm [data-slot="repository-examples"] button {
+  min-height: 44px;
+  padding-inline: 8px;
+  border-radius: 7px;
+  color: #ffffff;
+  font-size: 12px;
+  text-decoration: underline;
+  text-decoration-color: rgb(255 255 255 / 40%);
+  text-underline-offset: 4px;
+}
+
+.repositoryForm [data-slot="repository-examples"] button:hover:not(:disabled) {
+  background: rgb(255 255 255 / 14%);
+  text-decoration-color: #ffffff;
+}
+
+.repositoryForm [role="alert"] {
+  padding: 10px 14px;
+  border: 1px solid #fecdd3;
+  border-radius: 10px;
+  background: #fff1f2;
+  color: #9f1239;
+  line-height: 1.6;
+}
+
+.repositoryForm p[role="status"] {
+  color: #ffffff;
+  text-align: center;
+  text-shadow: 0 1px 6px rgb(7 21 44 / 65%);
+}
+
+.explore {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  margin-top: 28px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  color: #edf4fc;
+  font-size: 12px;
+  text-shadow: 0 1px 6px rgb(3 17 48 / 80%);
+}
+
+.explore svg {
+  transition: transform 180ms;
+}
+
+.explore:hover svg {
+  transform: translateY(3px);
+}
+
+.hero :focus-visible {
+  outline-color: #a5dcff;
+}
+
+@media (max-width: 639px) {
+  .headline {
+    max-width: 480px;
+    margin-top: 24px;
+    font-size: clamp(2.15rem, 8.7vw, 3.25rem);
+    line-height: 1.12;
+  }
+
+  .description {
+    max-width: 410px;
+    margin-top: 18px;
+  }
+
+  .composerEntrance {
+    margin-top: 30px;
+  }
+
+  .repositoryForm [data-slot="repository-field"] {
+    padding: 6px;
+    border-radius: 18px;
+  }
+
+  .repositoryForm [data-slot="input-control"],
+  .repositoryForm input {
+    min-height: 52px;
+    height: 52px;
+  }
+
+  .repositoryForm input {
+    padding-left: 43px;
+    font-size: 16px;
+  }
+
+  .repositoryForm [data-slot="repository-icon"] {
+    left: 12px;
+    width: 19px;
+  }
+
+  .repositoryForm button[type="submit"] {
+    min-width: 50px;
+    min-height: 50px;
+    padding-inline: 14px;
+    border-radius: 12px;
+  }
+
+  .repositoryForm [data-slot="repository-submit-label"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .repositoryForm [data-slot="repository-examples"] {
+    column-gap: 2px;
+  }
+
+  .repositoryForm [data-slot="repository-examples"] button {
+    padding-inline: 5px;
+    font-size: 11px;
+  }
+
+  .explore {
+    margin-top: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero * {
+    transition: none;
+  }
+
+  .headline {
+    filter: none;
+  }
+
+  .repositoryForm [data-slot="repository-field"]:focus-within::after {
+    animation: none;
+  }
+
+  .explore:hover svg,
+  .repositoryForm button[type="submit"]:hover > svg {
+    transform: none;
+  }
+}

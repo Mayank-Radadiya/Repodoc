@@ -38,12 +38,14 @@ describe("landing audit integration", () => {
     });
     expect(input.value).toBe("");
     expect(input.id).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Audit" }));
+    fireEvent.click(screen.getByRole("button", { name: "Audit repository" }));
     expect(await screen.findByRole("alert")).toBeDefined();
     expect(fetchMock).not.toHaveBeenCalled();
-    fireEvent.change(input, {
-      target: { value: "https://github.com/facebook/react" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "facebook/react" }));
+    expect(input.value).toBe("facebook/react");
+    expect(document.activeElement).toBe(input);
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
     fireEvent.submit(input.closest("form")!);
     await waitFor(() =>
       expect(navigation.push).toHaveBeenCalledWith("/report/facebook/react"),
@@ -63,7 +65,7 @@ describe("landing audit integration", () => {
       screen.getByRole("textbox", { name: "GitHub repository" }),
       { target: { value: "facebook/react" } },
     );
-    fireEvent.click(screen.getByRole("button", { name: "Audit" }));
+    fireEvent.click(screen.getByRole("button", { name: "Audit repository" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "invalid report",
     );

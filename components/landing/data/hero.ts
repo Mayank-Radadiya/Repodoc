@@ -15,7 +15,7 @@ export const SAMPLE_REPOS = [
 ];
 
 export const TRUST_METRICS = [
-  "Single-roundtrip Git tree traversal",
-  "Defensible v1.0 Rubric",
-  "1-Click Atomic PR via Git Data API",
+  "Evidence behind every score",
+  "Docs, tests & project hygiene",
+  "Reviewable fixes",
 ];
