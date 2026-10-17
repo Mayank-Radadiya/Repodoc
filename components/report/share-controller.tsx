@@ -10,7 +10,6 @@ import { buildShareUrl, copyToClipboard } from "./badge-snippet";
 import { ReportView } from "./report-view";
 import { ReportPending } from "./report-pending";
 import { ReportErrorCard } from "./report-error-card";
-import styles from "./report.module.css";
 
 export interface ShareControllerProps {
   shareId: string;
@@ -124,9 +123,9 @@ function ShareSession({ shareId, initialReport = null }: ShareControllerProps) {
         />
       )}
       <div className="flex flex-wrap items-center gap-3">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
           <span
-            className="size-1.5 rounded-full bg-slate-500"
+            className="size-1.5 rounded-full bg-muted-foreground"
             aria-hidden="true"
           />
           Shared snapshot (read-only)
@@ -134,7 +133,7 @@ function ShareSession({ shareId, initialReport = null }: ShareControllerProps) {
         <p
           role="status"
           aria-atomic="true"
-          className={`${styles.secondary} text-sm`}
+          className="text-sm text-muted-foreground"
         >
           {copyStatus === "copied"
             ? "Share link copied."
@@ -153,7 +152,7 @@ function ShareSession({ shareId, initialReport = null }: ShareControllerProps) {
             readOnly
             value={shareUrl}
             onFocus={(event) => event.target.select()}
-            className="min-h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3"
           />
         </div>
       )}
@@ -197,7 +196,7 @@ function ShareSession({ shareId, initialReport = null }: ShareControllerProps) {
           </Button>
           <Link
             href={`/report/${encodeURIComponent(report.owner)}/${encodeURIComponent(report.repo)}`}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium hover:bg-slate-50"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
           >
             View live report
             <ExternalLink aria-hidden="true" className="size-3.5" />

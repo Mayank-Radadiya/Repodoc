@@ -41,5 +41,32 @@ export {
   type ReportErrorKind,
   type ClassifiedReportError,
 } from "./report-error-card";
+export {
+  REPORT_THEME_COOKIE,
+  parseReportTheme,
+  type ReportTheme,
+} from "./theme";
+export {
+  ReportThemeScope,
+  useReportTheme,
+  type ReportThemeScopeProps,
+} from "./theme-scope";
+export { ThemeToggle, type ThemeToggleProps } from "./theme-toggle";
+export {
+  AuditRepositoryDialog,
+  type AuditRepositoryDialogProps,
+} from "./audit-dialog";
+export {
+  REPORT_CATEGORIES,
+  REPORT_CATEGORY_IDS,
+  getReportCategory,
+  type ReportCategoryMeta,
+} from "./categories";
+export {
+  applyCheckPreview,
+  computeReportPreview,
+  getPotentialPoints,
+  type ReportPreview,
+} from "./report-preview";
 
 

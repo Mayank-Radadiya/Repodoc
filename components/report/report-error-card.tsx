@@ -130,59 +130,81 @@ export function ReportErrorCard({
         : "";
 
   const iconMap: Record<ReportErrorKind, React.ReactNode> = {
-    rate_limited: <Clock className="size-6 text-amber-600" aria-hidden="true" />,
-    not_found: <SearchX className="size-6 text-blue-600" aria-hidden="true" />,
-    network: <WifiOff className="size-6 text-rose-600" aria-hidden="true" />,
-    bad_input: <AlertCircle className="size-6 text-amber-600" aria-hidden="true" />,
-    server_error: <AlertCircle className="size-6 text-rose-600" aria-hidden="true" />,
+    rate_limited: (
+      <Clock
+        className="size-6 text-amber-600 dark:text-amber-400"
+        aria-hidden="true"
+      />
+    ),
+    not_found: (
+      <SearchX
+        className="size-6 text-blue-600 dark:text-blue-400"
+        aria-hidden="true"
+      />
+    ),
+    network: (
+      <WifiOff
+        className="size-6 text-rose-600 dark:text-rose-400"
+        aria-hidden="true"
+      />
+    ),
+    bad_input: (
+      <AlertCircle
+        className="size-6 text-amber-600 dark:text-amber-400"
+        aria-hidden="true"
+      />
+    ),
+    server_error: (
+      <AlertCircle
+        className="size-6 text-rose-600 dark:text-rose-400"
+        aria-hidden="true"
+      />
+    ),
   };
 
   return (
     <div
       role="alert"
-      className={`rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 ${className}`}
+      className={`rounded-3xl border border-border bg-card p-6 shadow-card sm:p-8 ${className}`}
     >
       <div className="flex items-start gap-4">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-slate-100">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
           {iconMap[classified.kind]}
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-xl font-semibold tracking-tight text-slate-900">
+          <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">
             {displayTitle}
           </h2>
           {context && (
-            <p className="mt-1 font-mono text-sm text-slate-500 break-words">
+            <p className="mt-1 font-mono text-sm break-words text-muted-foreground">
               {context}
             </p>
           )}
-          <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             {classified.message}
           </p>
           {rawError && rawError !== classified.message && (
-            <p className="mt-2 text-xs font-mono text-slate-500 break-words">
+            <p className="mt-2 font-mono text-xs break-words text-muted-foreground">
               {rawError}
             </p>
           )}
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-muted-foreground">
             {classified.suggestion}
           </p>
           {previousReportShown && (
-            <p className="mt-3 rounded-md bg-slate-50 p-2.5 text-xs text-slate-600">
+            <p className="mt-3 rounded-md bg-muted/60 p-2.5 text-xs text-muted-foreground">
               The previous report is still shown.
             </p>
           )}
           <div className="mt-6 flex flex-wrap items-center gap-3">
             {onRetry && (
-              <Button
-                onClick={onRetry}
-                className="min-h-11 px-5"
-              >
+              <Button onClick={onRetry} className="min-h-11 px-5">
                 {retryLabel}
               </Button>
             )}
             <Link
               href="/#hero"
-              className="inline-flex min-h-11 items-center rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="inline-flex min-h-11 items-center rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
             >
               Audit another repository
             </Link>

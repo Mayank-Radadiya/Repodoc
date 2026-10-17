@@ -10,7 +10,6 @@ import { buildReportUrl, copyToClipboard } from "./badge-snippet";
 import { ReportView } from "./report-view";
 import { ReportPending } from "./report-pending";
 import { ReportErrorCard } from "./report-error-card";
-import styles from "./report.module.css";
 
 interface ReportControllerProps extends ParsedGitHubUrl {
   initialReport: PersistedAuditReport | null;
@@ -114,7 +113,7 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
       <p
         role="status"
         aria-atomic="true"
-        className={`${styles.secondary} text-sm`}
+        className="text-sm text-muted-foreground"
       >
         {pending && report
           ? "Re-auditing repository…"
@@ -134,7 +133,7 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
             readOnly
             value={reportUrl}
             onFocus={(event) => event.target.select()}
-            className="min-h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3"
           />
         </div>
       )}
@@ -168,7 +167,7 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
           {report.shareId && (
             <Link
               href={`/share/${encodeURIComponent(report.shareId)}`}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium hover:bg-slate-50"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
             >
               <Share2 aria-hidden="true" className="size-3.5" />
               Share link
@@ -184,7 +183,7 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
             {copyStatus === "copied" ? "Link copied" : "Copy report link"}
           </Button>
           <Button
-            className={`${styles.primaryAction} min-h-11`}
+            className="min-h-11"
             loading={pending}
             disabled={pending}
             onClick={() => void runAudit()}

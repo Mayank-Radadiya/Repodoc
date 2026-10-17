@@ -57,7 +57,7 @@ describe("ShareController", () => {
 
     // Category breakdown and expandable evidence are present
     fireEvent.click(
-      screen.getByRole("button", { name: /Evidence for README/i }),
+      screen.getByRole("button", { name: /Evidence and remediation for README/i }),
     );
     expect(await screen.findByText("Files checked")).toBeDefined();
 

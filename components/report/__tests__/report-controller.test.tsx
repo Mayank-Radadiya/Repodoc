@@ -69,7 +69,7 @@ describe("report controller and composed report view", () => {
     expect(screen.getByText(/Oct 13, 2026/)).toBeDefined();
     expect(screen.getByText("main")).toBeDefined();
     fireEvent.click(
-      screen.getByRole("button", { name: /Evidence for README/i }),
+      screen.getByRole("button", { name: /Evidence and remediation for README/i }),
     );
     expect(await screen.findByText("Files checked")).toBeDefined();
     await screen.findByRole("button", { name: /copy markdown/i });

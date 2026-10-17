@@ -231,7 +231,7 @@ export function RubricAuditVisual() {
           {/* Evidence Details */}
           <div className="space-y-2 flex-1 flex flex-col justify-between text-xs">
             <div className="bg-slate-900 text-slate-100 p-2.5 rounded-lg font-mono text-[11px] overflow-x-auto">
-              <div className="text-slate-400 text-[10px] mb-1">// Parsed AST query expression:</div>
+              <div className="text-slate-400 text-[10px] mb-1">{"// Parsed AST query expression:"}</div>
               <code className="text-sky-300">{selectedCheck.astToken}</code>
             </div>
 

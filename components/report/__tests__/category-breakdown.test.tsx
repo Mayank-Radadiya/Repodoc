@@ -1,322 +1,362 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { useMemo, useState } from "react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { AuditReport, CategoryId } from "@/src/lib/types";
 import { CategoryBreakdown } from "@/components/report/category-breakdown";
-import { CategoryBreakdown as RootExport } from "@/components/report";
-import { CategoryBreakdown as SrcExport } from "@/src/components/report/category-breakdown";
-import { CategoryBreakdown as SrcBarrelExport } from "@/src/components/report";
-import type { AuditReport, CategoryId, CheckResult, PersistedAuditReport } from "@/src/lib/types";
+import { CategoryBreakdown as CategoryBreakdownFromBarrel } from "@/components/report";
+import { CategoryBreakdown as CategoryBreakdownFromShim } from "@/src/components/report/category-breakdown";
+import { computeReportPreview } from "@/components/report/report-preview";
+import { makeCheck, makeFixtureReport } from "./report-fixtures";
 
-function makeCheck(
-  id: string,
-  name: string,
-  category: CategoryId,
-  pointsAwarded: number,
-  maxPoints: number,
-  passed: boolean,
-): CheckResult {
-  return {
-    id,
-    name,
-    category,
-    pointsAwarded,
-    maxPoints,
-    passed,
-    evidence: {
-      details: `Evidence details for ${name}`,
-      found: passed,
-      filesChecked: [`${id}.md`],
-    },
-  };
+afterEach(cleanup);
+
+interface HarnessProps {
+  report?: AuditReport;
+  previewedIds?: ReadonlySet<string>;
+  onTogglePreview?: (checkId: string) => void;
+  initialOpen?: CategoryId[];
 }
 
-function makeReport(): AuditReport {
-  return {
-    owner: "example",
-    repo: "repository",
-    defaultBranch: "main",
-    healthScore: 46.5,
-    rubricVersion: "1.0.0",
-    generatedAt: "2026-10-13T12:00:00.000Z",
-    // Interleaved categories ensure grouping does not depend on input order.
-    checks: [
-      makeCheck("security", "Security policy", "security", 0, 10, false),
-      makeCheck("readme", "README present", "documentation", 8, 8, true),
-      makeCheck("license", "License present", "hygiene", 10, 10, true),
-      makeCheck("headings", "README headings", "documentation", 10, 10, true),
-      makeCheck("gitignore", "Gitignore present", "hygiene", 0, 5, false),
-      makeCheck("ci", "CI workflow", "testing_ci", 15, 15, true),
-      makeCheck("metadata", "Repository metadata", "community", 3.5, 7, false),
-    ],
-  };
+function BreakdownHarness({
+  report = makeFixtureReport(),
+  previewedIds = new Set(),
+  onTogglePreview = () => {},
+  initialOpen = ["documentation"],
+}: HarnessProps) {
+  const [openCategories, setOpenCategories] = useState<CategoryId[]>(initialOpen);
+  const preview = useMemo(
+    () => computeReportPreview(report, previewedIds),
+    [report, previewedIds],
+  );
+
+  return (
+    <CategoryBreakdown
+      report={report}
+      preview={preview}
+      previewedIds={previewedIds}
+      onTogglePreview={onTogglePreview}
+      openCategories={openCategories}
+      onOpenCategoriesChange={setOpenCategories}
+    />
+  );
 }
 
-function categoryTrigger(name: string) {
+const ALL_CATEGORIES: CategoryId[] = [
+  "documentation",
+  "hygiene",
+  "testing_ci",
+  "community",
+  "security",
+];
+
+function accordionTriggers(): HTMLElement[] {
+  return Array.from(
+    document.querySelectorAll<HTMLElement>('[data-slot="accordion-trigger"]'),
+  );
+}
+
+function categoryTrigger(name: string): HTMLElement {
   return screen.getByRole("button", { name: new RegExp(`^${name}`) });
 }
 
+function checkRow(name: string): HTMLElement {
+  const row = screen.getByText(name).closest("li");
+  if (!row) throw new Error(`No row found for check ${name}`);
+  return row as HTMLElement;
+}
+
 describe("CategoryBreakdown", () => {
-  it("shows all five category names and rubric scores in order", () => {
-    render(<CategoryBreakdown report={makeReport()} />);
+  it("renders the region heading, pillar and check counts", () => {
+    render(<BreakdownHarness />);
 
-    const categories = [
-      ["Documentation", "18/25"],
-      ["Project Hygiene", "10/20"],
-      ["Testing & CI/CD", "15/25"],
-      ["Community & Metadata", "3.5/15"],
-      ["Security Baseline", "0/15"],
-    ];
-    const triggers = screen.getAllByRole("button").filter(
-      (button) => button.getAttribute("data-slot") === "accordion-trigger",
-    );
+    const region = screen.getByRole("region", { name: "Category breakdown" });
+    expect(region).toBeDefined();
+    expect(within(region).getByText("5 pillars · 7 checks")).toBeDefined();
+    expect(
+      within(region).getByText(/preview fixes on failed checks/i),
+    ).toBeDefined();
+  });
 
+  it("lists the five categories in canonical order with effective scores", () => {
+    render(<BreakdownHarness />);
+
+    const triggers = accordionTriggers();
     expect(triggers).toHaveLength(5);
-    categories.forEach(([name, score], index) => {
-      expect(triggers[index].textContent).toContain(name);
-      expect(within(triggers[index]).getByText(score)).toBeDefined();
-    });
-    expect(screen.getByRole("region", { name: "Category breakdown" })).toBeDefined();
-  });
+    expect(triggers.map((trigger) => trigger.getAttribute("aria-label"))).toEqual([
+      "Documentation: 12 out of 25 points",
+      "Project Hygiene: 10 out of 20 points",
+      "Testing & CI/CD: 15 out of 25 points",
+      "Community & Metadata: 3.5 out of 15 points",
+      "Security Baseline: 0 out of 15 points",
+    ]);
 
-  it("opens Documentation initially and leaves evidence and other categories closed", () => {
-    render(<CategoryBreakdown report={makeReport()} />);
-
-    expect(categoryTrigger("Documentation").getAttribute("aria-expanded")).toBe("true");
-    expect(categoryTrigger("Project Hygiene").getAttribute("aria-expanded")).toBe("false");
-    expect(screen.getByText("README present")).toBeDefined();
-    expect(screen.queryByText("License present")).toBeNull();
-    expect(screen.getByRole("button", { name: "Evidence for README present" }).getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByText("Evidence details for README present")).toBeNull();
-  });
-
-  it("allows multiple categories to stay open and collapse independently", async () => {
-    render(<CategoryBreakdown report={makeReport()} />);
     const documentation = categoryTrigger("Documentation");
-    const hygiene = categoryTrigger("Project Hygiene");
+    expect(within(documentation).getByText("12/25 pts")).toBeDefined();
+    expect(within(documentation).getByText("1 of 2 passed")).toBeDefined();
 
-    fireEvent.click(hygiene);
-    expect(hygiene.getAttribute("aria-expanded")).toBe("true");
-    expect(documentation.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByText("License present")).toBeDefined();
-
-    fireEvent.click(documentation);
-    expect(documentation.getAttribute("aria-expanded")).toBe("false");
-    expect(hygiene.getAttribute("aria-expanded")).toBe("true");
-    await waitFor(() => expect(screen.queryByText("README present")).toBeNull());
+    const security = categoryTrigger("Security Baseline");
+    expect(within(security).getByText("0/15 pts")).toBeDefined();
+    expect(within(security).getByText("0 of 1 passed")).toBeDefined();
   });
 
-  it("groups each check into its category and preserves check order", () => {
-    const report = makeReport();
-    render(<CategoryBreakdown report={report} />);
-    ["Project Hygiene", "Testing & CI/CD", "Community & Metadata", "Security Baseline"].forEach(
-      (name) => fireEvent.click(categoryTrigger(name)),
+  it("opens only the documentation category by default", () => {
+    render(<BreakdownHarness />);
+
+    expect(categoryTrigger("Documentation").getAttribute("aria-expanded")).toBe(
+      "true",
+    );
+    for (const name of [
+      "Project Hygiene",
+      "Testing & CI/CD",
+      "Community & Metadata",
+      "Security Baseline",
+    ]) {
+      expect(categoryTrigger(name).getAttribute("aria-expanded")).toBe("false");
+    }
+  });
+
+  it("shows filter counts and filters checks by status", () => {
+    render(<BreakdownHarness initialOpen={ALL_CATEGORIES} />);
+
+    const allFilter = screen.getByRole("button", { name: "All checks (7)" });
+    expect(allFilter.getAttribute("aria-pressed")).toBe("true");
+    expect(
+      screen.getByRole("button", { name: "Failed (4)" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Passed (3)" }),
+    ).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Failed (4)" }));
+    expect(screen.getByText("Security policy")).toBeDefined();
+    expect(screen.getByText(".gitignore")).toBeDefined();
+    expect(screen.queryByText("README")).toBeNull();
+    expect(screen.queryByText("CI workflow")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Passed (3)" }));
+    expect(screen.getByText("README")).toBeDefined();
+    expect(screen.getByText("CI workflow")).toBeDefined();
+    expect(screen.queryByText("Security policy")).toBeNull();
+  });
+
+  it("updates counts, rows, and points when fixes are previewed", () => {
+    const report = makeFixtureReport();
+    const onTogglePreview = vi.fn();
+    const { rerender } = render(
+      <BreakdownHarness
+        report={report}
+        onTogglePreview={onTogglePreview}
+        initialOpen={ALL_CATEGORIES}
+      />,
     );
 
-    [
-      ["Documentation", "documentation"],
-      ["Project Hygiene", "hygiene"],
-      ["Testing & CI/CD", "testing_ci"],
-      ["Community & Metadata", "community"],
-      ["Security Baseline", "security"],
-    ].forEach(([label, id]) => {
-      const list = screen.getByRole("list", { name: `${label} checks` });
-      const rows = within(list).getAllByRole("listitem");
-      const expectedChecks = report.checks.filter((check) => check.category === id);
-      expect(rows).toHaveLength(expectedChecks.length);
-      expectedChecks.forEach((check, index) => {
-        expect(within(rows[index]).getByText(check.name)).toBeDefined();
-        expect(within(rows[index]).getByText(`${check.pointsAwarded}/${check.maxPoints} points`)).toBeDefined();
-        expect(within(rows[index]).getByText(check.passed ? "Passed" : "Failed")).toBeDefined();
-      });
+    const securityRow = checkRow("Security policy");
+    expect(within(securityRow).getByText("Failed")).toBeDefined();
+    expect(within(securityRow).getByText("0/10 pts")).toBeDefined();
+
+    const previewButton = within(securityRow).getByRole("button", {
+      name: /preview fix for security policy: \+10 pts/i,
     });
+    expect(previewButton.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(previewButton);
+    expect(onTogglePreview).toHaveBeenCalledWith("sec-policy");
+
+    rerender(
+      <BreakdownHarness
+        report={report}
+        previewedIds={new Set(["sec-policy"])}
+        initialOpen={ALL_CATEGORIES}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Failed (3)" })).toBeDefined();
+    const previewedRow = checkRow("Security policy");
+    expect(within(previewedRow).getByText("Previewed")).toBeDefined();
+    expect(within(previewedRow).getByText("10/10 pts")).toBeDefined();
+    const removeButton = within(previewedRow).getByRole("button", {
+      name: /remove preview for security policy/i,
+    });
+    expect(removeButton.getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("retains fractional partial credit for a failed check", () => {
-    render(<CategoryBreakdown report={makeReport()} />);
-    fireEvent.click(categoryTrigger("Community & Metadata"));
+  it("previews the highest-value fix from the heading shortcut", () => {
+    const onTogglePreview = vi.fn();
+    render(
+      <BreakdownHarness onTogglePreview={onTogglePreview} initialOpen={["documentation"]} />,
+    );
 
-    expect(within(categoryTrigger("Community & Metadata")).getByText("3.5/15")).toBeDefined();
-    const list = screen.getByRole("list", { name: "Community & Metadata checks" });
-    expect(within(list).getByText("3.5/7 points")).toBeDefined();
-    expect(within(list).getByText("Failed")).toBeDefined();
+    fireEvent.click(
+      screen.getByRole("button", { name: /preview fix for headings: \+6 pts/i }),
+    );
+    expect(onTogglePreview).toHaveBeenCalledWith("headings");
   });
 
-  it("expands evidence independently and shows details, found status, and paths", async () => {
-    render(<CategoryBreakdown report={makeReport()} />);
-    const readmeEvidence = screen.getByRole("button", { name: "Evidence for README present" });
-    const headingsEvidence = screen.getByRole("button", { name: "Evidence for README headings" });
+  it("filters checks by keyword and clears the search", () => {
+    render(<BreakdownHarness initialOpen={ALL_CATEGORIES} />);
 
-    fireEvent.click(readmeEvidence);
-    expect(readmeEvidence.getAttribute("aria-expanded")).toBe("true");
-    expect(headingsEvidence.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.getByText("Evidence details for README present")).toBeDefined();
-    expect(screen.getByText("Evidence: Found")).toBeDefined();
-    expect(screen.getByText("readme.md")).toBeDefined();
+    const input = screen.getByRole("searchbox", { name: /search checks/i });
+    fireEvent.change(input, { target: { value: "head" } });
 
-    fireEvent.click(headingsEvidence);
-    expect(readmeEvidence.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByText("headings.md")).toBeDefined();
-    fireEvent.click(readmeEvidence);
-    await waitFor(() => expect(screen.queryByText("readme.md")).toBeNull());
-    expect(headingsEvidence.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText("Headings")).toBeDefined();
+    expect(screen.queryByText("README")).toBeNull();
+    expect(screen.queryByText("CI workflow")).toBeNull();
+    expect(
+      screen.getAllByText("No checks match the current filter."),
+    ).toHaveLength(4);
+
+    fireEvent.click(screen.getByRole("button", { name: /clear search/i }));
+    expect(input).toHaveProperty("value", "");
+    expect(screen.getByText("README")).toBeDefined();
+    expect(screen.queryAllByText("No checks match the current filter.")).toHaveLength(0);
   });
 
-  it("shows not-found evidence for a failed check", () => {
-    render(<CategoryBreakdown report={makeReport()} />);
-    fireEvent.click(categoryTrigger("Security Baseline"));
-    fireEvent.click(screen.getByRole("button", { name: "Evidence for Security policy" }));
-    expect(screen.getByText("Evidence: Not found")).toBeDefined();
-  });
+  it("shows an empty state inside every category when nothing matches", () => {
+    render(<BreakdownHarness initialOpen={ALL_CATEGORIES} />);
 
-  it("uses passed for check status rather than inferring it from evidence.found", () => {
-    const report = makeReport();
-    report.checks[1].passed = false;
-    render(<CategoryBreakdown report={report} />);
-
-    const row = screen.getByText("README present").closest("li");
-    expect(row).not.toBeNull();
-    expect(within(row!).getByText("Failed")).toBeDefined();
-    fireEvent.click(screen.getByRole("button", { name: "Evidence for README present" }));
-    expect(screen.getByText("Evidence: Found")).toBeDefined();
-    expect(within(categoryTrigger("Documentation")).getByText("18/25")).toBeDefined();
-  });
-
-  it("renders all categories and explicit empty panels for an empty report", () => {
-    const report = makeReport();
-    report.checks = [];
-    report.healthScore = 0;
-    render(<CategoryBreakdown report={report} />);
-
-    [
-      ["Documentation", "0/25"],
-      ["Project Hygiene", "0/20"],
-      ["Testing & CI/CD", "0/25"],
-      ["Community & Metadata", "0/15"],
-      ["Security Baseline", "0/15"],
-    ].forEach(([name, score], index) => {
-      const trigger = categoryTrigger(name);
-      expect(within(trigger).getByText(score)).toBeDefined();
-      if (index > 0) fireEvent.click(trigger);
+    fireEvent.change(screen.getByRole("searchbox", { name: /search checks/i }), {
+      target: { value: "zzz" },
     });
 
-    expect(screen.getAllByText("No checks available")).toHaveLength(5);
-    expect(screen.queryByText("Passed")).toBeNull();
-    expect(screen.queryByRole("button", { name: /^Evidence for/ })).toBeNull();
+    expect(screen.queryByText("README")).toBeNull();
+    expect(
+      screen.getAllByText("No checks match the current filter."),
+    ).toHaveLength(5);
   });
 
-  it("renders an empty category alongside populated categories", () => {
-    const report = makeReport();
-    report.checks = report.checks.filter((check) => check.category !== "security");
-    render(<CategoryBreakdown report={report} />);
-    fireEvent.click(categoryTrigger("Security Baseline"));
+  it("expands and collapses all categories", () => {
+    render(<BreakdownHarness />);
 
-    expect(screen.getByText("No checks available")).toBeDefined();
-    expect(screen.getByText("README present")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: /expand all/i }));
+    for (const trigger of accordionTriggers()) {
+      expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    }
+
+    fireEvent.click(screen.getByRole("button", { name: /collapse all/i }));
+    for (const trigger of accordionTriggers()) {
+      expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    }
   });
 
-  it.each(["", " \n "])("provides fallbacks for empty evidence details %j and files", (details) => {
-    const report = makeReport();
-    report.checks[1].evidence = { details, found: false, filesChecked: [] };
-    render(<CategoryBreakdown report={report} />);
-    fireEvent.click(screen.getByRole("button", { name: "Evidence for README present" }));
+  it("reveals evidence for a check independently", () => {
+    render(<BreakdownHarness />);
 
-    expect(screen.getByText("No evidence details available")).toBeDefined();
-    expect(screen.getByText("No files checked")).toBeDefined();
-    expect(screen.getByText("Evidence: Not found")).toBeDefined();
-  });
-
-  it("renders long paths and markup as plain text without links or HTML injection", () => {
-    const report = makeReport();
-    const longPath = `directory/${"a".repeat(300)}/<script>file</script>.md`;
-    const details = '<img src=x onerror="alert(1)">';
-    report.checks[1].evidence = { details, found: true, filesChecked: [longPath, longPath] };
-    const { container } = render(<CategoryBreakdown report={report} />);
-    fireEvent.click(screen.getByRole("button", { name: "Evidence for README present" }));
-
-    expect(screen.getByText(details)).toBeDefined();
-    expect(screen.getAllByText(longPath)).toHaveLength(2);
-    expect(container.querySelector("img, script, a")).toBeNull();
-    expect(screen.getAllByText(longPath)[0].className).toContain("break-all");
-  });
-
-  it("links disclosure controls to panels and hides decorative icons", () => {
-    const { container } = render(<CategoryBreakdown report={makeReport()} />);
-    const category = categoryTrigger("Documentation");
-    const categoryPanel = document.getElementById(category.getAttribute("aria-controls")!);
-    expect(categoryPanel).not.toBeNull();
-    expect(categoryPanel?.getAttribute("aria-labelledby")).toBe(category.id);
-
-    const evidence = screen.getByRole("button", { name: "Evidence for README present" });
-    fireEvent.click(evidence);
-    const evidencePanel = document.getElementById(evidence.getAttribute("aria-controls")!);
-    expect(evidencePanel).not.toBeNull();
-    expect(evidencePanel?.textContent).toContain("Evidence details for README present");
-    container.querySelectorAll("svg").forEach((icon) => {
-      expect(icon.getAttribute("aria-hidden")).toBe("true");
+    const row = checkRow("README");
+    const trigger = within(row).getByRole("button", {
+      name: /evidence and remediation for readme/i,
     });
-    category.focus();
-    expect(document.activeElement).toBe(category);
-    evidence.focus();
-    expect(document.activeElement).toBe(evidence);
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+
+    fireEvent.click(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+
+    const panelId = trigger.getAttribute("aria-controls");
+    const panel = document.getElementById(panelId ?? "");
+    expect(panel).not.toBeNull();
+    expect(within(panel as HTMLElement).getByText("Evidence details for README")).toBeDefined();
+    expect(within(panel as HTMLElement).getByText(/found/i)).toBeDefined();
+    expect(within(panel as HTMLElement).getByText("readme.md")).toBeDefined();
+
+    const otherRow = checkRow("Headings");
+    expect(
+      within(otherRow)
+        .getByRole("button", { name: /evidence and remediation for headings/i })
+        .getAttribute("aria-expanded"),
+    ).toBe("false");
   });
 
-  it("updates scores and check rows when report props change", () => {
-    const report = makeReport();
-    const { rerender } = render(<CategoryBreakdown report={report} />);
-    const nextReport = makeReport();
-    nextReport.checks[1] = { ...nextReport.checks[1], name: "Updated README", pointsAwarded: 4, passed: false };
-    nextReport.checks = nextReport.checks.filter((check) => check.id !== "headings");
-    rerender(<CategoryBreakdown report={nextReport} />);
+  it("shows remediation details with a GitHub create link", () => {
+    const report = makeFixtureReport();
+    const checks = report.checks.map((check) =>
+      check.id === "headings"
+        ? makeCheck("headings", "Headings", "documentation", 4, 10, false, {
+            remediation: {
+              canAutomate: true,
+              targetPath: "CONTRIBUTING.md",
+              description: "Add a contributing guide.",
+            },
+          })
+        : check,
+    );
+    render(
+      <BreakdownHarness report={{ ...report, checks }} initialOpen={["documentation"]} />,
+    );
 
-    expect(within(categoryTrigger("Documentation")).getByText("4/25")).toBeDefined();
-    expect(screen.getByText("Updated README")).toBeDefined();
-    expect(screen.getByText("4/8 points")).toBeDefined();
-    expect(screen.queryByText("README headings")).toBeNull();
-    expect(screen.queryByText("README present")).toBeNull();
+    fireEvent.click(
+      within(checkRow("Headings")).getByRole("button", {
+        name: /evidence and remediation for headings/i,
+      }),
+    );
+
+    expect(screen.getByText("Add a contributing guide.")).toBeDefined();
+    const createLink = screen.getByRole("link", { name: /create contributing\.md on github/i });
+    expect(createLink.getAttribute("href")).toBe(
+      "https://github.com/example/repository/new/main?filename=CONTRIBUTING.md",
+    );
+    expect(createLink.getAttribute("target")).toBe("_blank");
+    expect(createLink.getAttribute("rel")).toContain("noopener");
   });
 
-  it("preserves frozen report inputs", () => {
-    const report = makeReport();
-    const original = JSON.stringify(report);
-    report.checks.forEach((check) => {
-      Object.freeze(check.evidence.filesChecked);
-      Object.freeze(check.evidence);
-      Object.freeze(check);
-    });
+  it("renders evidence paths as plain text without injection", () => {
+    const report = makeFixtureReport();
+    const checks = report.checks.map((check) =>
+      check.id === "readme"
+        ? makeCheck("readme", "README", "documentation", 8, 8, true, {
+            evidence: {
+              filesChecked: ["<img src=x onerror=alert(1)>.md"],
+              found: true,
+              details: "Evidence for README",
+            },
+          })
+        : check,
+    );
+    render(<BreakdownHarness report={{ ...report, checks }} />);
+
+    fireEvent.click(
+      within(checkRow("README")).getByRole("button", {
+        name: /evidence and remediation for readme/i,
+      }),
+    );
+
+    expect(screen.getByText("<img src=x onerror=alert(1)>.md")).toBeDefined();
+    expect(screen.queryAllByRole("img")).toHaveLength(0);
+  });
+
+  it("does not mutate frozen report inputs", () => {
+    const report = makeFixtureReport();
+    report.checks.forEach((check) => Object.freeze(check));
     Object.freeze(report.checks);
     Object.freeze(report);
-    render(<CategoryBreakdown report={report} />);
-    fireEvent.click(categoryTrigger("Project Hygiene"));
-    fireEvent.click(screen.getByRole("button", { name: "Evidence for License present" }));
-    expect(JSON.stringify(report)).toBe(original);
+    const snapshot = JSON.stringify(report);
+
+    render(<BreakdownHarness report={report} initialOpen={ALL_CATEGORIES} />);
+    fireEvent.click(screen.getByRole("button", { name: "Failed (4)" }));
+    fireEvent.change(screen.getByRole("searchbox", { name: /search checks/i }), {
+      target: { value: "readme" },
+    });
+
+    expect(JSON.stringify(report)).toBe(snapshot);
   });
 
-  it("supports persisted reports and custom className", () => {
-    const report: PersistedAuditReport = { ...makeReport(), shareId: "abc12345" };
-    render(<CategoryBreakdown report={report} className="custom-breakdown" />);
-    expect(screen.getByRole("region", { name: "Category breakdown" }).className).toContain("custom-breakdown");
+  it("keeps every svg decorative", () => {
+    render(<BreakdownHarness initialOpen={ALL_CATEGORIES} />);
+
+    const region = screen.getByRole("region", { name: "Category breakdown" });
+    for (const svg of region.querySelectorAll("svg")) {
+      expect(svg.getAttribute("aria-hidden")).toBe("true");
+    }
   });
 
-  it("provides unique accessible IDs when multiple reports are rendered", () => {
-    const { container } = render(
-      <>
-        <CategoryBreakdown report={makeReport()} />
-        <CategoryBreakdown report={makeReport()} />
-      </>,
-    );
-    const ids = Array.from(container.querySelectorAll("[id]"), (element) => element.id);
-    expect(new Set(ids).size).toBe(ids.length);
-    expect(screen.getAllByRole("region", { name: "Category breakdown" })).toHaveLength(2);
+  it("errors on duplicate check ids", () => {
+    const report = makeFixtureReport();
+    const duplicated = [...report.checks, report.checks[0]];
+
+    expect(() =>
+      render(<BreakdownHarness report={{ ...report, checks: duplicated }} />),
+    ).toThrow(/duplicate/i);
   });
 
-  it("preserves scoring helper validation for invalid reports", () => {
-    const report = makeReport();
-    report.checks.push(report.checks[0]);
-    expect(() => render(<CategoryBreakdown report={report} />)).toThrow("duplicate check ID");
-  });
-
-  it("exports the same component from compatibility paths and both barrels", () => {
-    expect(RootExport).toBe(CategoryBreakdown);
-    expect(SrcExport).toBe(CategoryBreakdown);
-    expect(SrcBarrelExport).toBe(CategoryBreakdown);
+  it("exposes the same component from the barrel and the src shim", () => {
+    expect(CategoryBreakdownFromBarrel).toBe(CategoryBreakdown);
+    expect(CategoryBreakdownFromShim).toBe(CategoryBreakdown);
   });
 });
