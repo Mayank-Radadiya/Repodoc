@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Inter, Space_Grotesk } from "next/font/google";
 import { jsonLd, site, siteUrl } from "@/lib/site";
+import { AuthProvider } from "@/components/auth/auth-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -75,7 +76,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

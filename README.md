@@ -25,6 +25,7 @@
 - [Installation & Setup](#installation--setup)
   - [Prerequisites](#prerequisites)
   - [Step-by-Step Installation](#step-by-step-installation)
+- [GitHub OAuth Setup](#github-oauth-setup)
 - [Usage & Development Workflows](#usage--development-workflows)
 - [Production Deployment](#production-deployment)
 - [Roadmap (Phase 2 Preview)](#roadmap-phase-2-preview)
@@ -221,10 +222,10 @@ cp .env.example .env
 | `DATABASE_URL` | **Yes** | `file:./dev.db` | Connection string for Prisma. Uses SQLite locally (`file:./dev.db`) and PostgreSQL in production (`postgresql://...`). |
 | `GITHUB_TOKEN` | *Optional* | `""` | GitHub Personal Access Token (classic or fine-grained with `public_repo` read access). Highly recommended in development to elevate GitHub API rate limits from 60 req/hr to 5,000 req/hr. |
 | `NEXT_PUBLIC_SITE_URL` | *Optional* | `https://repodoc.dev` | Canonical public origin used for generating full share URLs, OpenGraph social cards, and badge endpoint links. Set to `http://localhost:3000` during local testing if needed. |
-| `NEXTAUTH_SECRET` | *Phase 2* | `""` | NextAuth encryption secret (reserved for Phase 2 GitHub App authentication). |
-| `NEXTAUTH_URL` | *Phase 2* | `http://localhost:3000` | Base URL for authentication callbacks (reserved for Phase 2). |
-| `GITHUB_CLIENT_ID` | *Phase 2* | `""` | GitHub OAuth / App Client ID (reserved for Phase 2). |
-| `GITHUB_CLIENT_SECRET` | *Phase 2* | `""` | GitHub OAuth / App Client Secret (reserved for Phase 2). |
+| `NEXTAUTH_SECRET` | **For sign-in** | None | Random secret used to encrypt NextAuth session cookies. Generate with `openssl rand -base64 32`. |
+| `NEXTAUTH_URL` | **For sign-in** | None | Canonical origin, e.g. `http://localhost:3000` locally or `https://repodoc.dev` in production. Do not include `/api/auth`, query parameters, or credentials. |
+| `GITHUB_CLIENT_ID` | **For sign-in** | None | Client ID from the GitHub OAuth App registration. |
+| `GITHUB_CLIENT_SECRET` | **For sign-in** | None | Client secret from the same GitHub OAuth App. Keep server-side. |
 
 ---
 
@@ -283,6 +284,36 @@ Follow these steps to clone, configure, and run Repodoc locally on your machine.
 
 ---
 
+## GitHub OAuth Setup
+
+The OAuth backend uses NextAuth.js v5 (`5.0.0-beta.32`, pinned for Next.js 16 / React 19 compatibility). Public audits work without OAuth configuration; auth endpoints return a sanitized configuration error until all four sign-in variables above are set. The landing, report, and share headers provide GitHub sign-in and an avatar menu with sign-out. On small screens, the sign-in control uses an icon with an accessible label.
+
+1. In GitHub **Settings → Developer settings → OAuth Apps → New OAuth App**, [register an OAuth App](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app). This task uses an OAuth App; GitHub App installation setup is separate.
+2. For local development, set **Homepage URL** to `http://localhost:3000` and **Authorization callback URL** to `http://localhost:3000/api/auth/callback/github`.
+3. Copy the app's client ID and generated client secret into the gitignored `.env` as `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. Generate a secret with `openssl rand -base64 32`, save it as `NEXTAUTH_SECRET`, and set `NEXTAUTH_URL="http://localhost:3000"`. Keep this secret stable across restarts so existing sessions remain readable. Restart the development server after changing environment variables.
+4. Create a **separate OAuth App for production** with homepage `https://<your-domain>` and callback `https://<your-domain>/api/auth/callback/github`. Configure that app's credentials, a separate session secret, and the HTTPS `NEXTAUTH_URL` in the deployment environment. Use the matching origin when opening the app; plain HTTP is permitted only for local development.
+
+The authorization request asks for `read:user user:email public_repo workflow`. Profile/email scopes support GitHub identity, including private email addresses. `public_repo` enables the planned public-repository changes and PRs; `workflow` enables creation of CI workflow files. OAuth scopes are requested by the application during consent, rather than selected in the OAuth App registration. These scopes grant substantial write access to public repositories and workflows, subject to the user's own permissions; private repository access via `repo` is not requested. See [GitHub's scope definitions](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps). This task does not perform repository writes.
+
+To verify the setup manually:
+
+1. Start the app and use **Sign in with GitHub** in a page header. Complete GitHub login/consent and confirm you return to the same page, including its query string and fragment. The [built-in sign-in page](http://localhost:3000/api/auth/signin) is also available.
+2. Open [the session endpoint](http://localhost:3000/api/auth/session). It should contain `user.id` (the database ID), `user.githubId`, `user.username`, standard profile fields, and an expiry, with **no access token**. Refresh and restart the server; the session should persist with the same secret.
+3. Run `bunx prisma studio` and confirm one `User` record exists. Sign in again and confirm that the existing record is updated, preserving installation and report associations.
+4. Open the header avatar menu, confirm it identifies your GitHub username, and choose **Sign out**. Confirm you return to the same page, the sign-in control reappears, and the session endpoint returns `null`. The [built-in sign-out page](http://localhost:3000/api/auth/signout) is also available.
+
+The shared client session provider fetches only the public session after hydration, preserving the static landing page. Authentication status synchronizes on window focus and across tabs. Account menus support keyboard navigation and remain inside the report's light/dark theme scope. Missing or failed avatar images fall back to username initials. Rejected sign-in/out requests show a generic error and allow retry without displaying provider payloads.
+
+On a live report with failing automatable findings, **Fix All** appears only after authentication. It is deliberately disabled with the explanation **Pull request creation is not available yet.** This is the agreed scope for task 2.0.2; the remediation API, license selection, and working PR flow belong to later tasks. Shared snapshots remain read-only, and score previews remain public. The gate controls presentation only: future remediation handlers must independently authorize the server session using `getGitHubSession()`.
+
+To verify the UI, check both landing navigation layouts and the live/share headers. Confirm Fix All is hidden while loading, signed out, or when no failing automatable findings exist; visible but disabled when eligible and signed in; and absent from shared snapshots. Check avatar fallback, keyboard opening/Escape/focus restoration, light/dark menus, and another tab's sign-out. Run `bun run test:run components/auth components/report/__tests__/fix-button.test.tsx components/report/__tests__/report-shell.test.tsx --maxWorkers=2` for automated coverage.
+
+Sessions use encrypted, HttpOnly cookies with a 30-day lifetime; HTTPS deployments also use Secure cookies. Database user records contain identity fields only. The GitHub access token stays in encrypted JWT claims and is omitted from browser-readable session responses. Server code can call `getGitHubSession()` from `@/lib/auth` to obtain `{ userId, githubId, username, accessToken }`, or `null` when credentials are missing, invalid, or expired. Never pass this result to a Client Component or return it from an API. `auth()` from `@/auth` returns the public session without credentials. Client session updates cannot overwrite trusted identity or token claims. Provider expiry is honored if supplied; revoked tokens or expired credentials require signing in again. Automatic token refresh is not implemented.
+
+Automated OAuth tests use mocked GitHub responses and a temporary SQLite database; they do not require real credentials. Run `bun run test:run lib/auth/__tests__`. GitHub registration and a real browser consent flow must still be verified before marking task 2.0.1 complete.
+
+---
+
 ## Usage & Development Workflows
 
 | Command | Tool | Description |
@@ -324,6 +355,7 @@ Follow these steps to clone, configure, and run Repodoc locally on your machine.
    - `DATABASE_URL`: Your PostgreSQL connection string.
    - `GITHUB_TOKEN`: A GitHub PAT with read-only access for elevated rate limits.
    - `NEXT_PUBLIC_SITE_URL`: Your production domain (e.g., `https://repodoc.dev`).
+   - For GitHub sign-in: `NEXTAUTH_SECRET`, HTTPS `NEXTAUTH_URL`, `GITHUB_CLIENT_ID`, and `GITHUB_CLIENT_SECRET` from the production OAuth App described above.
 
 3. **Deploy:**
    Push your repository to GitHub and link it to Vercel for automated deployments on push.

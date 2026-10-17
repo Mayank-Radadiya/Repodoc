@@ -10,6 +10,7 @@ import { buildReportUrl, copyToClipboard } from "./badge-snippet";
 import { ReportView } from "./report-view";
 import { ReportPending } from "./report-pending";
 import { ReportErrorCard } from "./report-error-card";
+import { FixButton } from "./fix-button";
 
 interface ReportControllerProps extends ParsedGitHubUrl {
   initialReport: PersistedAuditReport | null;
@@ -164,6 +165,7 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
       feedback={feedback}
       actions={
         <>
+          <FixButton checks={report.checks} />
           {report.shareId && (
             <Link
               href={`/share/${encodeURIComponent(report.shareId)}`}

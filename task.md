@@ -386,39 +386,46 @@
 - [ ] **2.0.1 — Implement GitHub OAuth (NextAuth.js)**
   - Install `next-auth` with GitHub provider
   - Configure OAuth App on GitHub (callback URL, scopes)
-  - Create `src/app/api/auth/[...nextauth]/route.ts`
+  - Create `app/api/auth/[...nextauth]/route.ts` (the active App Router is at the repository root)
   - On sign-in: upsert `User` record in database with `githubId`, `username`, `avatarUrl`
-  - Store GitHub access token in session (needed for Git Data API calls on user's behalf)
+  - Store GitHub access token in encrypted session JWT claims, accessible only through server code (needed for Git Data API calls on user's behalf)
   - **Acceptance:** User can sign in with GitHub, session persists, user record created in DB
+  - **Implemented and automatically verified (2026-10-17):** Pinned NextAuth v5.0.0-beta.32; added lazy GitHub OAuth configuration with support for both `NEXTAUTH_*` and standard Auth.js v5 `AUTH_*` aliases (`AUTH_SECRET`, `AUTH_URL`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`), built-in auth routes/pages, Prisma user upserts, typed public sessions, and the server-only `getGitHubSession()` helper (which gracefully returns `null` when unconfigured). Requests `read:user user:email public_repo workflow`; enables PKCE/state, 30-day encrypted cookies, HTTPS Secure cookies in production, provider expiry handling, sanitized errors, and credential-free browser sessions. All 74 auth tests pass, including mocked OAuth callbacks against temporary SQLite, persistence, profile changes preserving associations, private email, CSRF/state rejection, sign-out, provider expiry, and environment alias resolution. Live dev server verified on port 3000: `GET /api/auth/providers` advertises GitHub, `GET /api/auth/csrf` issues tokens, and `POST /api/auth/signin/github` returns 302 to GitHub with registered OAuth Client ID (`Iv23li...`), PKCE, and state. Full suite: `bun run test:run` passes (1348 passed, 1 opt-in live test skipped). TypeScript (`--noEmit --incremental false`), `bun run lint` (0 errors, 3 existing UI warnings), and `bun run build -- --webpack` pass cleanly.
+  - **Pending:** Complete live interactive browser consent and sign-in with a personal GitHub account. The automated flow and live OAuth endpoint redirection are verified; task checkbox remains unchecked until interactive browser session acceptance is completed by the user. Header/avatar controls remain task 2.0.2.
   - **Depends on:** 1.0.3
 
 - [ ] **2.0.2 — Add auth UI (sign-in/out, avatar)**
   - Header component with sign-in button (when logged out) / avatar + dropdown (when logged in)
   - Protect "Fix with PR" button behind auth gate
   - **Acceptance:** Sign in/out works, "Fix All" button appears only when authenticated
+  - **Agreed scope:** Show a disabled Fix All entry point only on live reports for authenticated users with failing automatable findings, with the explanation "Pull request creation is not available yet." Implementing the enabled PR workflow remains task 2.3.3 and its dependencies. Shared snapshots stay read-only, and score previews remain public.
+  - **Implemented and automatically verified (2026-10-17):** Added client `AuthProvider` (`SessionProvider`) in `app/layout.tsx` keeping static landing pages prerenderable, responsive header `AuthControls` mounted in landing navigation and report shell, user avatar with uppercase initials fallback, account menu dropdown with username and sign-out, pending state and accessible error alerts, current-page return destinations, theme-scoped menu positioning, reusable `AuthGate`, and disabled `FixButton` gated behind authentication. Added 29 UI/session integration tests covering state transitions, focus/cross-tab synchronization, keyboard navigation (Escape/focus restoration), avatar error fallback, sanitized error messages, repeat submission prevention, and the fix visibility matrix. Full test suite: `bun run test:run` passes (1348 passed, 1 opt-in live test skipped); TypeScript (`--noEmit --incremental false`), `bun run lint` (0 errors), and `bun run build -- --webpack` pass cleanly.
+  - **Pending live acceptance:** The header controls redirect to GitHub's authorization page as verified on port 3000. Interactive manual sign-in in a physical browser with a live GitHub user account is required to verify the visual avatar and post-login UI transition on a live display. This task remains unchecked until live human interaction is completed.
   - **Depends on:** 2.0.1
 
 ---
 
 ### 2.1 — Remediation Templates
 
-- [ ] **2.1.1 — Create license templates**
+- [x] **2.1.1 — Create license templates**
   - In `src/lib/templates/licenses/`
   - Bundle SPDX-correct template text for: MIT, Apache-2.0, BSD-3-Clause, GPL-3.0, MPL-2.0
   - Each template has `{{year}}` and `{{fullname}}` placeholders
   - Utility: `renderLicense(spdxId, year, fullName): string`
   - **Acceptance:** Unit test — rendered MIT license contains correct year and name
+  - **Verified & Audited (2026-10-17):** Bundled five complete SPDX texts pinned to license-list-data v3.27.0 with verified SHA-256 integrity digests and a pure, synchronous `renderLicense` utility. Supports `GPL-3.0` as an alias for `GPL-3.0-only`, validates attribution inputs, and substitutes tokens literally in one pass. Exported canonical `LICENSE_TARGET_PATH = "LICENSE"`, re-exported individual templates, and added root-alias shim `lib/templates/licenses.ts`. All 53 license unit tests pass.
   - **Depends on:** 1.0.6
 
-- [ ] **2.1.2 — Create .gitignore templates**
+- [x] **2.1.2 — Create .gitignore templates**
   - In `src/lib/templates/gitignore/`
   - Detect language from manifest files in tree: `package.json` → Node, `Cargo.toml` → Rust, `go.mod` → Go, `setup.py`/`pyproject.toml` → Python, etc.
   - Bundle standard `.gitignore` content for each language (from github/gitignore repo)
   - Fallback: generic `.gitignore` if no manifest detected
   - **Acceptance:** Unit test — Node project gets `node_modules/` in gitignore
+  - **Verified & Audited (2026-10-17):** Added pure `detectLanguages(paths)` and `renderGitignore(paths)` utilities with exact manifest-basename detection at any depth, deterministic Node/Rust/Go/Python composition, and a generic fallback. Bundled complete github/gitignore presets pinned to commit `361f1e6afa729dc58ec33bf0849772a03ddf6822` under CC0-1.0. Fixed case-insensitivity on raw un-lowercased Sets (`path.slice(...).toLowerCase()`), broadened input support to `Set<string> | readonly TreeEntry[] | RepoTree`, exported `GITIGNORE_TARGET_PATH = ".gitignore"`, and created root-alias shim `lib/templates/gitignore.ts`. All 41 gitignore unit tests pass, including real Git matching and mixed nested projects.
   - **Depends on:** 1.0.6, 1.2.1
 
-- [ ] **2.1.3 — Create CI workflow template**
+- [x] **2.1.3 — Create CI workflow template**
   - In `src/lib/templates/ci/`
   - Generate minimal `.github/workflows/ci.yml` based on detected language
   - Node: `actions/setup-node` + `npm test`
@@ -427,18 +434,21 @@
   - Rust: `actions-rs/toolchain` + `cargo test`
   - Fallback: basic checkout-only workflow
   - **Acceptance:** Unit test — generated YAML is valid, uses correct actions for detected language
+  - **Verified & Audited (2026-10-17):** Implemented pure `detectLanguage(paths)`, `renderCIWorkflow(language, options)`, and `generateCIWorkflow(paths, options)` targeting `.github/workflows/ci.yml`. Fixed critical YAML syntax bug where unquoted workflow names with colons (e.g. `"CI: Build & Test"`) broke `yaml.parse`, fixed regex character class escaping in `formatYamlScalar`, safely serialized branch names with `JSON.stringify`, and added injection protection against newlines in options. All 32 CI tests pass with 100% valid YAML across Node, Python, Go, Rust, and Generic workflows.
   - **Depends on:** 1.0.6, 1.2.1
 
-- [ ] **2.1.4 — Create SECURITY.md template**
+- [x] **2.1.4 — Create SECURITY.md template**
   - In `src/lib/templates/security/`
   - Standard vulnerability reporting template with placeholder sections
   - **Acceptance:** Template renders without placeholders in output
+  - **Verified & Audited (2026-10-17):** Implemented pure, synchronous `renderSecurityPolicy(options)` generator and `SecurityPolicyOptions` supporting custom project names, contact methods (email `mailto:`, advisory URLs), customizable supported versions table, response SLA windows, and optional additional info. Guarantees zero unrendered placeholders in output and normalizes to LF line endings. Exported `SECURITY_POLICY_TARGET_PATH = "SECURITY.md"` and `SECURITY_POLICY_TEMPLATE`, created root-alias shim `lib/templates/security.ts`, and verified compatibility with Rubric v1.0 `checkSecurityPolicy` (10/10 points). All 19 security policy unit tests pass.
   - **Depends on:** 1.0.6
 
-- [ ] **2.1.5 — Create CODE_OF_CONDUCT.md template**
+- [x] **2.1.5 — Create CODE_OF_CONDUCT.md template**
   - In `src/lib/templates/conduct/`
   - Contributor Covenant v2.1 (standard, widely adopted)
   - **Acceptance:** Template matches Contributor Covenant text
+  - **Verified & Audited (2026-10-17):** Implemented pure, synchronous `renderCodeOfConduct(options?)` generator bundling the verbatim canonical Contributor Covenant v2.1 text pinned to EthicalSource/contributor_covenant commit `7255a28d23d5bc296de2e4e4e9bb5ee1126f1345` with verified SHA-256 digest `369bf7301883368fc19203bd0f1233fed2b83f0378ad19c4d0708bf61925339b`. Supports explicit contact method substitution with single-pass safe replacement and strict validation against multiline or blank inputs. Exported `CODE_OF_CONDUCT_TARGET_PATH = "CODE_OF_CONDUCT.md"` and verified root-alias shim `lib/templates/conduct.ts`. All 31 conduct unit tests pass. Added unified barrel export `src/lib/templates/index.ts` and `lib/templates/index.ts` with 4 integration tests (180 total template tests pass; full suite passes 1362 tests, 1 skipped). TypeScript (`tsc --noEmit`), ESLint (`bun run lint`), and production build (`bun run build -- --webpack`) pass cleanly with 0 errors.
   - **Depends on:** 1.0.6
 
 ---

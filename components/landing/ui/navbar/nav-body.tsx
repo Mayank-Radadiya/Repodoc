@@ -19,7 +19,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         y: visible ? 16 : 0,
       }}
       transition={RESIZE_TRANSITION}
-      style={{ minWidth: "680px", contain: "layout" }}
+      style={{ minWidth: "min(100%, 64rem)", contain: "layout" }}
       className={cn(
         "relative z-60 mx-auto hidden w-full max-w-7xl flex-row items-center justify-between self-start rounded-full bg-transparent px-5 py-2.5 transition-colors duration-300 lg:flex",
         visible && SURFACE,

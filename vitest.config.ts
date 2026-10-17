@@ -7,6 +7,8 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    // NextAuth's extensionless Next.js imports need Vite's module resolution.
+    server: { deps: { inline: ["next-auth"] } },
   },
   resolve: {
     alias: {
@@ -16,4 +18,3 @@ export default defineConfig({
     },
   },
 });
- 

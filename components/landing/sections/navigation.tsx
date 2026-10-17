@@ -14,6 +14,7 @@ import {
 } from "../ui/navbar";
 import { CandyLink } from "../ui/candy-button";
 import { NAV_LINKS } from "../data/navigation";
+import { AuthControls } from "@/components/auth/auth-controls";
 
 export interface LandingNavigationProps {
   overPhoto?: boolean;
@@ -44,12 +45,16 @@ export function LandingNavigation({
           items={NAV_LINKS}
           className={
             onPhoto
-              ? "[&_a]:text-white [&_a:hover]:text-white [&_a>div]:bg-white/20"
-              : undefined
+              ? "relative inset-auto space-x-0 [&_a]:px-2 [&_a]:text-white [&_a:hover]:text-white [&_a>div]:bg-white/20"
+              : "relative inset-auto space-x-0 [&_a]:px-2"
           }
         />
         <div className="relative z-20 flex transform-gpu items-center gap-3">
-          <CandyLink href="#observatory" className="px-5 py-2 text-sm">
+          <AuthControls onPhoto={onPhoto} />
+          <CandyLink
+            href="#observatory"
+            className="hidden px-4 py-2 text-sm xl:inline-flex"
+          >
             Explore Audit
           </CandyLink>
         </div>
@@ -65,10 +70,13 @@ export function LandingNavigation({
       >
         <MobileNavHeader>
           <NavbarLogo />
-          <MobileNavToggle
-            isOpen={mobileOpen}
-            onClick={() => setMobileOpen((open) => !open)}
-          />
+          <div className="flex items-center gap-2">
+            <AuthControls onPhoto={onPhoto} />
+            <MobileNavToggle
+              isOpen={mobileOpen}
+              onClick={() => setMobileOpen((open) => !open)}
+            />
+          </div>
         </MobileNavHeader>
 
         <MobileNavMenu isOpen={mobileOpen} onClose={closeMobile}>

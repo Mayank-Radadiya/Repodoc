@@ -3,13 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   cleanup,
   fireEvent,
-  render,
   screen,
   waitFor,
 } from "@testing-library/react";
 import { ScoringEngine } from "@/src/lib/scoring/engine";
 import { ReportController } from "../report-controller";
 import { ShareController } from "../share-controller";
+import { renderSignedOut as render } from "@/components/auth/__tests__/fixtures";
 
 const savedReport = {
   ...ScoringEngine.run({

@@ -5,11 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AuthControls } from "@/components/auth/auth-controls";
 import { AuditRepositoryDialog } from "./audit-dialog";
 import { ThemeToggle } from "./theme-toggle";
+import { useReportTheme } from "./theme-scope";
 
 export function ReportShell({ children }: { children: ReactNode }) {
   const [auditOpen, setAuditOpen] = useState(false);
+  const { scopeElement } = useReportTheme();
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -53,10 +56,11 @@ export function ReportShell({ children }: { children: ReactNode }) {
             <Button
               variant="outline"
               className="min-h-11"
+              aria-label="Audit another repository"
               onClick={() => setAuditOpen(true)}
             >
               <Search aria-hidden="true" />
-              Audit another repository
+              <span className="hidden md:inline">Audit another repository</span>
               <kbd
                 aria-hidden="true"
                 className="ml-1 hidden rounded border border-border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground lg:inline"
@@ -64,6 +68,7 @@ export function ReportShell({ children }: { children: ReactNode }) {
                 ⌘K
               </kbd>
             </Button>
+            <AuthControls portalContainer={scopeElement} />
           </div>
         </nav>
       </header>

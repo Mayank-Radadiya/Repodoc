@@ -1,7 +1,7 @@
 import {
   cleanup,
   fireEvent,
-  render,
+  render as renderWithContext,
   screen,
   waitFor,
   within,
@@ -9,6 +9,10 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ReportThemeScope } from "@/components/report/theme-scope";
 import { ReportShell } from "@/components/report/report-shell";
+import {
+  renderSignedOut as render,
+  TestAuthSession,
+} from "@/components/auth/__tests__/fixtures";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -24,6 +28,26 @@ vi.mock("next/navigation", () => ({
 afterEach(() => cleanup());
 
 describe("ReportShell", () => {
+  it("keeps the authenticated menu inside the report theme scope", async () => {
+    renderWithContext(
+      <TestAuthSession status="authenticated">
+        <ReportThemeScope initialTheme="dark">
+          <ReportShell>content</ReportShell>
+        </ReportThemeScope>
+      </TestAuthSession>,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Account menu for octocat" }),
+    );
+    const menu = await screen.findByRole("menu");
+    const scope = screen.getByTestId("report-theme-scope");
+    expect(scope.classList.contains("dark")).toBe(true);
+    expect(scope.contains(menu)).toBe(true);
+    expect(
+      within(menu).getByRole("menuitem", { name: "Sign out" }),
+    ).toBeDefined();
+  });
+
   it("renders navigation, skip link and report content", () => {
     render(
       <ReportThemeScope>
@@ -64,9 +88,7 @@ describe("ReportShell", () => {
         name: /audit a github repository/i,
       }),
     ).toBeDefined();
-    expect(
-      within(dialog).getByLabelText(/github repository/i),
-    ).toBeDefined();
+    expect(within(dialog).getByLabelText(/github repository/i)).toBeDefined();
 
     const scope = screen.getByTestId("report-theme-scope");
     expect(scope.contains(dialog)).toBe(true);
