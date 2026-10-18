@@ -212,7 +212,7 @@ export const GridDistortion: React.FC<GridDistortionProps> = ({
   onReady,
   grid = 15,
   mouse,
-  radius = 0.18,
+  radius,
   strength = 0.15,
   relaxation = 0.96,
   mode = 'drag',
