@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useId, useEffect, useRef } from "react";
-import { Check, Copy, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -11,18 +10,24 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Tabs, TabsList, TabsTab, TabsPanel } from "@/components/ui/tabs";
+import { Tabs, TabsPanel } from "@/components/ui/tabs";
 import { BADGE_LABEL, getBadgeColor } from "@/lib/badge";
 import {
   BADGE_COLOR_PALETTE,
   normalizeScore,
 } from "@/components/report/score-gauge";
 import type { AuditReport } from "@/lib/types";
+import {
+  BadgeFormatSelector,
+  FORMATS,
+  type BadgeSnippetFormat,
+} from "./badge-format-selector";
+import { BadgeCopyButton } from "./badge-copy-button";
+
+export type { BadgeSnippetFormat };
 
 export const DEFAULT_BASE_URL = "https://repodoc.dev";
 export const DEFAULT_BADGE_LABEL = "Repo Health";
-
-export type BadgeSnippetFormat = "markdown" | "html" | "url";
 
 export interface GenerateBadgeUrlsOptions {
   owner: string;
@@ -254,16 +259,6 @@ export interface BadgeSnippetProps {
   className?: string;
 }
 
-const FORMATS: {
-  value: BadgeSnippetFormat;
-  label: string;
-  copyLabel: string;
-}[] = [
-  { value: "markdown", label: "Markdown", copyLabel: "Markdown" },
-  { value: "html", label: "HTML", copyLabel: "HTML" },
-  { value: "url", label: "Image URL", copyLabel: "URL" },
-];
-
 type CopyFeedback = {
   snippet: string;
   format: BadgeSnippetFormat;
@@ -452,38 +447,16 @@ export function BadgeSnippet({
           className="min-w-0 gap-3 motion-reduce:[&_*]:transition-none"
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <TabsList activateOnFocus aria-label="Embed snippet format">
-              {FORMATS.map(({ value, label }) => (
-                <TabsTab
-                  key={value}
-                  value={value}
-                  className="min-h-11 px-2.5 text-sm focus-visible:ring-blue-600 dark:focus-visible:ring-blue-400 sm:min-h-11"
-                >
-                  {label}
-                </TabsTab>
-              ))}
-            </TabsList>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCopy}
-              aria-disabled={copying}
-              aria-busy={copying}
-              aria-describedby={copyError ? statusId : undefined}
-              aria-label={
-                copied
-                  ? "Copied snippet to clipboard"
-                  : `Copy ${activeFormat} snippet`
-              }
-              className="min-h-11 gap-2 focus-visible:ring-blue-600 motion-reduce:transition-none dark:focus-visible:ring-blue-400 sm:min-h-11"
-            >
-              {copied ? (
-                <Check className="size-4" aria-hidden="true" />
-              ) : (
-                <Copy className="size-4" aria-hidden="true" />
-              )}
-              {copied ? "Copied" : copying ? "Copying…" : `Copy ${copyLabel}`}
-            </Button>
+            <BadgeFormatSelector />
+            <BadgeCopyButton
+              copied={copied}
+              copying={copying}
+              copyError={copyError}
+              copyLabel={copyLabel}
+              activeFormat={activeFormat}
+              statusId={statusId}
+              onCopy={handleCopy}
+            />
           </div>
           {FORMATS.map(({ value }) => (
             <TabsPanel key={value} value={value} className="min-w-0">

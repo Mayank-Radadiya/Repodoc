@@ -33,6 +33,16 @@ export {
   type BadgeSnippetFormat,
   type GenerateBadgeUrlsOptions,
 } from "./badge-snippet";
+export {
+  BadgeFormatSelector,
+  FORMATS,
+  type BadgeFormatSelectorProps,
+  type BadgeFormatItem,
+} from "./badge-format-selector";
+export {
+  BadgeCopyButton,
+  type BadgeCopyButtonProps,
+} from "./badge-copy-button";
 
 export { ReportView, type ReportViewProps } from "./report-view";
 export { ReportPending } from "./report-pending";
