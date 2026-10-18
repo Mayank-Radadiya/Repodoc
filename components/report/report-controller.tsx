@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { Copy, RefreshCw, Share2 } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { requestAudit } from "@/src/lib/request-audit";
@@ -12,6 +11,7 @@ import { ReportView } from "./report-view";
 import { ReportPending } from "./report-pending";
 import { ReportErrorCard } from "./report-error-card";
 import { FixButton } from "./fix-button";
+import { ReportShareMenu } from "./report-share-menu";
 
 interface ReportControllerProps extends ParsedGitHubUrl {
   initialReport: PersistedAuditReport | null;
@@ -186,24 +186,12 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
             <RefreshCw aria-hidden="true" />
             Re-audit
           </Button>
-          {report.shareId && (
-            <Link
-              href={`/share/${encodeURIComponent(report.shareId)}`}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
-            >
-              <Share2 aria-hidden="true" className="size-3.5" />
-              Share link
-            </Link>
-          )}
-          <Button
-            variant="outline"
-            className="min-h-11"
-            disabled={!origin || copyStatus === "copying"}
-            onClick={() => void share()}
-          >
-            <Copy aria-hidden="true" />
-            {copyStatus === "copied" ? "Link copied" : "Copy report link"}
-          </Button>
+          <ReportShareMenu
+            shareId={report.shareId}
+            copyStatus={copyStatus}
+            canCopy={Boolean(origin)}
+            onCopy={() => void share()}
+          />
         </>
       }
     />

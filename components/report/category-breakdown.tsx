@@ -8,6 +8,8 @@ import {
   ChevronDown,
   ExternalLink,
   FilePlus2,
+  Undo2,
+  Plus,
   Search,
   X,
 } from "lucide-react";
@@ -94,15 +96,8 @@ function CheckRow({
           )}
         />
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <p className="min-w-0 [overflow-wrap:anywhere] text-sm font-medium text-foreground">
-              {check.name}
-            </p>
-            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-              {formatPoints(check.pointsAwarded)}/{check.maxPoints} pts
-            </span>
-          </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+          <div className={styles.checkHeading}>
+            <p className={styles.checkTitle}>{check.name}</p>
             <span
               className={cn(
                 styles.statusBadge,
@@ -115,6 +110,9 @@ function CheckRow({
             >
               {statusLabel}
             </span>
+            <span className={styles.checkPoints}>
+              {formatPoints(check.pointsAwarded)}/{check.maxPoints} pts
+            </span>
           </div>
           {!evidenceOpen && (
             <p className={styles.evidenceExcerpt}>
@@ -122,18 +120,42 @@ function CheckRow({
             </p>
           )}
           <Collapsible open={evidenceOpen} onOpenChange={setEvidenceOpen}>
-            <CollapsibleTrigger
-              aria-label={`Evidence and remediation for ${check.name}`}
-              className="group flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md py-1 text-xs font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              Evidence &amp; remediation
-              <ChevronDown
-                aria-hidden="true"
-                className="size-3.5 transition-transform group-data-panel-open:rotate-180 motion-reduce:transition-none"
-              />
-            </CollapsibleTrigger>
+            <div className={styles.checkActions}>
+              <CollapsibleTrigger
+                aria-label={`Evidence and remediation for ${check.name}`}
+                className="group flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md py-1 text-xs font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                Evidence &amp; remediation
+                <ChevronDown
+                  aria-hidden="true"
+                  className="size-3.5 transition-transform group-data-panel-open:rotate-180 motion-reduce:transition-none"
+                />
+              </CollapsibleTrigger>
+              {showPreviewToggle && (
+                <button
+                  type="button"
+                  aria-pressed={isPreviewed}
+                  aria-label={
+                    isPreviewed
+                      ? `Remove preview for ${check.name}`
+                      : `Preview fix for ${check.name}: +${formatPoints(potential)} pts`
+                  }
+                  onClick={() => onTogglePreview(check.id)}
+                  className={styles.previewButton}
+                >
+                  {isPreviewed ? (
+                    <Undo2 aria-hidden="true" className="size-3.5" />
+                  ) : (
+                    <Plus aria-hidden="true" className="size-3.5" />
+                  )}
+                  {isPreviewed
+                    ? "Undo preview"
+                    : `Preview +${formatPoints(potential)} pts`}
+                </button>
+              )}
+            </div>
             <CollapsiblePanel className="motion-reduce:transition-none">
-              <div className="mt-2 space-y-3 border-l-2 border-border pl-3 text-xs leading-relaxed">
+              <div className="mt-2 space-y-4 rounded-lg border border-border bg-muted/30 p-4 text-sm leading-relaxed">
                 <p className="max-w-prose whitespace-pre-wrap break-words text-muted-foreground">
                   {check.evidence.details.trim()
                     ? check.evidence.details
@@ -189,29 +211,6 @@ function CheckRow({
             </CollapsiblePanel>
           </Collapsible>
         </div>
-        {showPreviewToggle && (
-          <button
-            type="button"
-            aria-pressed={isPreviewed}
-            aria-label={
-              isPreviewed
-                ? `Remove preview for ${check.name}`
-                : `Preview fix for ${check.name}: +${formatPoints(potential)} pts`
-            }
-            onClick={() => onTogglePreview(check.id)}
-            className={cn(
-              styles.previewButton,
-              "inline-flex min-h-11 shrink-0 items-center rounded-md border px-3 py-2 text-xs font-medium transition-colors",
-              isPreviewed
-                ? "border-info/50 bg-info/15 text-info-foreground"
-                : "border-border bg-card text-muted-foreground hover:border-info/50 hover:text-info-foreground",
-            )}
-          >
-            {isPreviewed
-              ? "Undo preview"
-              : `Preview +${formatPoints(potential)} pts`}
-          </button>
-        )}
       </div>
     </li>
   );
@@ -332,9 +331,9 @@ export function CategoryBreakdown({
                 revealMatches();
               }}
               className={cn(
-                "inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 text-xs font-medium transition-colors sm:flex-none",
+                "inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap px-2.5 text-xs font-medium transition-colors sm:flex-none",
                 filter === value
-                  ? "bg-card text-foreground shadow-xs"
+                  ? "text-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -487,7 +486,10 @@ export function CategoryBreakdown({
               >
                 <AccordionTrigger
                   aria-label={`${name}: ${formatPoints(category.pointsAwarded)} out of ${category.maxPoints} points`}
-              className="items-center gap-3 rounded-none px-5 py-4 text-foreground hover:bg-muted/40 sm:px-6"
+                  className={cn(
+                    styles.categoryTrigger,
+                    "items-center gap-3 px-4 py-4 text-foreground hover:bg-muted/60 sm:px-6",
+                  )}
                 >
                   <span className="flex min-w-0 flex-1 items-center gap-3">
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted/70">
@@ -512,7 +514,7 @@ export function CategoryBreakdown({
                     </span>
                   </span>
                 </AccordionTrigger>
-                <AccordionPanel className="px-5 pb-2 sm:px-6">
+                <AccordionPanel className="px-4 pb-0 sm:px-6">
                   {category.checks.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                       No checks available

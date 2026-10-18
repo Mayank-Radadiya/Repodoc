@@ -1,11 +1,6 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { ScoringEngine } from "@/src/lib/scoring/engine";
 import { ReportController } from "../report-controller";
 import { ShareController } from "../share-controller";
@@ -51,18 +46,16 @@ describe("audit page to shareable report flow", () => {
     expect(screen.getByRole("button", { name: "Re-audit" })).toBeDefined();
 
     // Audit page provides share link targeting /share/[shareId]
-    const shareLink = screen.getByRole("link", { name: /share link/i });
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    const shareLink = await screen.findByRole("menuitem", {
+      name: "Share link",
+    });
     expect(shareLink.getAttribute("href")).toBe("/share/octo1234");
 
     unmount();
 
     // 2. Open the shareable read-only report at /share/octo1234
-    render(
-      <ShareController
-        shareId="octo1234"
-        initialReport={savedReport}
-      />,
-    );
+    render(<ShareController shareId="octo1234" initialReport={savedReport} />);
 
     // Read-only report displays identical score and category breakdown
     expect(
@@ -74,9 +67,7 @@ describe("audit page to shareable report flow", () => {
     expect(screen.getByText("Shared snapshot (read-only)")).toBeDefined();
 
     // Read-only report MUST NOT have a Re-audit button
-    expect(
-      screen.queryByRole("button", { name: /re-audit/i }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: /re-audit/i })).toBeNull();
 
     // Read-only report allows copying the share link
     const copyShareButton = screen.getByRole("button", {

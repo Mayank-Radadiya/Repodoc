@@ -69,12 +69,17 @@ describe("report controller and composed report view", () => {
     expect(screen.getByText(/Oct 13, 2026/)).toBeDefined();
     expect(screen.getByText("main")).toBeDefined();
     fireEvent.click(
-      screen.getByRole("button", { name: /Evidence and remediation for README/i }),
+      screen.getByRole("button", {
+        name: /Evidence and remediation for README/i,
+      }),
     );
     expect(await screen.findByText("Files checked")).toBeDefined();
     await screen.findByRole("button", { name: /copy markdown/i });
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
     expect(
-      screen.getByRole("link", { name: /share link/i }).getAttribute("href"),
+      (
+        await screen.findByRole("menuitem", { name: "Share link" })
+      ).getAttribute("href"),
     ).toBe(`/share/${saved.shareId}`);
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -153,8 +158,13 @@ describe("report controller and composed report view", () => {
 
   it("copies the report URL and badge with the current deployment origin", async () => {
     show();
-    const share = screen.getByRole("button", { name: "Copy report link" });
-    await waitFor(() => expect(share.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    const share = await screen.findByRole("menuitem", {
+      name: "Copy report link",
+    });
+    await waitFor(() =>
+      expect(share.getAttribute("aria-disabled")).not.toBe("true"),
+    );
     fireEvent.click(share);
     await screen.findByRole("button", { name: "Link copied" });
     expect(copy).toHaveBeenLastCalledWith(
@@ -175,8 +185,13 @@ describe("report controller and composed report view", () => {
   it("provides manual-copy recovery after clipboard failure", async () => {
     copy.mockRejectedValue(new Error("Permission denied"));
     show();
-    const share = screen.getByRole("button", { name: "Copy report link" });
-    await waitFor(() => expect(share.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    const share = await screen.findByRole("menuitem", {
+      name: "Copy report link",
+    });
+    await waitFor(() =>
+      expect(share.getAttribute("aria-disabled")).not.toBe("true"),
+    );
     fireEvent.click(share);
     const input = await screen.findByRole<HTMLInputElement>("textbox", {
       name: "Copy the report link manually",

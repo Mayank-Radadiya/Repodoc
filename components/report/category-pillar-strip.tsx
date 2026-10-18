@@ -38,7 +38,7 @@ export function CategoryPillarStrip({
   return (
     <ul
       aria-label="Score by rubric category"
-      className={cn("min-w-0", className)}
+      className={cn(styles.categoryGrid, className)}
     >
       {REPORT_CATEGORIES.map(({ id, name, icon: Icon }) => {
         const category = preview.categories[id];
@@ -65,10 +65,10 @@ export function CategoryPillarStrip({
                 <span>{name}</span>
               </span>
               <span className={styles.categoryPoints}>
-                <span className="font-semibold text-foreground">
+                <span className={styles.categoryEarned}>
                   {formatPoints(category.pointsAwarded)}
                 </span>
-                /{category.maxPoints}
+                <span> / {category.maxPoints}</span>
                 <span className="sr-only"> pts · {percent}%</span>
               </span>
               <span aria-hidden="true" className={styles.categoryBar}>

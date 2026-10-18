@@ -128,31 +128,31 @@ export function ReportErrorCard({
   const iconMap: Record<ReportErrorKind, React.ReactNode> = {
     rate_limited: (
       <Clock
-        className="size-6 text-amber-600 dark:text-amber-400"
+        className="size-6 text-warning-foreground"
         aria-hidden="true"
       />
     ),
     not_found: (
       <SearchX
-        className="size-6 text-blue-600 dark:text-blue-400"
+        className="size-6 text-info-foreground"
         aria-hidden="true"
       />
     ),
     network: (
       <WifiOff
-        className="size-6 text-rose-600 dark:text-rose-400"
+        className="size-6 text-destructive-foreground"
         aria-hidden="true"
       />
     ),
     bad_input: (
       <AlertCircle
-        className="size-6 text-amber-600 dark:text-amber-400"
+        className="size-6 text-warning-foreground"
         aria-hidden="true"
       />
     ),
     server_error: (
       <AlertCircle
-        className="size-6 text-rose-600 dark:text-rose-400"
+        className="size-6 text-destructive-foreground"
         aria-hidden="true"
       />
     ),
@@ -161,10 +161,10 @@ export function ReportErrorCard({
   return (
     <div
       role="alert"
-      className={`rounded-[16px] border border-border bg-card p-6 sm:p-8 ${className}`}
+      className={`rounded-xl border border-border bg-card p-5 sm:p-6 ${className}`}
     >
       <div className="flex items-start gap-4">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
           {iconMap[classified.kind]}
         </div>
         <div className="min-w-0 flex-1">

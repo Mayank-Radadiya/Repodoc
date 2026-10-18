@@ -373,7 +373,7 @@ export function BadgeSnippet({
         className,
       )}
     >
-      <CardHeader className="gap-2 p-5 pb-0 sm:p-6 sm:pb-0">
+      <CardHeader className="gap-2 p-5 pb-0">
         <CardTitle
           render={<h2 id={titleId} />}
           className="text-sm leading-6 font-semibold"
@@ -385,7 +385,7 @@ export function BadgeSnippet({
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="min-w-0 space-y-4 p-5 pt-4 sm:p-6 sm:pt-4">
+      <CardContent className="min-w-0 space-y-4 p-5 pt-4">
         <div className="overflow-hidden rounded-lg border border-border">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-border bg-muted/40 px-4 py-2.5 text-xs text-muted-foreground">
             <span>README.md</span>
@@ -490,7 +490,7 @@ export function BadgeSnippet({
               <pre
                 tabIndex={0}
                 aria-label={`${value} code snippet`}
-                className="max-w-full overflow-x-auto whitespace-pre-wrap break-all rounded-lg border border-border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:focus-visible:outline-blue-400"
+                className="max-h-40 max-w-full overflow-auto whitespace-pre-wrap break-all rounded-lg border border-border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:focus-visible:outline-blue-400"
               >
                 <code className="select-all">
                   {getSnippetForFormat(value, urlOptions)}

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import type { AuditReport, CategoryId } from "@/src/lib/types";
 import { computeReportPreview } from "./report-preview";
 import { ReportHero } from "./report-hero";
+import { ReportSectionNav } from "./report-section-nav";
 import { CategoryPillarStrip } from "./category-pillar-strip";
 import { CategoryBreakdown, type CheckFilter } from "./category-breakdown";
 import { HealthGaugeCard } from "./health-gauge-card";
@@ -20,10 +21,7 @@ export interface ReportViewProps {
   feedback?: ReactNode;
 }
 
-export function ReportView({
-  report,
-  ...props
-}: ReportViewProps) {
+export function ReportView({ report, ...props }: ReportViewProps) {
   return (
     <ReportViewSession
       key={`${report.owner}/${report.repo}/${report.generatedAt}`}
@@ -46,12 +44,14 @@ function ReportViewSession({
     const populated = REPORT_CATEGORIES.filter(({ id }) =>
       report.checks.some((check) => check.category === id),
     );
-    const ranked = populated.map(({ id }) => ({
-      id,
-      potential: report.checks
-        .filter((check) => check.category === id)
-        .reduce((total, check) => total + getPotentialPoints(check), 0),
-    })).sort((a, b) => b.potential - a.potential);
+    const ranked = populated
+      .map(({ id }) => ({
+        id,
+        potential: report.checks
+          .filter((check) => check.category === id)
+          .reduce((total, check) => total + getPotentialPoints(check), 0),
+      }))
+      .sort((a, b) => b.potential - a.potential);
     return ranked.length ? [ranked[0].id] : [];
   });
   const [search, setSearch] = useState("");
@@ -120,14 +120,7 @@ function ReportViewSession({
           />
         }
       />
-      <div className={styles.sectionBar}>
-        <nav aria-label="Report sections" className={styles.sectionNav}>
-          <a href="#report-overview">Overview</a>
-          <a href="#report-findings">Findings</a>
-          <a href="#report-improvements">Improvements</a>
-          <a href="#report-badge">Badge</a>
-        </nav>
-      </div>
+      <ReportSectionNav />
       <div className={styles.body}>
         <div className={styles.findingsPanel}>
           <CategoryBreakdown
@@ -151,17 +144,12 @@ function ReportViewSession({
             onTogglePreview={togglePreview}
             onApplyBoosters={applyBoosters}
           />
-          <div id="report-badge" className="min-w-0 scroll-mt-24">
+          <div id="report-badge" className="min-w-0">
             {baseUrl ? (
               <BadgeSnippet report={report} baseUrl={baseUrl} />
             ) : (
-              <div
-                aria-busy="true"
-                className={styles.badgePlaceholder}
-              >
-                <h2 className="text-sm font-semibold">
-                  Embed your badge
-                </h2>
+              <div aria-busy="true" className={styles.badgePlaceholder}>
+                <h2 className="text-sm font-semibold">Embed your badge</h2>
                 <p className="mt-3 text-sm text-muted-foreground">
                   Preparing badge links…
                 </p>

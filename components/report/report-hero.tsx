@@ -60,13 +60,12 @@ export function ReportHero({
   }).format(new Date(report.generatedAt));
 
   return (
-    <section aria-labelledby="report-title" className={cn("min-w-0", className)}>
+    <section
+      aria-labelledby="report-title"
+      className={cn("min-w-0", className)}
+    >
       <div className={styles.headingRow}>
         <div className={styles.identity}>
-          <p className="mb-2.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <ShieldCheck aria-hidden="true" className="size-4" />
-            Repository health report
-          </p>
           <h1 id="report-title" className={styles.reportTitle}>
             <span className="font-normal text-muted-foreground">
               {report.owner}/
@@ -74,11 +73,14 @@ export function ReportHero({
             <wbr />
             {report.repo}
           </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Repository health report
+          </p>
         </div>
         {actions && <div className={styles.actions}>{actions}</div>}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
+      <div className={styles.metadata}>
         <span className="inline-flex min-w-0 items-center gap-1.5 [overflow-wrap:anywhere]">
           <GitBranch aria-hidden="true" className="size-3.5 shrink-0" />
           {report.defaultBranch}
@@ -102,21 +104,23 @@ export function ReportHero({
           <ExternalLink aria-hidden="true" className="size-3.5" />
         </Link>
       </div>
-      {feedback && <div className="mt-3">{feedback}</div>}
+      {feedback && <div className={styles.feedback}>{feedback}</div>}
 
       <div id="report-overview" className={cn(styles.overview, "mt-6")}>
         <div className={styles.summary}>
-          <h2 className="text-sm leading-6 font-semibold">Repository health</h2>
           <div className={styles.scoreLine}>
             <ScoreGauge
               healthScore={preview.score}
-              size={104}
-              strokeWidth={6}
+              size={80}
+              strokeWidth={5}
               animated={false}
               showStatus={false}
               className={styles.gauge}
             />
             <div className={styles.scoreDetails}>
+              <h2 className="mb-1 text-xs leading-5 font-medium text-muted-foreground">
+                Repository health
+              </h2>
               <p
                 data-testid="hero-status-pill"
                 data-badge-color={color}
@@ -146,34 +150,39 @@ export function ReportHero({
                   }}
                 />
               </div>
-              <p className="mt-1.5 text-xs tabular-nums text-muted-foreground">
-                {passPercent}% pass rate
-              </p>
             </div>
           </div>
-          <div className={styles.checkSummary}>
-            <span className="inline-flex items-center gap-2 text-success-foreground">
-              <CheckCircle2 aria-hidden="true" className="size-3.5" />
-              <strong className="font-semibold tabular-nums">
-                {preview.passedChecks}
-              </strong>{" "}
-              passed
-            </span>
-            <span
-              className={cn(
-                "inline-flex items-center gap-2",
-                failedChecks > 0
-                  ? "text-warning-foreground"
-                  : "text-muted-foreground",
-              )}
-            >
-              <CircleAlert aria-hidden="true" className="size-3.5" />
-              <strong className="font-semibold tabular-nums">
-                {failedChecks}
-              </strong>{" "}
-              to review
-            </span>
-          </div>
+          <dl className={styles.checkSummary}>
+            <div>
+              <dt>
+                <CheckCircle2
+                  aria-hidden="true"
+                  className="size-3.5 text-success-foreground"
+                />{" "}
+                Passed
+              </dt>
+              <dd>{preview.passedChecks}</dd>
+            </div>
+            <div>
+              <dt>
+                <CircleAlert
+                  aria-hidden="true"
+                  className="size-3.5 text-warning-foreground"
+                />{" "}
+                To review
+              </dt>
+              <dd>{failedChecks}</dd>
+            </div>
+            <div>
+              <dt>Pass rate</dt>
+              <dd>
+                {passPercent}
+                <span className="text-base font-medium text-muted-foreground">
+                  %
+                </span>
+              </dd>
+            </div>
+          </dl>
         </div>
         {pillars && (
           <div className={styles.rubric}>
