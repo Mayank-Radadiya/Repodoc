@@ -22,7 +22,9 @@ export function ShareController(props: ShareControllerProps) {
 }
 
 function ShareSession({ shareId, initialReport = null }: ShareControllerProps) {
-  const [report, setReport] = useState<PersistedAuditReport | null>(initialReport);
+  const [report, setReport] = useState<PersistedAuditReport | null>(
+    initialReport,
+  );
   const [pending, setPending] = useState(!initialReport);
   const [error, setError] = useState<string | null>(null);
   const [origin, setOrigin] = useState<string | null>(null);
@@ -48,11 +50,12 @@ function ShareSession({ shareId, initialReport = null }: ShareControllerProps) {
         },
       );
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         throw new Error(
-          payload?.error || "Unable to load this shared report. It may have expired or does not exist.",
+          payload?.error ||
+            "Unable to load this shared report. It may have expired or does not exist.",
         );
       }
       const data = await response.json();
@@ -112,7 +115,7 @@ function ShareSession({ shareId, initialReport = null }: ShareControllerProps) {
   };
 
   const feedback = (
-    <div className="mb-6 space-y-3">
+    <div className="space-y-3 [&>p:empty]:hidden">
       {error && (
         <ReportErrorCard
           error={error}
@@ -124,9 +127,9 @@ function ShareSession({ shareId, initialReport = null }: ShareControllerProps) {
         />
       )}
       <div className="flex flex-wrap items-center gap-3">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-xs font-medium text-info-foreground">
           <span
-            className="size-1.5 rounded-full bg-muted-foreground"
+            className="size-1.5 rounded-full bg-primary"
             aria-hidden="true"
           />
           Shared snapshot (read-only)

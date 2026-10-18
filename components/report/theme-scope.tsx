@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/lib/utils";
+import styles from "./report.module.css";
 import {
   REPORT_THEME_COOKIE,
   parseReportTheme,
@@ -89,6 +90,7 @@ export function ReportThemeScope({
         data-theme={theme}
         style={{ colorScheme: theme }}
         className={cn(
+          styles.scope,
           "min-h-svh bg-background text-foreground",
           isDark && "dark",
         )}

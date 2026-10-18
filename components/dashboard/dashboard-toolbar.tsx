@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
-import { ArrowUpDown, Filter, Search, X } from "lucide-react";
+import { ArrowDownWideNarrow, ChevronDown, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { useId } from "react";
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
+import styles from "./dashboard.module.css";
 
 export type AuditStatusFilter = "all" | "audited" | "unaudited";
 export type RepoSortOption = "updated" | "stars" | "score" | "name";
@@ -20,7 +20,14 @@ export interface DashboardToolbarProps {
   sortBy: RepoSortOption;
   onSortChange: (sort: RepoSortOption) => void;
   totalFiltered: number;
+  counts?: Record<AuditStatusFilter, number>;
 }
+
+const filters: { value: AuditStatusFilter; label: string }[] = [
+  { value: "all", label: "All repositories" },
+  { value: "audited", label: "Audited" },
+  { value: "unaudited", label: "Needs audit" },
+];
 
 export function DashboardToolbar({
   search,
@@ -33,136 +40,91 @@ export function DashboardToolbar({
   sortBy,
   onSortChange,
   totalFiltered,
-}: DashboardToolbarProps): React.JSX.Element {
+  counts,
+}: DashboardToolbarProps) {
+  const groupId = useId();
+  const reducedMotion = useReducedMotion();
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-2xs backdrop-blur-md">
-      {/* Search & Selectors Row */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* Search Field */}
-        <div className="relative min-w-0 flex-1">
-          <Search
-            className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400"
-            aria-hidden="true"
-          />
+    <div className={styles.toolbar}>
+      <div className={styles.filterHeading}>
+        <LayoutGroup id={groupId}>
+        <div role="group" aria-label="Audit filter" className={styles.filters}>
+          {filters.map(({ value, label }) => (
+            <button
+              type="button"
+              key={value}
+              aria-pressed={statusFilter === value}
+              aria-label={label}
+              onClick={() => onStatusFilterChange(value)}
+              className={styles.filterButton}
+            >
+              {label}
+              {counts && <span className={styles.filterCount} aria-hidden="true">{counts[value]}</span>}
+              {statusFilter === value && <motion.span className={styles.activeFilter} layoutId="active-filter" transition={{ duration: reducedMotion ? 0 : 0.18, ease: "easeOut" }} />}
+            </button>
+          ))}
+        </div>
+        </LayoutGroup>
+        <p role="status" className={styles.resultCount}>
+          Showing {totalFiltered}{" "}
+          {totalFiltered === 1 ? "repository" : "repositories"}
+        </p>
+      </div>
+      <div className={styles.controls}>
+        <div className={styles.search}>
+          <Search size={16} aria-hidden="true" className={styles.searchIcon} />
           <Input
-            type="text"
+            id="repository-search"
+            type="search"
             value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search repositories by name or description…"
-            className="h-10 pl-9 pr-8 text-sm placeholder:text-slate-400"
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Search repositories…"
             aria-label="Search repositories"
+            className={styles.searchControl}
           />
           {search && (
             <button
               type="button"
-              onClick={() => onSearchChange("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:text-slate-600 focus:outline-none"
+              className={styles.clearSearch}
               aria-label="Clear search"
+              onClick={() => onSearchChange("")}
             >
-              <X className="size-3.5" aria-hidden="true" />
+              <X size={16} aria-hidden="true" />
             </button>
           )}
         </div>
-
-        {/* Dropdowns Group */}
-        <div className="flex items-center gap-2">
-          {/* Language Selector */}
-          <div className="relative">
+        <div className={styles.selects}>
+          <div className={styles.selectControl}>
             <select
               value={selectedLanguage}
-              onChange={(e) => onLanguageChange(e.target.value)}
+              onChange={(event) => onLanguageChange(event.target.value)}
               aria-label="Filter by language"
-              className="h-10 cursor-pointer appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 focus:border-[#005FD6] focus:outline-none"
             >
-              <option value="all">All Languages</option>
-              {languages.map((lang) => (
-                <option key={lang} value={lang}>
-                  {lang}
+              <option value="all">All languages</option>
+              {languages.map((language) => (
+                <option key={language} value={language}>
+                  {language}
                 </option>
               ))}
             </select>
-            <Filter
-              className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400"
-              aria-hidden="true"
-            />
+            <ChevronDown size={14} aria-hidden="true" />
           </div>
-
-          {/* Sort Selector */}
-          <div className="relative">
+          <div className={styles.selectControl}>
             <select
               value={sortBy}
-              onChange={(e) => onSortChange(e.target.value as RepoSortOption)}
+              onChange={(event) =>
+                onSortChange(event.target.value as RepoSortOption)
+              }
               aria-label="Sort repositories"
-              className="h-10 cursor-pointer appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 shadow-2xs hover:border-slate-300 focus:border-[#005FD6] focus:outline-none"
             >
-              <option value="updated">Recently Updated</option>
-              <option value="stars">Most Stars</option>
-              <option value="score">Highest Health Score</option>
+              <option value="updated">Recently updated</option>
+              <option value="stars">Most stars</option>
+              <option value="score">Highest health score</option>
               <option value="name">Alphabetical</option>
             </select>
-            <ArrowUpDown
-              className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400"
-              aria-hidden="true"
-            />
+            <ArrowDownWideNarrow size={14} aria-hidden="true" />
           </div>
         </div>
-      </div>
-
-      {/* Filter Tabs & Count Row */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
-        <div className="flex items-center gap-1.5" role="tablist" aria-label="Audit filter">
-          <Button
-            variant={statusFilter === "all" ? "default" : "ghost"}
-            size="sm"
-            role="tab"
-            aria-selected={statusFilter === "all"}
-            onClick={() => onStatusFilterChange("all")}
-            className={cn(
-              "h-7 rounded-full px-3 text-xs",
-              statusFilter === "all"
-                ? "bg-[#005FD6] text-white hover:bg-[#0051b8]"
-                : "text-slate-600 hover:bg-slate-100",
-            )}
-          >
-            All
-          </Button>
-
-          <Button
-            variant={statusFilter === "audited" ? "default" : "ghost"}
-            size="sm"
-            role="tab"
-            aria-selected={statusFilter === "audited"}
-            onClick={() => onStatusFilterChange("audited")}
-            className={cn(
-              "h-7 rounded-full px-3 text-xs",
-              statusFilter === "audited"
-                ? "bg-[#005FD6] text-white hover:bg-[#0051b8]"
-                : "text-slate-600 hover:bg-slate-100",
-            )}
-          >
-            Audited
-          </Button>
-
-          <Button
-            variant={statusFilter === "unaudited" ? "default" : "ghost"}
-            size="sm"
-            role="tab"
-            aria-selected={statusFilter === "unaudited"}
-            onClick={() => onStatusFilterChange("unaudited")}
-            className={cn(
-              "h-7 rounded-full px-3 text-xs",
-              statusFilter === "unaudited"
-                ? "bg-[#005FD6] text-white hover:bg-[#0051b8]"
-                : "text-slate-600 hover:bg-slate-100",
-            )}
-          >
-            Needs Audit
-          </Button>
-        </div>
-
-        <span className="text-xs text-slate-500 font-medium">
-          Showing {totalFiltered} {totalFiltered === 1 ? "repository" : "repositories"}
-        </span>
       </div>
     </div>
   );

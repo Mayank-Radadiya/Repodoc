@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import { CheckCircle2, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { AuditReport } from "@/src/lib/types";
@@ -10,10 +11,6 @@ import {
   getPotentialPoints,
   type ReportPreview,
 } from "./report-preview";
-import { getScoreGaugePalette, ScoreGauge } from "./score-gauge";
-
-const DISCLAIMER =
-  "Based on repository files and metadata. Tests and workflows are inspected for presence, not executed.";
 
 export interface HealthGaugeCardProps {
   report: AuditReport;
@@ -24,6 +21,7 @@ export interface HealthGaugeCardProps {
   className?: string;
 }
 
+/** The score lives in the overview; this panel focuses on the next improvements. */
 export function HealthGaugeCard({
   report,
   preview,
@@ -33,146 +31,113 @@ export function HealthGaugeCard({
   className,
 }: HealthGaugeCardProps) {
   const headingId = useId();
-  const { palette } = getScoreGaugePalette(preview.score);
-  const hasPreview = preview.delta > 0;
-
-  const passPercent =
-    preview.totalChecks > 0
-      ? Math.round((preview.passedChecks / preview.totalChecks) * 100)
-      : 0;
-
-  const allPassedInReport = report.checks.every((check) => check.passed);
+  const allPassedInReport =
+    report.checks.length > 0 && report.checks.every((check) => check.passed);
   const allFailuresPreviewed =
-    !allPassedInReport && preview.topBoosters.length === 0;
+    !allPassedInReport && preview.topBoosters.length === 0 && preview.delta > 0;
 
   return (
     <section
       aria-labelledby={headingId}
       className={cn(
-        "min-w-0 rounded-3xl border border-border bg-card p-5 shadow-card sm:p-6",
+        "min-w-0 rounded-xl border border-border bg-card p-5 sm:p-6",
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <h2 id={headingId} className="font-display text-xl font-semibold">
-          Repository health
+      <div className="flex items-center gap-2">
+        <TrendingUp
+          aria-hidden="true"
+          className="size-4 text-muted-foreground"
+        />
+        <h2 id={headingId} className="text-sm leading-6 font-semibold">
+          Score improvements
         </h2>
-        <span
-          className={cn(
-            "inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-medium",
-            palette.bg,
-            palette.border,
-            palette.text,
+      </div>
+      <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+        Preview the checks with the most points to gain.
+      </p>
+      {allPassedInReport ||
+      allFailuresPreviewed ||
+      preview.topBoosters.length === 0 ? (
+        <div className="mt-5 rounded-lg bg-muted/60 p-4 text-sm leading-6">
+          {allPassedInReport && (
+            <CheckCircle2
+              aria-hidden="true"
+              className="mb-3 size-5 text-success-foreground"
+            />
           )}
-        >
-          {palette.label}
-        </span>
-      </div>
-
-      <div className="mt-6 flex flex-col items-center gap-2">
-        <ScoreGauge healthScore={preview.score} size="lg" showStatus={false} />
-        {hasPreview && (
-          <p
-            data-testid="preview-delta"
-            className="text-sm font-medium text-emerald-600 dark:text-emerald-400"
-          >
-            +{formatPoints(preview.delta)} pts with previewed fixes
+          <p className="font-medium">
+            {allPassedInReport
+              ? "Every check passes. Nothing left to fix."
+              : allFailuresPreviewed
+                ? "All failing checks are previewed."
+                : "No score improvements available."}
           </p>
-        )}
-        <p className="text-sm font-medium">
-          {preview.passedChecks} of {preview.totalChecks} checks passed
-        </p>
-      </div>
-
-      <div className="mt-6">
-        <div className="flex items-center justify-between gap-3 text-sm">
-          <span>Check pass rate</span>
-          <span className="tabular-nums text-muted-foreground">
-            {passPercent}%
+          <p className="mt-1 text-muted-foreground">
+            {allFailuresPreviewed
+              ? "Clear the preview to return to your audited results."
+              : "Run another audit after making changes to your repository."}
+          </p>
+        </div>
+      ) : (
+        <ul className="mt-4 divide-y divide-border">
+          {preview.topBoosters.map((check) => {
+            const potential = getPotentialPoints(check);
+            const categoryName = getReportCategory(check.category).name;
+            return (
+              <li key={check.id}>
+                <button
+                  type="button"
+                  aria-pressed={previewedIds.has(check.id)}
+                  aria-label={`${check.name} (${categoryName}): preview +${formatPoints(potential)} pts`}
+                  onClick={() => onTogglePreview(check.id)}
+                  className="group flex w-full items-center justify-between gap-3 rounded-md px-1 py-4 text-left transition-colors hover:bg-muted/60"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-sm leading-5 font-medium [overflow-wrap:anywhere]">
+                      {check.name}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                      {categoryName}
+                    </span>
+                    <span className="mt-1 block text-xs text-primary">
+                      Preview fix
+                    </span>
+                  </span>
+                  <span className="shrink-0 rounded-md bg-primary/8 px-2 py-1 text-xs font-semibold text-info-foreground tabular-nums">
+                    +{formatPoints(potential)} pts
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {preview.topBoosters.length >= 3 && (
+        <Button
+          type="button"
+          variant="secondary"
+          className="mt-3 min-h-11 w-full"
+          onClick={() =>
+            onApplyBoosters(preview.topBoosters.map((check) => check.id))
+          }
+        >
+          Preview top 3
+          <span className="ml-auto text-xs tabular-nums text-primary">
+            +
+            {formatPoints(
+              preview.topBoosters.reduce(
+                (total, check) => total + getPotentialPoints(check),
+                0,
+              ),
+            )}{" "}
+            pts
           </span>
-        </div>
-        <div
-          role="img"
-          aria-label={`Pass rate: ${passPercent}% (${preview.passedChecks} of ${preview.totalChecks} checks)`}
-          className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-muted"
-        >
-          <span
-            className="h-full bg-emerald-500"
-            style={{ width: `${passPercent}%` }}
-          />
-          {passPercent < 100 && (
-            <span className="h-full flex-1 bg-rose-500/70" />
-          )}
-        </div>
-      </div>
-
-      <div className="mt-6">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-medium">Fastest score boosters</h3>
-          {preview.topBoosters.length >= 3 && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="min-h-9"
-              onClick={() =>
-                onApplyBoosters(preview.topBoosters.map((check) => check.id))
-              }
-            >
-              Preview top 3
-            </Button>
-          )}
-        </div>
-        {allPassedInReport ? (
-          <p className="mt-2 text-sm text-muted-foreground">
-            Every check passes. Nothing left to fix.
-          </p>
-        ) : allFailuresPreviewed ? (
-          <p className="mt-2 text-sm text-muted-foreground">
-            All failing checks are previewed.
-          </p>
-        ) : (
-          <ul className="mt-2 space-y-1.5">
-            {preview.topBoosters.map((check) => {
-              const potential = getPotentialPoints(check);
-              const categoryName = getReportCategory(check.category).name;
-              const isPreviewed = previewedIds.has(check.id);
-
-              return (
-                <li key={check.id}>
-                  <button
-                    type="button"
-                    aria-pressed={isPreviewed}
-                    aria-label={`${check.name} (${categoryName}): preview +${formatPoints(potential)} pts`}
-                    onClick={() => onTogglePreview(check.id)}
-                    className={cn(
-                      "flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                      isPreviewed
-                        ? "border-indigo-300 bg-indigo-50 dark:border-indigo-800 dark:bg-indigo-950/40"
-                        : "border-border hover:bg-muted/60",
-                    )}
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium">
-                        {check.name}
-                      </span>
-                      <span className="block text-xs text-muted-foreground">
-                        {categoryName}
-                      </span>
-                    </span>
-                    <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400">
-                      +{formatPoints(potential)} pts
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-
-      <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-        {DISCLAIMER}
+        </Button>
+      )}
+      <p className="mt-4 border-t border-border pt-4 text-xs leading-5 text-muted-foreground">
+        Previews show potential impact. Your audited score updates after changes
+        are merged and re-audited.
       </p>
     </section>
   );

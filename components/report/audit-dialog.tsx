@@ -1,5 +1,6 @@
 "use client";
 
+import type { RefObject } from "react";
 import {
   Dialog,
   DialogDescription,
@@ -14,6 +15,7 @@ export interface AuditRepositoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialValue?: string;
+  returnFocus?: RefObject<HTMLElement | null>;
 }
 
 /**
@@ -25,6 +27,7 @@ export function AuditRepositoryDialog({
   open,
   onOpenChange,
   initialValue,
+  returnFocus,
 }: AuditRepositoryDialogProps) {
   const { scopeElement } = useReportTheme();
 
@@ -32,6 +35,7 @@ export function AuditRepositoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPopup
         className="max-w-xl"
+        finalFocus={returnFocus}
         portalProps={{ container: scopeElement ?? undefined }}
       >
         <DialogHeader>

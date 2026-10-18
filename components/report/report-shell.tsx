@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search } from "lucide-react";
@@ -12,18 +12,25 @@ import { useReportTheme } from "./theme-scope";
 
 export function ReportShell({ children }: { children: ReactNode }) {
   const [auditOpen, setAuditOpen] = useState(false);
+  const auditReturnFocus = useRef<HTMLElement | null>(null);
   const { scopeElement } = useReportTheme();
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
+        if (!auditOpen) {
+          auditReturnFocus.current =
+            document.activeElement instanceof HTMLElement
+              ? document.activeElement
+              : null;
+        }
         setAuditOpen((open) => !open);
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [auditOpen]);
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -33,52 +40,65 @@ export function ReportShell({ children }: { children: ReactNode }) {
       >
         Skip to report
       </a>
-      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-md">
         <nav
           aria-label="Report navigation"
           className="mx-auto flex min-h-16 w-full max-w-[80rem] items-center justify-between gap-3 px-4 py-1.5 sm:px-6 lg:px-8"
         >
-          <Link
-            href="/"
-            aria-label="Repodoc home"
-            className="flex min-h-11 shrink-0 items-center gap-2 rounded-md"
-          >
-            <Image src="/logo.svg" alt="" width={28} height={28} />
-            <span className="font-display text-lg font-semibold tracking-tight">
-              Repodoc
+          <div className="flex min-w-0 items-center gap-4">
+            <Link
+              href="/"
+              aria-label="Repodoc home"
+              className="flex min-h-11 shrink-0 items-center gap-2.5 rounded-md"
+            >
+              <Image src="/logo.svg" alt="" width={28} height={28} />
+              <span className="font-display text-lg font-semibold tracking-tight">
+                Repodoc
+              </span>
+            </Link>
+            <span aria-hidden="true" className="hidden text-border sm:block">
+              /
             </span>
-            <span className="hidden rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">
-              v1.0
+            <span className="hidden text-sm text-muted-foreground sm:block">
+              Reports
             </span>
-          </Link>
+          </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            <ThemeToggle />
             <Button
-              variant="outline"
+              variant="ghost"
               className="min-h-11"
               aria-label="Audit another repository"
-              onClick={() => setAuditOpen(true)}
+              onClick={(event) => {
+                auditReturnFocus.current = event.currentTarget;
+                setAuditOpen(true);
+              }}
             >
               <Search aria-hidden="true" />
               <span className="hidden md:inline">Audit another repository</span>
               <kbd
                 aria-hidden="true"
-                className="ml-1 hidden rounded border border-border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground lg:inline"
+                className="ml-1 hidden rounded border border-border bg-muted px-1.5 font-mono text-xs text-muted-foreground lg:inline"
               >
                 ⌘K
               </kbd>
             </Button>
+            <span aria-hidden="true" className="mx-1 h-5 w-px bg-border" />
+            <ThemeToggle />
             <AuthControls portalContainer={scopeElement} />
           </div>
         </nav>
       </header>
       <main
         id="report-content"
-        className="mx-auto w-full max-w-[80rem] flex-1 px-4 py-8 sm:px-6 sm:py-12 lg:px-8"
+        className="mx-auto w-full max-w-[80rem] flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8"
       >
         {children}
       </main>
-      <AuditRepositoryDialog open={auditOpen} onOpenChange={setAuditOpen} />
+      <AuditRepositoryDialog
+        open={auditOpen}
+        onOpenChange={setAuditOpen}
+        returnFocus={auditReturnFocus}
+      />
     </div>
   );
 }

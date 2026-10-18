@@ -13,7 +13,7 @@ describe("ReportPending loading skeleton", () => {
     expect(screen.getByText("Auditing octocat/Hello-World…")).toBeDefined();
   });
 
-  it("renders structured skeletons mirroring the category, score, and badge cards", () => {
+  it("keeps visual skeletons hidden from assistive technology", () => {
     const { container } = render(<ReportPending />);
 
     // Screen reader accessible heading
@@ -22,11 +22,13 @@ describe("ReportPending loading skeleton", () => {
     ).toBeDefined();
 
     // Skeletons use motion-safe pulse
-    const pulseElements = container.querySelectorAll(".motion-safe\\:animate-pulse");
+    const pulseElements = container.querySelectorAll(
+      ".motion-safe\\:animate-pulse",
+    );
     expect(pulseElements.length).toBeGreaterThan(0);
 
-    // Grid layout with 3 columns on large screens
-    const grid = container.querySelector(".lg\\:grid-cols-3");
-    expect(grid).toBeDefined();
+    const skeletons = container.querySelector('[aria-hidden="true"]');
+    expect(skeletons).not.toBeNull();
+    expect(skeletons?.contains(pulseElements[0])).toBe(true);
   });
 });

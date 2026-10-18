@@ -118,7 +118,6 @@ export function buildShareUrl(options: {
   return `${base}/share/${shareId}`;
 }
 
-
 /**
  * Generates the standard Markdown embed snippet as defined in idea.md:
  * [![Repo Health](https://img.shields.io/endpoint?url=https://repodoc.dev/api/badge/owner/repo)](https://repodoc.dev/report/owner/repo)
@@ -370,14 +369,14 @@ export function BadgeSnippet({
     <Card
       aria-labelledby={titleId}
       className={cn(
-        "min-w-0 w-full overflow-hidden shadow-none dark:[--muted-foreground:var(--color-neutral-300)]",
+        "min-w-0 w-full overflow-hidden rounded-xl shadow-none before:shadow-none dark:before:shadow-none",
         className,
       )}
     >
-      <CardHeader className="gap-2 p-4 sm:p-6">
+      <CardHeader className="gap-2 p-5 pb-0 sm:p-6 sm:pb-0">
         <CardTitle
           render={<h2 id={titleId} />}
-          className="font-display text-xl leading-tight"
+          className="text-sm leading-6 font-semibold"
         >
           Add a health badge
         </CardTitle>
@@ -386,7 +385,7 @@ export function BadgeSnippet({
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="min-w-0 space-y-5 p-4 sm:p-6">
+      <CardContent className="min-w-0 space-y-4 p-5 pt-4 sm:p-6 sm:pt-4">
         <div className="overflow-hidden rounded-lg border border-border">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-border bg-muted/40 px-4 py-2.5 text-xs text-muted-foreground">
             <span>README.md</span>
@@ -394,7 +393,7 @@ export function BadgeSnippet({
               {resolvedOwner}/{resolvedRepo}
             </span>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3 py-2">
             <div className="flex flex-wrap items-center gap-3">
               <a
                 href={reportUrl}
@@ -491,7 +490,7 @@ export function BadgeSnippet({
               <pre
                 tabIndex={0}
                 aria-label={`${value} code snippet`}
-                className="max-w-full overflow-x-auto whitespace-pre-wrap break-all rounded-lg border border-border bg-muted/40 p-4 font-mono text-xs leading-relaxed text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:focus-visible:outline-blue-400"
+                className="max-w-full overflow-x-auto whitespace-pre-wrap break-all rounded-lg border border-border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:focus-visible:outline-blue-400"
               >
                 <code className="select-all">
                   {getSnippetForFormat(value, urlOptions)}

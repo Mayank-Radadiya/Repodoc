@@ -1,234 +1,200 @@
 "use client";
 
-import React, { useState } from "react";
+import { useId } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import {
   AlertCircle,
   ExternalLink,
+  GitBranch,
   GitFork,
   Loader2,
   RotateCcw,
-  Sparkles,
+  ScanLine,
   Star,
 } from "lucide-react";
 import type { DashboardRepoItem } from "@/src/lib/dashboard";
-import { requestAudit } from "@/src/lib/request-audit";
+import { formatAuditDate, getHealthBand, hasHealthScore, type RepositoryAuditState } from "./dashboard-model";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import styles from "./dashboard.module.css";
 
 export interface DashboardRepoCardProps {
   repo: DashboardRepoItem;
-  onAuditComplete?: (updatedRepo: DashboardRepoItem) => void;
-  fetcher?: typeof fetch;
+  onAudit: (repo: DashboardRepoItem) => void;
+  auditState?: RepositoryAuditState;
 }
 
-function getScoreBadgeClass(score: number): string {
-  if (score >= 80) {
-    return "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
-  }
-  if (score >= 50) {
-    return "bg-amber-500/10 text-amber-700 border-amber-500/20";
-  }
-  return "bg-rose-500/10 text-rose-700 border-rose-500/20";
-}
-
-function getLanguageColor(language: string | null): string {
-  if (!language) return "bg-slate-400";
-  const colors: Record<string, string> = {
-    TypeScript: "bg-blue-500",
-    JavaScript: "bg-amber-400",
-    Python: "bg-emerald-500",
-    Rust: "bg-orange-600",
-    Go: "bg-cyan-500",
-    Java: "bg-red-500",
-    "C++": "bg-pink-500",
-    Ruby: "bg-rose-600",
-    PHP: "bg-indigo-400",
-    HTML: "bg-orange-500",
-    CSS: "bg-purple-500",
-  };
-  return colors[language] ?? "bg-blue-400";
+function languageClass(language: string | null) {
+  if (language === "TypeScript") return styles.languageBlue;
+  if (language === "JavaScript") return styles.languageYellow;
+  if (language === "Python") return styles.languageGreen;
+  if (language === "Go") return styles.languageCyan;
+  if (language === "Rust" || language === "HTML") return styles.languageOrange;
+  return styles.languageNeutral;
 }
 
 export function DashboardRepoCard({
   repo,
-  onAuditComplete,
-  fetcher,
-}: DashboardRepoCardProps): React.JSX.Element {
-  const [isAuditing, setIsAuditing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleAudit = async () => {
-    if (isAuditing) return;
-    setIsAuditing(true);
-    setError(null);
-
-    try {
-      const report = await requestAudit(
-        { owner: repo.owner, repo: repo.name },
-        { fetcher },
-      );
-
-      const shareId = "shareId" in report ? report.shareId : null;
-      const updated: DashboardRepoItem = {
-        ...repo,
-        hasReport: true,
-        healthScore: report.healthScore,
-        shareId: shareId ?? repo.shareId,
-        lastAuditedAt: new Date().toISOString(),
-      };
-
-      onAuditComplete?.(updated);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to audit repository.";
-      setError(message);
-    } finally {
-      setIsAuditing(false);
-    }
-  };
+  onAudit,
+  auditState,
+}: DashboardRepoCardProps) {
+  const isAuditing = auditState?.pending ?? false;
+  const error = auditState?.error;
+  const errorId = useId();
+  const reducedMotion = useReducedMotion();
 
   const reportUrl = `/report/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.name)}`;
+  const score = hasHealthScore(repo) ? repo.healthScore : null;
+  const health = score !== null ? getHealthBand(score) : null;
+  const date = repo.hasReport ? formatAuditDate(repo.lastAuditedAt) : null;
 
   return (
-    <div className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xs backdrop-blur-md transition-all duration-200 hover:border-slate-300 hover:shadow-md">
-      {/* Top Header */}
-      <div>
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <a
-                href={repo.githubUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="group/title inline-flex items-center gap-1.5 truncate text-base font-semibold text-slate-900 transition-colors hover:text-[#005FD6]"
-              >
-                <span className="truncate">{repo.name}</span>
-                <ExternalLink
-                  className="size-3.5 shrink-0 opacity-0 transition-opacity group-hover/title:opacity-100"
-                  aria-hidden="true"
-                />
-              </a>
-              <Badge
-                variant="outline"
-                className="shrink-0 text-[10px] font-medium tracking-wide uppercase"
-              >
-                {repo.isPrivate ? "Private" : "Public"}
-              </Badge>
-            </div>
-            <p className="mt-1 line-clamp-2 text-xs text-slate-500">
-              {repo.description || "No description provided."}
-            </p>
-          </div>
+    <article
+      className={styles.repoRow}
+      aria-label={`Repository ${repo.fullName}`}
+    >
+      <div className={styles.repoDetails}>
+        <div className={styles.repoTitle}>
+          <a
+            href={repo.githubUrl}
+            target="_blank"
+            rel="noreferrer"
+            className={styles.repoLink}
+          >
+            {repo.name}
+            <ExternalLink size={13} aria-hidden="true" />
+          </a>
+          <span className={styles.visibility}>
+            {repo.isPrivate ? "Private" : "Public"}
+          </span>
         </div>
-
-        {/* Metadata Row */}
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-500">
+        <p className={styles.description}>
+          {repo.description || "No description provided."}
+        </p>
+        <div className={styles.metadata}>
           {repo.language && (
-            <div className="flex items-center gap-1.5">
-              <span
-                className={cn("size-2 rounded-full", getLanguageColor(repo.language))}
+            <span>
+              <i
+                className={cn(styles.languageDot, languageClass(repo.language))}
                 aria-hidden="true"
               />
-              <span>{repo.language}</span>
-            </div>
+              {repo.language}
+            </span>
           )}
-
-          <div className="flex items-center gap-1">
-            <Star className="size-3.5 text-slate-400" aria-hidden="true" />
-            <span>{repo.starsCount}</span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <GitFork className="size-3.5 text-slate-400" aria-hidden="true" />
-            <span>{repo.forksCount}</span>
-          </div>
-
-          <span className="text-[11px] text-slate-400">
-            Branch: {repo.defaultBranch}
+          <span aria-label={`${repo.starsCount} stars`}>
+            <Star size={13} aria-hidden="true" />
+            {repo.starsCount}
+          </span>
+          <span aria-label={`${repo.forksCount} forks`}>
+            <GitFork size={13} aria-hidden="true" />
+            {repo.forksCount}
+          </span>
+          <span
+            className={styles.branch}
+            title={`Branch: ${repo.defaultBranch}`}
+          >
+            <GitBranch size={13} aria-hidden="true" />
+            {repo.defaultBranch}
           </span>
         </div>
       </div>
 
-      {/* Error Notice */}
-      {error && (
-        <div
-          role="alert"
-          className="mt-3 flex items-start gap-1.5 rounded-lg border border-destructive/20 bg-destructive/10 p-2 text-xs text-destructive"
-        >
-          <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-          <span className="flex-1">{error}</span>
-        </div>
-      )}
-
-      {/* Footer Actions */}
-      <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-        {repo.hasReport && repo.healthScore !== null ? (
+      <div className={cn(styles.repoHealth, health && styles[health.key])}>
+        <span className={styles.mobileLabel}>Health</span>
+        {score !== null && health ? (
           <>
-            <div className="flex items-center gap-2">
+            <motion.span className={styles.score} key={`${score}-${repo.lastAuditedAt}`} initial={auditState?.completed && !reducedMotion ? { opacity: 0, y: 3 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : 0.2 }}>
+              {score}
+              <span>/100</span>
+            </motion.span>
+            <div
+              role="meter"
+              aria-label={`Health score for ${repo.name}`}
+              aria-valuenow={score}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuetext={`${score} out of 100, ${health.label}`}
+              className={styles.healthTrack}
+            >
               <span
-                className={cn(
-                  "inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-semibold tabular-nums",
-                  getScoreBadgeClass(repo.healthScore),
-                )}
-              >
-                {repo.healthScore}/100
-              </span>
+                style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
+              />
             </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 text-xs text-slate-700"
-                onClick={handleAudit}
-                disabled={isAuditing}
-              >
-                {isAuditing ? (
-                  <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-                ) : (
-                  <RotateCcw className="size-3.5" aria-hidden="true" />
-                )}
-                <span>{isAuditing ? "Auditing…" : "Re-audit"}</span>
-              </Button>
-
-              <Button
-                render={<Link href={reportUrl} />}
-                size="sm"
-                className="h-8 text-xs bg-[#005FD6] text-white hover:bg-[#0051b8]"
-              >
-                View Report
-              </Button>
-            </div>
+            <span className={styles.healthLabel}>{health.label}</span>
           </>
         ) : (
           <>
-            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">
-              Not audited yet
+            <span className={styles.unscored}>
+              {repo.hasReport ? "Score unavailable" : "Not audited yet"}
             </span>
-
-            <Button
-              size="sm"
-              className="h-8 gap-1.5 text-xs bg-[#005FD6] text-white hover:bg-[#0051b8]"
-              onClick={handleAudit}
-              disabled={isAuditing}
-            >
-              {isAuditing ? (
-                <>
-                  <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-                  <span>Auditing…</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="size-3.5" aria-hidden="true" />
-                  <span>Audit Repository</span>
-                </>
-              )}
-            </Button>
+            <span className={styles.healthHint}>
+              {repo.hasReport ? "Re-audit to update" : "Ready to audit"}
+            </span>
           </>
         )}
       </div>
-    </div>
+
+      <div className={styles.lastAudit} role="group" aria-label="Last audit">
+        <span className={styles.mobileLabel}>Last audit</span>
+        {date ? (
+          <time dateTime={repo.lastAuditedAt ?? undefined}>{date}</time>
+        ) : (
+          <span>{repo.hasReport ? "Date unavailable" : "—"}</span>
+        )}
+      </div>
+
+      <div className={styles.repoActions}>
+        <Button
+          variant={repo.hasReport ? "ghost" : "default"}
+          className={cn(
+            styles.action,
+            repo.hasReport ? styles.quietAction : styles.primaryAction,
+          )}
+          onClick={() => onAudit(repo)}
+          disabled={isAuditing}
+          aria-describedby={error ? errorId : undefined}
+        >
+          {isAuditing ? (
+            <Loader2
+              size={14}
+              className="motion-safe:animate-spin"
+              aria-hidden="true"
+            />
+          ) : repo.hasReport ? (
+            <RotateCcw size={14} aria-hidden="true" />
+          ) : (
+            <ScanLine size={14} aria-hidden="true" />
+          )}
+          <span>
+            {isAuditing
+              ? "Auditing…"
+                : error ? "Retry audit" : repo.hasReport
+                ? "Re-audit"
+                : "Audit repository"}
+          </span>
+        </Button>
+        {repo.hasReport && (
+          <Button
+            render={<Link href={reportUrl} />}
+            variant="outline"
+            className={cn(styles.action, styles.reportAction)}
+          >
+            View report
+          </Button>
+        )}
+        {isAuditing && (
+          <span role="status" className="sr-only">
+            Auditing {repo.name}…
+          </span>
+        )}
+      </div>
+      {error && (
+        <div role="alert" id={errorId} className={styles.auditError}>
+          <AlertCircle size={16} aria-hidden="true" />
+          <p>{error}</p>
+        </div>
+      )}
+    </article>
   );
 }

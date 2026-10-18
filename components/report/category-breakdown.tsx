@@ -3,11 +3,13 @@
 import { useId, useMemo, useState } from "react";
 import {
   CheckCircle2,
+  ArrowUpDown,
+  CircleAlert,
   ChevronDown,
   ExternalLink,
   FilePlus2,
+  Search,
   X,
-  XCircle,
 } from "lucide-react";
 import {
   Accordion,
@@ -30,6 +32,7 @@ import {
   getPotentialPoints,
   type ReportPreview,
 } from "./report-preview";
+import styles from "./report.module.css";
 
 export interface CategoryBreakdownProps {
   report: AuditReport;
@@ -39,9 +42,14 @@ export interface CategoryBreakdownProps {
   openCategories: CategoryId[];
   onOpenCategoriesChange: (categories: CategoryId[]) => void;
   className?: string;
+  search?: string;
+  onSearchChange?: (search: string) => void;
+  filter?: CheckFilter;
+  onFilterChange?: (filter: CheckFilter) => void;
 }
 
-type CheckFilter = "all" | "failed" | "passed";
+export type CheckFilter = "all" | "failed" | "passed";
+type CheckSort = "rubric" | "impact" | "name";
 
 interface CheckRowProps {
   check: CheckResult;
@@ -62,7 +70,7 @@ function CheckRow({
 }: CheckRowProps) {
   const potential = getPotentialPoints(check);
   const showPreviewToggle = isPreviewed || (!check.passed && potential > 0);
-  const StatusIcon = check.passed ? CheckCircle2 : XCircle;
+  const StatusIcon = check.passed ? CheckCircle2 : CircleAlert;
   const statusLabel = isPreviewed
     ? "Previewed"
     : check.passed
@@ -71,8 +79,8 @@ function CheckRow({
   const remediation = check.remediation;
 
   return (
-    <li className="py-4 first:pt-0 last:pb-0">
-      <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+    <li className={styles.checkRow}>
+      <div className={styles.checkRowLayout}>
         <StatusIcon
           aria-hidden="true"
           className={cn(
@@ -81,36 +89,36 @@ function CheckRow({
               ? "text-info-foreground"
               : check.passed
                 ? "text-success-foreground"
-                : "text-destructive-foreground",
+                : "text-warning-foreground",
           )}
         />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <p className="min-w-0 break-words font-medium text-foreground">
+            <p className="min-w-0 [overflow-wrap:anywhere] text-sm font-medium text-foreground">
               {check.name}
             </p>
-            <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
               {formatPoints(check.pointsAwarded)}/{check.maxPoints} pts
             </span>
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <span
               className={cn(
-                "rounded-full border px-2 py-0.5 text-xs font-medium",
+                styles.statusBadge,
                 isPreviewed
-                  ? "border-info/40 bg-info/10 text-info-foreground"
+                  ? "bg-info/8 text-info-foreground"
                   : check.passed
-                    ? "border-success/40 bg-success/10 text-success-foreground"
-                    : "border-destructive/40 bg-destructive/10 text-destructive-foreground",
+                    ? "bg-success/8 text-success-foreground"
+                    : "bg-warning/10 text-warning-foreground",
               )}
             >
               {statusLabel}
             </span>
           </div>
-          <Collapsible className="mt-2">
+          <Collapsible>
             <CollapsibleTrigger
               aria-label={`Evidence and remediation for ${check.name}`}
-              className="group flex cursor-pointer items-center gap-1.5 rounded-sm py-1 text-xs font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="group flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md py-1 text-xs font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Evidence &amp; remediation
               <ChevronDown
@@ -141,7 +149,9 @@ function CheckRow({
                       ))}
                     </ul>
                   ) : (
-                    <p className="mt-1 text-muted-foreground">No files checked</p>
+                    <p className="mt-1 text-muted-foreground">
+                      No files checked
+                    </p>
                   )}
                 </div>
                 {remediation && (
@@ -150,7 +160,7 @@ function CheckRow({
                     <p className="mt-1 text-muted-foreground">
                       {remediation.description}
                     </p>
-                    <p className="mt-2">
+                    <p className="mt-1">
                       <code className="rounded-sm bg-muted px-1.5 py-0.5 break-all">
                         {remediation.targetPath}
                       </code>
@@ -160,7 +170,7 @@ function CheckRow({
                         href={`https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/new/${encodeURIComponent(defaultBranch)}?filename=${encodeURIComponent(remediation.targetPath)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-2 inline-flex min-h-9 items-center gap-1.5 text-sm font-medium text-info-foreground underline-offset-4 hover:underline"
+                        className="mt-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-info-foreground underline-offset-4 hover:underline"
                       >
                         <FilePlus2 aria-hidden="true" className="size-3.5" />
                         Create {remediation.targetPath} on GitHub
@@ -184,10 +194,11 @@ function CheckRow({
             }
             onClick={() => onTogglePreview(check.id)}
             className={cn(
-              "inline-flex min-h-8 shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+              styles.previewButton,
+              "inline-flex min-h-11 shrink-0 items-center rounded-md border px-3 py-2 text-xs font-medium transition-colors",
               isPreviewed
                 ? "border-info/50 bg-info/15 text-info-foreground"
-                : "border-border bg-background text-muted-foreground hover:border-info/50 hover:text-info-foreground",
+                : "border-border bg-card text-muted-foreground hover:border-info/50 hover:text-info-foreground",
             )}
           >
             {isPreviewed
@@ -208,11 +219,22 @@ export function CategoryBreakdown({
   openCategories,
   onOpenCategoriesChange,
   className,
+  search: controlledSearch,
+  onSearchChange,
+  filter: controlledFilter,
+  onFilterChange,
 }: CategoryBreakdownProps) {
   const headingId = useId();
-  const [filter, setFilter] = useState<CheckFilter>("all");
-  const [search, setSearch] = useState("");
+  const sortId = useId();
+  const [localFilter, setLocalFilter] = useState<CheckFilter>("all");
+  const [localSearch, setLocalSearch] = useState("");
+  const [sort, setSort] = useState<CheckSort>("impact");
+  const filter = controlledFilter ?? localFilter;
+  const search = controlledSearch ?? localSearch;
+  const setFilter = onFilterChange ?? setLocalFilter;
+  const setSearch = onSearchChange ?? setLocalSearch;
   const query = search.trim().toLowerCase();
+  const isFiltering = filter !== "all" || query.length > 0;
 
   const counts = useMemo(() => {
     let passed = 0;
@@ -240,52 +262,128 @@ export function CategoryBreakdown({
   const matches = (check: CheckResult) => {
     if (filter === "failed" && check.passed) return false;
     if (filter === "passed" && !check.passed) return false;
-    if (query && !check.name.toLowerCase().includes(query)) return false;
+    if (
+      query &&
+      ![
+        check.name,
+        check.evidence.details,
+        ...check.evidence.filesChecked,
+        check.remediation?.targetPath ?? "",
+        REPORT_CATEGORIES.find((category) => category.id === check.category)
+          ?.name ?? "",
+      ].some((value) => value.toLowerCase().includes(query))
+    )
+      return false;
     return true;
   };
+  const matchingCount = preview.checks.filter(matches).length;
+  const visibleCategories = REPORT_CATEGORIES.filter(
+    ({ id }) => !isFiltering || preview.categories[id].checks.some(matches),
+  );
+  const resetFilters = () => {
+    setSearch("");
+    setFilter("all");
+  };
+  const revealMatches = () => onOpenCategoriesChange([...REPORT_CATEGORY_IDS]);
 
   return (
-    <section aria-labelledby={headingId} className={cn("min-w-0", className)}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <section
+      id="report-findings"
+      aria-labelledby={headingId}
+      className={cn(styles.findings, className)}
+    >
+      <div className={styles.findingsHeading}>
         <div className="min-w-0">
           <h2
             id={headingId}
-            className="font-display text-xl font-semibold text-foreground"
+            className="text-base font-semibold text-foreground"
           >
-            Category breakdown
+            Findings
           </h2>
           <p className="mt-1 max-w-prose text-sm text-muted-foreground">
-            Open a category to check the evidence. Preview fixes on failed
-            checks to see the score impact.
+            Explore the evidence behind each check and preview improvements.
           </p>
         </div>
-        <span className="shrink-0 rounded-full border border-border bg-muted/50 px-3 py-1 font-mono text-xs text-muted-foreground">
-          {REPORT_CATEGORIES.length} pillars · {report.checks.length} checks
+        <span className="text-xs leading-5 tabular-nums text-muted-foreground">
+          {report.checks.length} checks across {REPORT_CATEGORIES.length}{" "}
+          categories
         </span>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+      <div className={styles.findingsToolbar}>
         <div
           role="group"
           aria-label="Filter checks by status"
-          className="flex items-center gap-1.5"
+          className={styles.statusFilters}
         >
           {filters.map(({ value, count }) => (
             <button
               key={value}
               type="button"
               aria-pressed={filter === value}
-              onClick={() => setFilter(value)}
+              onClick={() => {
+                setFilter(value);
+                revealMatches();
+              }}
               className={cn(
-                "inline-flex min-h-8 items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                "inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 py-2 text-xs font-medium transition-colors sm:flex-none",
                 filter === value
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-background text-muted-foreground hover:text-foreground",
+                  ? "border-border bg-card text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
               {filterLabels[value]} ({count})
             </button>
           ))}
+        </div>
+        <div className={styles.findingsSearch}>
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 z-10 size-4 text-muted-foreground"
+          />
+          <Input
+            type="search"
+            aria-label="Search checks"
+            placeholder="Search checks or files…"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              revealMatches();
+            }}
+            className="w-full flex-1 [&_input]:pr-11 [&_input]:pl-9"
+          />
+          {search && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => setSearch("")}
+              className="absolute right-0 z-10 inline-flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <X aria-hidden="true" className="size-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className={styles.findingsOptions}>
+        <div className="flex min-w-0 items-center gap-2">
+          <ArrowUpDown
+            aria-hidden="true"
+            className="size-3.5 shrink-0 text-muted-foreground"
+          />
+          <label htmlFor={sortId} className="sr-only">
+            Sort checks within categories
+          </label>
+          <select
+            id={sortId}
+            value={sort}
+            onChange={(event) => setSort(event.target.value as CheckSort)}
+            className={styles.sortSelect}
+          >
+            <option value="impact">Highest impact</option>
+            <option value="rubric">Rubric order</option>
+            <option value="name">Name (A–Z)</option>
+          </select>
         </div>
         <div className="flex items-center gap-1">
           <Button
@@ -306,114 +404,139 @@ export function CategoryBreakdown({
           </Button>
         </div>
       </div>
-
-      <div className="mt-3 flex items-center gap-2">
-        <Input
-          type="search"
-          aria-label="Search checks"
-          placeholder="Search checks"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          className="max-w-sm flex-1"
-        />
-        {search && (
+      {isFiltering && (
+        <div className="flex items-center justify-between gap-3 px-5 pb-3 text-xs text-muted-foreground sm:px-6">
+          <p role="status" aria-live="polite">
+            {matchingCount} of {counts.total} checks shown
+          </p>
           <button
             type="button"
-            aria-label="Clear search"
-            onClick={() => setSearch("")}
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-foreground"
+            onClick={resetFilters}
+            className="min-h-11 rounded-md px-2 font-medium text-primary hover:underline"
           >
-            <X aria-hidden="true" className="size-3.5" />
+            Clear filters
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
-      <Accordion
-        multiple
-        value={openCategories}
-        onValueChange={(value) =>
-          onOpenCategoriesChange(value as CategoryId[])
-        }
-        className="mt-4 border-y border-border [&_[data-slot=accordion-panel]]:motion-reduce:transition-none [&_[data-slot=accordion-indicator]]:motion-reduce:transition-none"
-      >
-        {REPORT_CATEGORIES.map(({ id, name, icon: CategoryIcon }) => {
-          const category = preview.categories[id];
-          const categoryPassed = category.checks.filter(
-            (check) => check.passed,
-          ).length;
-          const visibleChecks = category.checks.filter(matches);
-          const percent =
-            category.maxPoints > 0
-              ? Math.round((category.pointsAwarded / category.maxPoints) * 100)
-              : 0;
+      {matchingCount === 0 ? (
+        <div className={styles.emptyState}>
+          <Search
+            aria-hidden="true"
+            className="mx-auto mb-3 size-6 text-muted-foreground"
+          />
+          <h3 className="text-sm font-semibold">
+            {counts.total === 0
+              ? "No checks in this report"
+              : "No checks match your filters"}
+          </h3>
+          <p className="mt-1 max-w-prose text-sm text-muted-foreground">
+            {counts.total === 0
+              ? "Run another audit to generate repository findings."
+              : "Try a different check name or file path, or clear your filters."}
+          </p>
+          {isFiltering && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetFilters}
+              className="mt-4"
+            >
+              Show all checks
+            </Button>
+          )}
+        </div>
+      ) : (
+        <Accordion
+          multiple
+          value={openCategories}
+          onValueChange={(value) =>
+            onOpenCategoriesChange(value as CategoryId[])
+          }
+          className="border-t border-border [&_[data-slot=accordion-panel]]:motion-reduce:transition-none [&_[data-slot=accordion-indicator]]:motion-reduce:transition-none"
+        >
+          {visibleCategories.map(({ id, name, icon: CategoryIcon }) => {
+            const category = preview.categories[id];
+            const categoryPassed = category.checks.filter(
+              (check) => check.passed,
+            ).length;
+            const visibleChecks = category.checks
+              .filter(matches)
+              .sort((a, b) =>
+                sort === "impact"
+                  ? getPotentialPoints(b) - getPotentialPoints(a)
+                  : sort === "name"
+                    ? a.name.localeCompare(b.name)
+                    : 0,
+              );
 
-          return (
-            <AccordionItem key={id} value={id} id={`category-${id}`}>
-              <AccordionTrigger
-                aria-label={`${name}: ${formatPoints(category.pointsAwarded)} out of ${category.maxPoints} points`}
-                className="items-center gap-3 py-4 text-foreground"
+            return (
+              <AccordionItem
+                key={id}
+                value={id}
+                id={`category-${id}`}
+                className={styles.categoryItem}
               >
-                <span className="flex min-w-0 flex-1 items-center gap-3">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/50">
-                    <CategoryIcon
-                      aria-hidden="true"
-                      className="size-4 text-muted-foreground"
-                    />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
-                      <span className="min-w-0 truncate text-sm font-medium">
-                        {name}
-                      </span>
-                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                        {categoryPassed} of {category.checks.length} passed
-                      </span>
-                    </span>
-                    <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-muted">
-                      <span
-                        className="block h-full rounded-full bg-foreground/70"
-                        style={{ width: `${percent}%` }}
+                <AccordionTrigger
+                  aria-label={`${name}: ${formatPoints(category.pointsAwarded)} out of ${category.maxPoints} points`}
+                  className="items-center gap-3 rounded-none px-5 py-4 text-foreground hover:bg-muted/40 sm:px-6"
+                >
+                  <span className="flex min-w-0 flex-1 items-center gap-3">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted/70">
+                      <CategoryIcon
+                        aria-hidden="true"
+                        className="size-4 text-muted-foreground"
                       />
                     </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+                        <span className="min-w-0 truncate text-sm font-medium">
+                          {name}
+                        </span>
+                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                          {categoryPassed} of {category.checks.length} passed
+                        </span>
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                      {formatPoints(category.pointsAwarded)}/
+                      {category.maxPoints} pts
+                    </span>
                   </span>
-                  <span className="shrink-0 rounded-full border border-border bg-muted/50 px-2.5 py-1 font-mono text-xs tabular-nums text-muted-foreground">
-                    {formatPoints(category.pointsAwarded)}/{category.maxPoints}{" "}
-                    pts
-                  </span>
-                </span>
-              </AccordionTrigger>
-              <AccordionPanel>
-                {category.checks.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No checks available
-                  </p>
-                ) : visibleChecks.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No checks match the current filter.
-                  </p>
-                ) : (
-                  <ul
-                    aria-label={`${name} checks`}
-                    className="divide-y divide-border"
-                  >
-                    {visibleChecks.map((check) => (
-                      <CheckRow
-                        key={check.id}
-                        check={check}
-                        owner={report.owner}
-                        repo={report.repo}
-                        defaultBranch={report.defaultBranch}
-                        isPreviewed={previewedIds.has(check.id)}
-                        onTogglePreview={onTogglePreview}
-                      />
-                    ))}
-                  </ul>
-                )}
-              </AccordionPanel>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+                </AccordionTrigger>
+                <AccordionPanel className="px-5 pb-2 sm:px-6">
+                  {category.checks.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No checks available
+                    </p>
+                  ) : visibleChecks.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No checks match the current filter.
+                    </p>
+                  ) : (
+                    <ul
+                      aria-label={`${name} checks`}
+                      className="divide-y divide-border"
+                    >
+                      {visibleChecks.map((check) => (
+                        <CheckRow
+                          key={check.id}
+                          check={check}
+                          owner={report.owner}
+                          repo={report.repo}
+                          defaultBranch={report.defaultBranch}
+                          isPreviewed={previewedIds.has(check.id)}
+                          onTogglePreview={onTogglePreview}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                </AccordionPanel>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      )}
     </section>
   );
 }

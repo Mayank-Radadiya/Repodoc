@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { computeReportPreview } from "@/components/report/report-preview";
 import { ReportHero } from "@/components/report/report-hero";
@@ -14,15 +20,38 @@ function renderHero(
   const { previewedIds, ...overrides } = options;
   const report = makeFixtureReport();
   const preview = computeReportPreview(report, previewedIds ?? new Set());
-  return render(<ReportHero report={report} preview={preview} {...overrides} />);
+  return render(
+    <ReportHero report={report} preview={preview} {...overrides} />,
+  );
 }
 
 describe("ReportHero", () => {
-  it("renders the repository heading and report chip", () => {
+  it("renders the repository identity and report description", () => {
     renderHero();
     const heading = screen.getByRole("heading", { level: 1 });
     expect(heading.textContent).toBe("example/repository");
     expect(screen.getByText("Repository health report")).toBeDefined();
+  });
+
+  it("renders the audited score, passed checks, and pass rate in the overview", () => {
+    renderHero();
+    expect(screen.getByRole("meter").getAttribute("aria-valuenow")).toBe("41");
+    expect(screen.getByText("3 of 7 checks passed")).toBeDefined();
+    expect(
+      screen
+        .getByRole("img", { name: /pass rate/i })
+        .getAttribute("aria-label"),
+    ).toContain("43%");
+    expect(
+      screen.getByText(/inspected for presence, not executed/i),
+    ).toBeDefined();
+  });
+
+  it("distinguishes previewed results from the audited score", () => {
+    renderHero({ previewedIds: new Set(["sec-policy"]) });
+    expect(screen.getByRole("meter").getAttribute("aria-valuenow")).toBe("51");
+    expect(screen.getByTestId("preview-delta").textContent).toContain("+10");
+    expect(screen.getByText(/Audited score: 41/)).toBeDefined();
   });
 
   it("links to the repository on GitHub in a new tab", () => {
@@ -35,7 +64,7 @@ describe("ReportHero", () => {
     expect(link.getAttribute("rel")).toContain("noopener");
   });
 
-  it("shows the status pill from the preview score and palette", () => {
+  it("shows the health status from the preview score and palette", () => {
     renderHero();
     const pill = screen.getByTestId("hero-status-pill");
     expect(pill.textContent).toContain("Needs Improvement");

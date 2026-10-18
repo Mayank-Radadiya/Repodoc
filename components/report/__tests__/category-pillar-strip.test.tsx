@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CategoryPillarStrip } from "@/components/report/category-pillar-strip";
 import { computeReportPreview } from "@/components/report/report-preview";
@@ -29,8 +29,7 @@ describe("CategoryPillarStrip", () => {
     expect(buttons).toHaveLength(5);
 
     const docs = screen.getByRole("button", { name: /Documentation/ });
-    expect(within(docs).getByText("12/25 pts")).toBeDefined();
-    expect(within(docs).getByText("48%")).toBeDefined();
+    expect(docs.getAttribute("aria-label")).toContain("12 of 25 points (48%)");
   });
 
   it("reports a selected category", () => {
@@ -42,10 +41,14 @@ describe("CategoryPillarStrip", () => {
   it("tones the progress bar by earned ratio", () => {
     renderStrip();
     expect(
-      screen.getByRole("button", { name: /Documentation/ }).getAttribute("data-tone"),
+      screen
+        .getByRole("button", { name: /Documentation/ })
+        .getAttribute("data-tone"),
     ).toBe("warning");
     expect(
-      screen.getByRole("button", { name: /Security Baseline/ }).getAttribute("data-tone"),
+      screen
+        .getByRole("button", { name: /Security Baseline/ })
+        .getAttribute("data-tone"),
     ).toBe("danger");
   });
 
@@ -67,15 +70,15 @@ describe("CategoryPillarStrip", () => {
     renderStrip(report);
     const docs = screen.getByRole("button", { name: /Documentation/ });
     expect(docs.getAttribute("data-tone")).toBe("success");
-    expect(within(docs).getByText("25/25 pts")).toBeDefined();
-    expect(within(docs).getByText("100%")).toBeDefined();
+    expect(docs.getAttribute("aria-label")).toContain("25 of 25 points (100%)");
   });
 
   it("reflects previewed fixes in points and tone", () => {
     renderStrip(makeFixtureReport(), new Set(["sec-policy"]));
     const security = screen.getByRole("button", { name: /Security Baseline/ });
-    expect(within(security).getByText("10/15 pts")).toBeDefined();
-    expect(within(security).getByText("67%")).toBeDefined();
+    expect(security.getAttribute("aria-label")).toContain(
+      "10 of 15 points (67%)",
+    );
     expect(security.getAttribute("data-tone")).toBe("warning");
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { FolderSearch, RotateCcw } from "lucide-react";
+import React, { useMemo, useRef, useState } from "react";
+import { Info, FolderSearch, RotateCcw } from "lucide-react";
 import type { DashboardData, DashboardRepoItem } from "@/src/lib/dashboard";
 import { DashboardProfileCard } from "./dashboard-profile-card";
 import {
@@ -11,6 +11,11 @@ import {
 } from "./dashboard-toolbar";
 import { DashboardRepoCard } from "./dashboard-repo-card";
 import { Button } from "@/components/ui/button";
+import { DashboardSummary } from "./dashboard-summary";
+import { DashboardInsightsPanel } from "./dashboard-insights";
+import { getDashboardInsights, type RepositoryAuditState } from "./dashboard-model";
+import { requestAudit } from "@/src/lib/request-audit";
+import styles from "./dashboard.module.css";
 
 export interface DashboardViewProps {
   initialData: DashboardData;
@@ -28,30 +33,13 @@ export function DashboardView({
   const [statusFilter, setStatusFilter] = useState<AuditStatusFilter>("all");
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [sortBy, setSortBy] = useState<RepoSortOption>("updated");
+  const [auditStates, setAuditStates] = useState<Record<number, RepositoryAuditState>>({});
+  const pendingAudits = useRef(new Set<number>());
+  const resultsHeading = useRef<HTMLHeadingElement>(null);
+  const [announcement, setAnnouncement] = useState("");
 
-  // Dynamically recalculate stats whenever repos update in-place
-  const stats = useMemo(() => {
-    const totalRepos = repos.length;
-    const auditedCount = repos.filter((r) => r.hasReport).length;
-    const unauditedCount = totalRepos - auditedCount;
-    const scoredRepos = repos.filter(
-      (r) => r.hasReport && r.healthScore !== null,
-    );
-    const averageScore =
-      scoredRepos.length > 0
-        ? Math.round(
-            scoredRepos.reduce((sum, r) => sum + (r.healthScore ?? 0), 0) /
-              scoredRepos.length,
-          )
-        : null;
-
-    return {
-      totalRepos,
-      auditedCount,
-      unauditedCount,
-      averageScore,
-    };
-  }, [repos]);
+  const insights = useMemo(() => getDashboardInsights(repos), [repos]);
+  const { stats } = insights;
 
   // Extract unique languages
   const availableLanguages = useMemo(() => {
@@ -103,10 +91,29 @@ export function DashboardView({
     });
   }, [repos, search, statusFilter, selectedLanguage, sortBy]);
 
-  const handleAuditComplete = (updatedRepo: DashboardRepoItem) => {
-    setRepos((prev) =>
-      prev.map((r) => (r.id === updatedRepo.id ? updatedRepo : r)),
-    );
+  const handleAudit = async (repo: DashboardRepoItem) => {
+    if (pendingAudits.current.has(repo.id)) return;
+    pendingAudits.current.add(repo.id);
+    setAuditStates((prev) => ({ ...prev, [repo.id]: { pending: true, error: null } }));
+    setAnnouncement(`Auditing ${repo.name}…`);
+    try {
+      const report = await requestAudit({ owner: repo.owner, repo: repo.name }, { fetcher });
+      setRepos((prev) => prev.map((item) => item.id === repo.id ? {
+        ...item,
+        hasReport: true,
+        healthScore: report.healthScore,
+        shareId: report.shareId,
+        lastAuditedAt: report.generatedAt,
+      } : item));
+      setAuditStates((prev) => ({ ...prev, [repo.id]: { pending: false, error: null, completed: true } }));
+      setAnnouncement(`Audit complete for ${repo.name}. Health score ${report.healthScore} out of 100.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to audit repository. Try again.";
+      setAuditStates((prev) => ({ ...prev, [repo.id]: { pending: false, error: message } }));
+      setAnnouncement(`Audit failed for ${repo.name}. ${message}`);
+    } finally {
+      pendingAudits.current.delete(repo.id);
+    }
   };
 
   const clearFilters = () => {
@@ -116,66 +123,115 @@ export function DashboardView({
     setSortBy("updated");
   };
 
+  const reviewUnaudited = () => {
+    clearFilters();
+    setStatusFilter("unaudited");
+    resultsHeading.current?.focus();
+  };
+
+  const hasFilters = Boolean(
+    search || statusFilter !== "all" || selectedLanguage !== "all",
+  );
+
   return (
-    <div className="flex flex-col gap-8">
-      {/* User Profile Card */}
-      <DashboardProfileCard user={initialData.user} stats={stats} />
-
-      {/* Filter and Search Bar */}
-      <DashboardToolbar
-        search={search}
-        onSearchChange={setSearch}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        selectedLanguage={selectedLanguage}
-        onLanguageChange={setSelectedLanguage}
-        languages={availableLanguages}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        totalFiltered={filteredAndSortedRepos.length}
-      />
-
-      {/* Repository Cards Grid */}
-      {filteredAndSortedRepos.length > 0 ? (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {filteredAndSortedRepos.map((repo) => (
-            <DashboardRepoCard
-              key={repo.id}
-              repo={repo}
-              onAuditComplete={handleAuditComplete}
-              fetcher={fetcher}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/60 p-12 text-center backdrop-blur-md">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 shadow-2xs">
-            <FolderSearch className="size-7" aria-hidden="true" />
-          </div>
-
-          <h3 className="mt-4 text-lg font-semibold text-slate-900">
-            No repositories found
-          </h3>
-
-          <p className="mt-1 max-w-sm text-sm text-slate-500">
-            {search || statusFilter !== "all" || selectedLanguage !== "all"
-              ? "No repositories match your active search and filter criteria."
-              : "No public repositories are currently linked to this GitHub account."}
+    <div className={styles.view}>
+      <div className={styles.pageHeading}>
+        <div>
+          <h1 className={styles.pageTitle}>Repository overview</h1>
+          <p className={styles.pageDescription}>
+            Track repository health and keep your audits up to date.
           </p>
-
-          {(search || statusFilter !== "all" || selectedLanguage !== "all") && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearFilters}
-              className="mt-5 gap-1.5 text-xs text-slate-700"
-            >
-              <RotateCcw className="size-3.5" aria-hidden="true" />
-              <span>Clear filters</span>
-            </Button>
-          )}
         </div>
-      )}
+        <DashboardProfileCard user={initialData.user} />
+      </div>
+      <DashboardSummary stats={stats} onReviewUnaudited={reviewUnaudited} />
+      <p className={styles.scopeNote}>Showing up to 100 owned repositories from GitHub. Insights reflect the repositories loaded here.</p>
+      <div className={styles.workspaceBody}>
+      <section className={styles.collection} aria-labelledby="repository-results-title">
+        <div className={styles.collectionHeading}>
+          <h2 id="repository-results-title" ref={resultsHeading} tabIndex={-1}>Your repositories</h2>
+          <span className={styles.collectionTotal}>{repos.length} loaded</span>
+        </div>
+        <DashboardToolbar
+          search={search}
+          onSearchChange={setSearch}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          selectedLanguage={selectedLanguage}
+          onLanguageChange={setSelectedLanguage}
+          languages={availableLanguages}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          totalFiltered={filteredAndSortedRepos.length}
+          counts={{ all: stats.totalRepos, audited: stats.auditedCount, unaudited: stats.unauditedCount }}
+        />
+        {filteredAndSortedRepos.length > 0 ? (
+          <div className={styles.repoList}>
+            <div className={styles.listHeading} aria-hidden="true">
+              <span>Repository</span>
+              <span>Health</span>
+              <span>Last audit</span>
+              <span>Actions</span>
+            </div>
+            <ul className={styles.repoItems} aria-label="Repositories">
+              {filteredAndSortedRepos.map((repo) => (
+                <li key={repo.id}>
+                  <DashboardRepoCard
+                    repo={repo}
+                    onAudit={handleAudit}
+                    auditState={auditStates[repo.id]}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className={styles.empty}>
+            <div className={styles.emptyIcon}>
+              <FolderSearch size={24} aria-hidden="true" />
+            </div>
+            <h2>
+              {hasFilters
+                ? "No repositories found"
+                : "Your repositories start here"}
+            </h2>
+            <p>
+              {hasFilters
+                ? "Try a different search or clear your filters to see all repositories."
+                : "There are no repositories available for this account. Create a repository on GitHub, then return to run your first audit."}
+            </p>
+            {hasFilters ? (
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className={`${styles.action} ${styles.reportAction}`}
+              >
+                <RotateCcw size={14} aria-hidden="true" />
+                Clear filters
+              </Button>
+            ) : (
+              <Button
+                render={
+                  <a
+                    href={initialData.user.githubUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  />
+                }
+                className={`${styles.action} ${styles.primaryAction}`}
+              >
+                Open GitHub profile
+              </Button>
+            )}
+          </div>
+        )}
+      </section>
+      <DashboardInsightsPanel insights={insights} />
+      </div>
+      <div role="status" aria-live="polite" aria-atomic="true" className={announcement ? styles.auditAnnouncement : "sr-only"}>
+        {announcement && <Info size={16} aria-hidden="true" />}
+        <span>{announcement}</span>
+      </div>
     </div>
   );
 }

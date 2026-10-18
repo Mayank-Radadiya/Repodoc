@@ -94,7 +94,7 @@ describe("ReportShell", () => {
     expect(scope.contains(dialog)).toBe(true);
   });
 
-  it("closes the audit dialog when Escape is pressed", async () => {
+  it("restores focus to the header button when Escape closes the audit dialog", async () => {
     render(
       <ReportThemeScope>
         <ReportShell>content</ReportShell>
@@ -108,20 +108,32 @@ describe("ReportShell", () => {
 
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: /audit another repository/i }),
+      ),
+    );
   });
 
   it("toggles the audit dialog with the keyboard shortcut", async () => {
     render(
       <ReportThemeScope>
-        <ReportShell>content</ReportShell>
+        <ReportShell>
+          <button type="button">Inspect report</button>
+        </ReportShell>
       </ReportThemeScope>,
     );
 
+    const originalFocus = screen.getByRole("button", {
+      name: "Inspect report",
+    });
+    originalFocus.focus();
     fireEvent.keyDown(document, { key: "k", metaKey: true });
     await screen.findByRole("dialog");
 
     fireEvent.keyDown(document, { key: "k", ctrlKey: true });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(originalFocus));
   });
 
   it("exposes the theme toggle in the header", () => {

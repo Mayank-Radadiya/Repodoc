@@ -28,17 +28,19 @@ describe("DashboardToolbar", () => {
       />,
     );
 
-    const input = screen.getByPlaceholderText(/search repositories/i) as HTMLInputElement;
+    const input = screen.getByPlaceholderText(
+      /search repositories/i,
+    ) as HTMLInputElement;
     expect(input.value).toBe("test-query");
 
     fireEvent.change(input, { target: { value: "new-query" } });
     expect(onSearchChange).toHaveBeenCalledWith("new-query");
 
-    const auditedTab = screen.getByRole("tab", { name: /^audited$/i });
+    const auditedTab = screen.getByRole("button", { name: /^audited$/i });
     fireEvent.click(auditedTab);
     expect(onStatusFilterChange).toHaveBeenCalledWith("audited");
 
-    const unauditedTab = screen.getByRole("tab", { name: /^needs audit$/i });
+    const unauditedTab = screen.getByRole("button", { name: /^needs audit$/i });
     fireEvent.click(unauditedTab);
     expect(onStatusFilterChange).toHaveBeenCalledWith("unaudited");
 

@@ -1,4 +1,9 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardRepoCard } from "../dashboard-repo-card";
 import type { DashboardRepoItem } from "@/src/lib/dashboard";
@@ -43,111 +48,85 @@ describe("DashboardRepoCard", () => {
   });
 
   it("renders unaudited repository metadata and audit action button", () => {
-    render(<DashboardRepoCard repo={sampleUnauditedRepo} />);
+    render(<DashboardRepoCard repo={sampleUnauditedRepo} onAudit={vi.fn()} />);
 
     expect(screen.getByText("super-app")).toBeDefined();
-    expect(screen.getByText("A super awesome Next.js web application")).toBeDefined();
+    expect(
+      screen.getByText("A super awesome Next.js web application"),
+    ).toBeDefined();
     expect(screen.getByText("TypeScript")).toBeDefined();
     expect(screen.getByText("42")).toBeDefined();
     expect(screen.getByText("5")).toBeDefined();
     expect(screen.getByText("Not audited yet")).toBeDefined();
-    expect(screen.getByRole("button", { name: /audit repository/i })).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: /audit repository/i }),
+    ).toBeDefined();
   });
 
   it("renders audited repository score badge and view report link", () => {
-    render(<DashboardRepoCard repo={sampleAuditedRepo} />);
+    render(<DashboardRepoCard repo={sampleAuditedRepo} onAudit={vi.fn()} />);
 
     expect(screen.getByText("documented-lib")).toBeDefined();
-    expect(screen.getByText("88/100")).toBeDefined();
+    expect(
+      screen.getByRole("meter", { name: /health score for documented-lib/i }),
+    ).toBeDefined();
     const viewLink = screen.getByRole("link", { name: /view report/i });
-    expect(viewLink.getAttribute("href")).toBe("/report/octocat/documented-lib");
+    expect(viewLink.getAttribute("href")).toBe(
+      "/report/octocat/documented-lib",
+    );
     expect(screen.getByRole("button", { name: /re-audit/i })).toBeDefined();
   });
 
-  it("triggers audit on click, shows loading state, and calls onAuditComplete on success", async () => {
-    const onAuditComplete = vi.fn();
-    const mockFetcher = vi.fn().mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          owner: "octocat",
-          repo: "super-app",
-          defaultBranch: "main",
-          healthScore: 95,
-          rubricVersion: "1.0.0",
-          shareId: "share123",
-          checks: [
-            {
-              id: "readme",
-              name: "README",
-              category: "documentation",
-              pointsAwarded: 95,
-              maxPoints: 95,
-              passed: true,
-              evidence: {
-                filesChecked: ["README.md"],
-                found: true,
-                details: "README exists",
-              },
-            },
-          ],
-          generatedAt: "2026-10-18T10:00:00Z",
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
-    );
-
-    render(
-      <DashboardRepoCard
-        repo={sampleUnauditedRepo}
-        onAuditComplete={onAuditComplete}
-        fetcher={mockFetcher}
-      />,
-    );
-
-    const auditBtn = screen.getByRole("button", { name: /audit repository/i });
-    fireEvent.click(auditBtn);
-
-    // Shows loading state
-    expect(screen.getByText(/auditing/i)).toBeDefined();
-
-    await waitFor(() => {
-      expect(onAuditComplete).toHaveBeenCalledTimes(1);
-    });
-
-    expect(onAuditComplete).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 1,
-        name: "super-app",
-        hasReport: true,
-        healthScore: 95,
-        shareId: "share123",
-      }),
-    );
+  it("sends the selected repository to the audit handler and reflects pending state", () => {
+    const onAudit = vi.fn();
+    const { rerender } = render(<DashboardRepoCard repo={sampleUnauditedRepo} onAudit={onAudit} />);
+    fireEvent.click(screen.getByRole("button", { name: /audit repository/i }));
+    expect(onAudit).toHaveBeenCalledWith(sampleUnauditedRepo);
+    rerender(<DashboardRepoCard repo={sampleUnauditedRepo} onAudit={onAudit} auditState={{ pending: true, error: null }} />);
+    expect(screen.getByRole("button", { name: /auditing/i }).hasAttribute("disabled")).toBe(true);
   });
 
-  it("displays error message when audit fails and permits retry", async () => {
-    const mockFetcher = vi.fn().mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({ error: "GitHub rate limit exceeded. Try again later." }),
-        { status: 429, headers: { "Content-Type": "application/json" } },
-      ),
-    );
+  it("keeps the saved report and score accessible on failure and provides retry", () => {
+    const onAudit = vi.fn();
+    render(<DashboardRepoCard repo={sampleAuditedRepo} onAudit={onAudit} auditState={{ pending: false, error: "GitHub rate limit exceeded. Try again later." }} />);
+    expect(screen.getByRole("alert").textContent).toContain("GitHub rate limit exceeded");
+    expect(screen.getByRole("meter").getAttribute("aria-valuenow")).toBe("88");
+    expect(screen.getByRole("link", { name: /view report/i })).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: /retry audit/i }));
+    expect(onAudit).toHaveBeenCalledWith(sampleAuditedRepo);
+  });
 
+  it("keeps report access available when the saved score is missing", () => {
     render(
       <DashboardRepoCard
-        repo={sampleUnauditedRepo}
-        fetcher={mockFetcher}
+        onAudit={vi.fn()}
+        repo={{ ...sampleAuditedRepo, healthScore: null, lastAuditedAt: null }}
       />,
     );
+    expect(screen.getByText("Score unavailable")).toBeDefined();
+    expect(screen.getByText("Date unavailable")).toBeDefined();
+    expect(
+      screen.getByRole("link", { name: /view report/i }).getAttribute("href"),
+    ).toBe("/report/octocat/documented-lib");
+    expect(screen.getByRole("button", { name: /re-audit/i })).toBeDefined();
+  });
 
-    const auditBtn = screen.getByRole("button", { name: /audit repository/i });
-    fireEvent.click(auditBtn);
-
-    await waitFor(() => {
-      expect(screen.getByText(/GitHub rate limit exceeded/i)).toBeDefined();
-    });
-
-    // Button should be active again to allow retry
-    expect(screen.getByRole("button", { name: /audit repository/i })).toBeDefined();
+  it("shows a zero health score and handles invalid audit dates", () => {
+    render(
+      <DashboardRepoCard
+        onAudit={vi.fn()}
+        repo={{
+          ...sampleAuditedRepo,
+          healthScore: 0,
+          lastAuditedAt: "invalid-date",
+          description: null,
+          language: null,
+        }}
+      />,
+    );
+    expect(screen.getByRole("meter").getAttribute("aria-valuenow")).toBe("0");
+    expect(screen.getByText("Critical")).toBeDefined();
+    expect(screen.getByText("Date unavailable")).toBeDefined();
+    expect(screen.getByText("No description provided.")).toBeDefined();
   });
 });

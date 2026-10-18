@@ -1,90 +1,76 @@
+import styles from "./report.module.css";
+
+function Skeleton({ className }: { className: string }) {
+  return (
+    <div
+      className={`rounded-md bg-muted motion-safe:animate-pulse ${className}`}
+    />
+  );
+}
+
 export function ReportPending({
   message = "Loading repository report…",
 }: {
   message?: string;
 }) {
   return (
-    <div
-      role="status"
-      aria-busy="true"
-      aria-live="polite"
-      className="space-y-6"
-    >
-      <div className="rounded-3xl border border-border bg-card p-5 shadow-card sm:p-7">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-              Repository health report
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+    <div role="status" aria-busy="true" aria-live="polite">
+      <h1 className="text-[28px] leading-tight font-semibold tracking-tight">
+        Repository health report
+      </h1>
+      <p className="mt-3 text-sm text-muted-foreground">{message}</p>
+      <div aria-hidden="true" className="mt-6">
+        <div className={styles.overview}>
+          <div className={styles.summary}>
+            <Skeleton className="h-6 w-40" />
+            <div className="mt-6 flex items-center gap-4">
+              <div className="size-28 shrink-0 rounded-full border-8 border-muted motion-safe:animate-pulse" />
+              <div className="min-w-0 flex-1 space-y-3">
+                <Skeleton className="h-4 w-full max-w-24" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-2 w-full" />
+              </div>
+            </div>
           </div>
-          <div aria-hidden="true" className="flex items-center gap-2">
-            <div className="h-9 w-24 rounded-full bg-muted motion-safe:animate-pulse" />
-            <div className="h-9 w-28 rounded-full bg-muted motion-safe:animate-pulse" />
-            <div className="h-9 w-24 rounded-full bg-muted motion-safe:animate-pulse" />
+          <div className={styles.rubric}>
+            <Skeleton className="mb-5 h-5 w-36" />
+            <div className="space-y-5">
+              {Array.from({ length: 5 }, (_, i) => (
+                <Skeleton key={i} className="h-6 w-full" />
+              ))}
+            </div>
           </div>
-        </div>
-        <div aria-hidden="true" className="mt-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="size-12 rounded-2xl bg-muted motion-safe:animate-pulse" />
-            <div className="h-8 w-64 max-w-full rounded-lg bg-muted motion-safe:animate-pulse" />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <div className="h-6 w-24 rounded-full bg-muted motion-safe:animate-pulse" />
-            <div className="h-6 w-32 rounded-full bg-muted motion-safe:animate-pulse" />
-            <div className="h-6 w-20 rounded-full bg-muted motion-safe:animate-pulse" />
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
-            {Array.from({ length: 5 }, (_, index) => (
-              <div
-                key={index}
-                className="h-16 rounded-2xl border border-border bg-muted/50 motion-safe:animate-pulse"
-              />
-            ))}
+          <div className="col-span-full border-t border-border px-6 py-4">
+            <Skeleton className="h-3 w-3/4" />
           </div>
         </div>
-      </div>
-
-      <div
-        aria-hidden="true"
-        className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3"
-      >
-        <div className="rounded-3xl border border-border bg-card p-5 shadow-card sm:p-7 lg:col-span-2 lg:row-span-2">
-          <div className="h-6 w-44 rounded-lg bg-muted motion-safe:animate-pulse" />
-          <div className="mt-4 flex flex-wrap gap-2">
-            <div className="h-8 w-24 rounded-full bg-muted motion-safe:animate-pulse" />
-            <div className="h-8 w-20 rounded-full bg-muted motion-safe:animate-pulse" />
-            <div className="h-8 w-20 rounded-full bg-muted motion-safe:animate-pulse" />
-          </div>
-          <div className="mt-5 space-y-3">
-            {Array.from({ length: 5 }, (_, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between rounded-2xl border border-border bg-muted/40 p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-lg bg-muted motion-safe:animate-pulse" />
-                  <div className="h-4 w-40 rounded bg-muted motion-safe:animate-pulse" />
+        <div className={styles.body}>
+          <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+            <Skeleton className="h-7 w-32" />
+            <Skeleton className="mt-3 h-4 w-3/4" />
+            <Skeleton className="mt-6 h-11 w-64 max-w-full" />
+            <Skeleton className="mt-4 h-11 w-full" />
+            <div className="mt-5 divide-y divide-border">
+              {Array.from({ length: 5 }, (_, i) => (
+                <div key={i} className="py-5">
+                  <Skeleton className="h-8 w-full" />
                 </div>
-                <div className="h-5 w-16 rounded-full bg-muted motion-safe:animate-pulse" />
+              ))}
+            </div>
+          </div>
+          <div className={styles.rail}>
+            {[0, 1].map((i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-border bg-card p-6"
+              >
+                <Skeleton className="h-6 w-40" />
+                <Skeleton className="mt-4 h-4 w-full" />
+                <Skeleton className="mt-5 h-32 w-full" />
+                <Skeleton className="mt-4 h-11 w-full" />
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="rounded-3xl border border-border bg-card p-5 shadow-card lg:col-start-3 lg:row-start-1">
-          <div className="h-5 w-36 rounded bg-muted motion-safe:animate-pulse" />
-          <div className="mt-5 flex flex-col items-center gap-4">
-            <div className="size-44 rounded-full border-[12px] border-muted motion-safe:animate-pulse" />
-            <div className="h-5 w-40 rounded bg-muted motion-safe:animate-pulse" />
-          </div>
-          <div className="mt-4 h-2 w-full rounded-full bg-muted motion-safe:animate-pulse" />
-        </div>
-
-        <div className="rounded-3xl border border-border bg-card p-5 shadow-card lg:col-start-3 lg:row-start-2">
-          <div className="h-5 w-36 rounded bg-muted motion-safe:animate-pulse" />
-          <div className="mt-4 h-20 rounded-2xl bg-muted/60 motion-safe:animate-pulse" />
-          <div className="mt-4 h-10 w-32 rounded-lg bg-muted motion-safe:animate-pulse" />
         </div>
       </div>
     </div>

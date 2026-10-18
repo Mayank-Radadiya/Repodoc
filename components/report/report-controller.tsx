@@ -102,7 +102,7 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
   };
 
   const feedback = (
-    <div className="mb-6 space-y-3">
+    <div className="space-y-3 [&>p:empty]:hidden">
       {error && (
         <ReportErrorCard
           error={error}
@@ -195,6 +195,7 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
             {copyStatus === "copied" ? "Link copied" : "Copy report link"}
           </Button>
           <Button
+            variant="outline"
             className="min-h-11"
             loading={pending}
             disabled={pending || remediationPending}

@@ -4,11 +4,7 @@ import { AlertCircle, Clock, SearchX, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export type ReportErrorKind =
-  | "rate_limited"
-  | "not_found"
-  | "network"
-  | "bad_input"
-  | "server_error";
+  "rate_limited" | "not_found" | "network" | "bad_input" | "server_error";
 
 export interface ClassifiedReportError {
   kind: ReportErrorKind;
@@ -165,14 +161,14 @@ export function ReportErrorCard({
   return (
     <div
       role="alert"
-      className={`rounded-3xl border border-border bg-card p-6 shadow-card sm:p-8 ${className}`}
+      className={`rounded-[16px] border border-border bg-card p-6 sm:p-8 ${className}`}
     >
       <div className="flex items-start gap-4">
         <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
           {iconMap[classified.kind]}
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">
+          <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
             {displayTitle}
           </h2>
           {context && (

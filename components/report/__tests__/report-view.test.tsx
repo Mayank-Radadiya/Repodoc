@@ -4,6 +4,7 @@ import {
   render,
   screen,
   within,
+  waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReportView } from "../report-view";
@@ -83,7 +84,9 @@ describe("ReportView", () => {
     expect(screen.getByRole("meter").getAttribute("data-score")).toBe("51");
     expect(screen.getByTestId("preview-delta").textContent).toContain("+10");
 
-    const row = screen.getByText("Security policy").closest("li") as HTMLElement;
+    const row = screen
+      .getByText("Security policy")
+      .closest("li") as HTMLElement;
     expect(within(row).getByText("Previewed")).toBeDefined();
 
     fireEvent.click(heroPill);
@@ -91,7 +94,7 @@ describe("ReportView", () => {
     expect(screen.getByRole("meter").getAttribute("data-score")).toBe("41");
   });
 
-  it("previews the top three boosters from the gauge card", () => {
+  it("previews the top three boosters from the improvement panel", () => {
     renderView();
 
     fireEvent.click(screen.getByRole("button", { name: /preview top 3/i }));
@@ -102,8 +105,21 @@ describe("ReportView", () => {
     expect(screen.queryByRole("button", { name: /preview top 3/i })).toBeNull();
   });
 
-  it("opens the matching category and scrolls to it when a pillar is selected", () => {
+  it("keeps the badge on the audited score while previewing fixes", () => {
     renderView();
+    fireEvent.click(screen.getByRole("button", { name: /preview top 3/i }));
+    expect(screen.getAllByRole("meter")).toHaveLength(1);
+    expect(screen.getByRole("meter").getAttribute("data-score")).toBe("62");
+    expect(screen.getByTestId("badge-preview-score").textContent).toBe(
+      "41/100",
+    );
+  });
+
+  it("clears filters, opens the matching category, and scrolls when a pillar is selected", async () => {
+    renderView();
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "security" },
+    });
 
     const stripButton = document.querySelector(
       '[data-category="hygiene"]',
@@ -112,7 +128,8 @@ describe("ReportView", () => {
 
     const trigger = screen.getByRole("button", { name: /^Project Hygiene:/ });
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
-    expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("searchbox")).toHaveProperty("value", "");
+    await waitFor(() => expect(scrollIntoViewMock).toHaveBeenCalledTimes(1));
   });
 
   it("renders the actions and feedback slots", () => {

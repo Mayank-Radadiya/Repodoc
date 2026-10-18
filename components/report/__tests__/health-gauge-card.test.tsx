@@ -27,23 +27,12 @@ function renderCard(
 }
 
 describe("HealthGaugeCard", () => {
-  it("renders the score gauge with the audited score", () => {
+  it("focuses on improvements without duplicating the overview gauge", () => {
     renderCard();
-    const gauge = screen.getByRole("meter");
-    expect(gauge.getAttribute("data-score")).toBe("41");
-    expect(gauge.getAttribute("aria-valuenow")).toBe("41");
-  });
-
-  it("renders the checks passed count", () => {
-    renderCard();
-    expect(screen.getByText("3 of 7 checks passed")).toBeDefined();
-  });
-
-  it("reports the pass rate", () => {
-    renderCard();
-    const rate = screen.getByRole("img", { name: /pass rate/i });
-    expect(rate.getAttribute("aria-label")).toContain("43%");
-    expect(rate.getAttribute("aria-label")).toContain("3 of 7 checks");
+    expect(
+      screen.getByRole("heading", { name: "Score improvements" }),
+    ).toBeDefined();
+    expect(screen.queryByRole("meter")).toBeNull();
   });
 
   it("lists the top boosters by recoverable points", () => {
@@ -83,11 +72,6 @@ describe("HealthGaugeCard", () => {
     expect(next.getAttribute("aria-pressed")).toBe("false");
   });
 
-  it("shows the preview delta under the gauge", () => {
-    renderCard(new Set(["sec-policy"]));
-    expect(screen.getByTestId("preview-delta").textContent).toContain("+10");
-  });
-
   it("shows an honest empty state when every check passes", () => {
     const report: AuditReport = {
       owner: "example",
@@ -104,24 +88,8 @@ describe("HealthGaugeCard", () => {
   });
 
   it("explains when all failing checks are previewed", () => {
-    renderCard(
-      new Set(["sec-policy", "headings", "gitignore", "metadata"]),
-    );
-    expect(screen.getByText(/all failing checks are previewed/i)).toBeDefined();
-    expect(
-      screen.queryByRole("button", { name: /preview top 3/i }),
-    ).toBeNull();
-  });
-
-  it("keeps the disclaimer about inspection-only auditing", () => {
-    renderCard();
-    expect(
-      screen.getByText(/inspected for presence, not executed/i),
-    ).toBeDefined();
-  });
-
-  it("shows the status label matching the preview score", () => {
     renderCard(new Set(["sec-policy", "headings", "gitignore", "metadata"]));
-    expect(screen.getByText("Fair")).toBeDefined();
+    expect(screen.getByText(/all failing checks are previewed/i)).toBeDefined();
+    expect(screen.queryByRole("button", { name: /preview top 3/i })).toBeNull();
   });
 });

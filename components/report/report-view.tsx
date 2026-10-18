@@ -6,9 +6,10 @@ import type { AuditReport, CategoryId } from "@/src/lib/types";
 import { computeReportPreview } from "./report-preview";
 import { ReportHero } from "./report-hero";
 import { CategoryPillarStrip } from "./category-pillar-strip";
-import { CategoryBreakdown } from "./category-breakdown";
+import { CategoryBreakdown, type CheckFilter } from "./category-breakdown";
 import { HealthGaugeCard } from "./health-gauge-card";
 import { BadgeSnippet } from "./badge-snippet";
+import styles from "./report.module.css";
 
 export interface ReportViewProps {
   report: AuditReport;
@@ -29,6 +30,8 @@ export function ReportView({
   const [openCategories, setOpenCategories] = useState<CategoryId[]>([
     "documentation",
   ]);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<CheckFilter>("all");
 
   const preview = useMemo(
     () => computeReportPreview(report, previewedIds),
@@ -60,6 +63,8 @@ export function ReportView({
   }, []);
 
   const selectCategory = useCallback((category: CategoryId) => {
+    setSearch("");
+    setFilter("all");
     setOpenCategories((current) =>
       current.includes(category) ? current : [...current, category],
     );
@@ -68,12 +73,12 @@ export function ReportView({
       typeof window !== "undefined" &&
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    document
-      .getElementById(`category-${category}`)
-      ?.scrollIntoView({
+    requestAnimationFrame(() =>
+      document.getElementById(`category-${category}`)?.scrollIntoView({
         behavior: reduceMotion ? "auto" : "smooth",
         block: "start",
-      });
+      }),
+    );
   }, []);
 
   return (
@@ -91,8 +96,8 @@ export function ReportView({
           />
         }
       />
-      <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-        <div className="rounded-3xl border border-border bg-card p-5 shadow-card sm:p-7 lg:col-span-2 lg:row-span-2">
+      <div className={styles.body}>
+        <div className={styles.findingsPanel}>
           <CategoryBreakdown
             report={report}
             preview={preview}
@@ -100,34 +105,51 @@ export function ReportView({
             onTogglePreview={togglePreview}
             openCategories={openCategories}
             onOpenCategoriesChange={setOpenCategories}
+            search={search}
+            onSearchChange={setSearch}
+            filter={filter}
+            onFilterChange={setFilter}
           />
         </div>
-        <HealthGaugeCard
-          report={report}
-          preview={preview}
-          previewedIds={previewedIds}
-          onTogglePreview={togglePreview}
-          onApplyBoosters={applyBoosters}
-          className="lg:col-start-3 lg:row-start-1"
-        />
-        <div className="min-w-0 lg:col-start-3 lg:row-start-2">
-          {baseUrl ? (
-            <BadgeSnippet report={report} baseUrl={baseUrl} />
-          ) : (
-            <div
-              aria-busy="true"
-              className="min-h-64 rounded-3xl border border-border bg-card p-6 shadow-card"
-            >
-              <h2 className="font-display text-xl font-semibold">
-                Embed your badge
-              </h2>
-              <p className="mt-3 text-sm text-muted-foreground">
-                Preparing badge links…
-              </p>
-            </div>
-          )}
-        </div>
+        <aside aria-label="Report tools" className={styles.rail}>
+          <HealthGaugeCard
+            report={report}
+            preview={preview}
+            previewedIds={previewedIds}
+            onTogglePreview={togglePreview}
+            onApplyBoosters={applyBoosters}
+          />
+          <div id="report-badge" className="min-w-0 scroll-mt-24">
+            {baseUrl ? (
+              <BadgeSnippet report={report} baseUrl={baseUrl} />
+            ) : (
+              <div
+                aria-busy="true"
+                className="min-h-64 rounded-xl border border-border bg-card p-6"
+              >
+                <h2 className="font-display text-lg font-semibold">
+                  Embed your badge
+                </h2>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Preparing badge links…
+                </p>
+              </div>
+            )}
+          </div>
+        </aside>
       </div>
+      <footer className={styles.reportFooter}>
+        <p>
+          Repository health is a starting point. Review the evidence before
+          making changes.
+        </p>
+        <a
+          href="#report-overview"
+          className="inline-flex min-h-11 items-center rounded-md font-medium hover:text-foreground"
+        >
+          Back to overview
+        </a>
+      </footer>
     </>
   );
 }

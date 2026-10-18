@@ -1,13 +1,13 @@
 import "server-only";
 
 import React from "react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { getGitHubSession } from "@/lib/auth";
 import { getDashboardData } from "@/src/lib/dashboard";
 import { DashboardView } from "@/components/dashboard";
-import { Button } from "@/components/ui/button";
+import { DashboardRetry } from "@/components/dashboard/dashboard-retry";
+import styles from "@/components/dashboard/dashboard.module.css";
 
 export const metadata = {
   title: "Dashboard - Repodoc",
@@ -32,20 +32,13 @@ export default async function DashboardPage() {
 
   if (loadError || !data) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-3xl border border-destructive/20 bg-destructive/5 p-12 text-center">
-        <AlertCircle className="size-10 text-destructive" aria-hidden="true" />
-        <h2 className="mt-4 text-xl font-bold text-slate-900">
-          Failed to load dashboard
-        </h2>
-        <p className="mt-2 max-w-md text-sm text-slate-600">
-          {loadError ?? "Unable to load dashboard data."}
-        </p>
-        <Button
-          render={<Link href="/dashboard" />}
-          className="mt-6 text-xs bg-[#005FD6] text-white hover:bg-[#0051b8]"
-        >
-          Retry
-        </Button>
+      <div className={styles.empty}>
+        <div className={styles.emptyIcon}>
+          <AlertCircle size={24} aria-hidden="true" />
+        </div>
+        <h1>Failed to load dashboard</h1>
+        <p>{loadError ?? "Unable to load dashboard data."}</p>
+        <DashboardRetry />
       </div>
     );
   }
