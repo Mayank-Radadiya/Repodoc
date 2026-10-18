@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-
+import React, { useEffect, useRef } from 'react';
 import './GridDistortion.css';
 
 const VERTEX = `#version 300 es
@@ -55,20 +54,26 @@ void main() {
   outColor = vec4(color * alpha, alpha);
 }`;
 
-const MODES = ['drag', 'push', 'swirl'];
+export type DistortionMode = 'drag' | 'push' | 'swirl';
+const MODES: readonly DistortionMode[] = ['drag', 'push', 'swirl'] as const;
 const GAIN = 18;
 const RIPPLE_LIFE = 1.6;
 
-const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value));
 
-const hash = (x, y, z) => {
+const hash = (x: number, y: number, z: number): number => {
   let h = Math.imul(x, 0x27d4eb2d) ^ Math.imul(y, 0x165667b1) ^ Math.imul(z, 0x2c1b3c6d);
   h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
   h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
   return ((h ^ (h >>> 16)) >>> 0) / 2147483648 - 1;
 };
 
-const compile = (gl, type, source) => {
+const compile = (
+  gl: WebGL2RenderingContext,
+  type: number,
+  source: string,
+): WebGLShader | null => {
   const shader = gl.createShader(type);
   if (!shader) return null;
   gl.shaderSource(shader, source);
@@ -78,11 +83,135 @@ const compile = (gl, type, source) => {
   return null;
 };
 
-const GridDistortion = ({
+export interface GridDistortionProps {
+  /**
+   * Image to distort. It covers the container.
+   */
+  imageSrc?: string;
+  /**
+   * Text to render and distort on a transparent canvas.
+   */
+  text?: string;
+  /**
+   * Called when texture is loaded and ready.
+   */
+  onReady?: () => void;
+  /**
+   * Number of cells across. Rows follow the container so cells stay square.
+   * Default: 15
+   */
+  grid?: number;
+  /**
+   * Reach of the pointer as a fraction of the container width. Alias for `radius`.
+   */
+  mouse?: number;
+  /**
+   * Reach of the pointer as a fraction of the container width.
+   * Default: 0.18
+   */
+  radius?: number;
+  /**
+   * How far the pointer throws the cells. 0 turns the pointer off.
+   * Default: 0.15
+   */
+  strength?: number;
+  /**
+   * How much displacement each cell keeps per frame. Higher values settle more slowly.
+   * Default: 0.96
+   */
+  relaxation?: number;
+  /**
+   * Drag pulls cells along with the pointer, push throws them outward and swirl spins them around it.
+   * Default: 'drag'
+   */
+  mode?: DistortionMode;
+  /**
+   * Blends the crisp blocks into a smooth liquid warp, from 0 to 1.
+   * Default: 0
+   */
+  softness?: number;
+  /**
+   * Splits the color channels on displaced cells, from 0 to 1.
+   * Default: 0
+   */
+  chroma?: number;
+  /**
+   * A slow wandering distortion that keeps the image alive while the pointer rests. 0 turns it off.
+   * Default: 0.3
+   */
+  idle?: number;
+  /**
+   * Sends a ring of displaced cells out from every click.
+   * Default: true
+   */
+  clickRipple?: boolean;
+  /**
+   * Scrambles the cells when the image loads and lets them settle into place.
+   * Default: true
+   */
+  intro?: boolean;
+  /**
+   * Extra class names for the container.
+   * Default: ''
+   */
+  className?: string;
+  /**
+   * Inline styles for the container.
+   */
+  style?: React.CSSProperties;
+  /**
+   * Optional error callback for fallback handling when loading textures or WebGL initialization fails.
+   */
+  onError?: (error: unknown) => void;
+}
+
+interface InternalSettings {
+  grid: number;
+  radius: number;
+  strength: number;
+  relaxation: number;
+  mode: DistortionMode;
+  softness: number;
+  chroma: number;
+  idle: number;
+  clickRipple: boolean;
+  intro: boolean;
+}
+
+interface Ripple {
+  x: number;
+  y: number;
+  start: number;
+}
+
+interface DistortionState {
+  width: number;
+  height: number;
+  cols: number;
+  rows: number;
+  sim: Float32Array;
+  out: Float32Array;
+  ripples: Ripple[];
+  time: number;
+  reveal: number;
+  loaded: boolean;
+  imageAspect: number;
+  request: number;
+  lastMove: number;
+  phantom: number;
+}
+
+interface ControlMethods {
+  load: (src?: string, textValue?: string) => void;
+  wake: () => void;
+}
+
+export const GridDistortion: React.FC<GridDistortionProps> = ({
   imageSrc,
   text,
   onReady,
   grid = 15,
+  mouse,
   radius = 0.18,
   strength = 0.15,
   relaxation = 0.96,
@@ -93,72 +222,139 @@ const GridDistortion = ({
   clickRipple = true,
   intro = true,
   className = '',
-  style
+  style,
+  onError,
 }) => {
-  const rootRef = useRef(null);
-  const canvasRef = useRef(null);
-  const controlRef = useRef(null);
-  const settings = {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const controlRef = useRef<ControlMethods | null>(null);
+
+  const effectiveRadius = radius ?? mouse ?? 0.18;
+  const settings: InternalSettings = {
     grid: clamp(Math.round(grid), 2, 120),
-    radius: clamp(radius, 0.01, 1),
+    radius: clamp(effectiveRadius, 0.01, 1),
     strength: Math.max(0, strength),
     relaxation: clamp(relaxation, 0, 0.995),
-    mode: MODES.includes(mode) ? mode : 'drag',
+    mode: mode && MODES.includes(mode) ? mode : 'drag',
     softness: clamp(softness, 0, 1),
     chroma: clamp(chroma, 0, 2),
     idle: clamp(idle, 0, 1),
     clickRipple,
-    intro
+    intro,
   };
-  const settingsRef = useRef(settings);
-  const onReadyRef = useRef(onReady);
-  const textRef = useRef(text);
+
+  const settingsRef = useRef<InternalSettings>(settings);
+  const onReadyRef = useRef<(() => void) | undefined>(onReady);
+  const onErrorRef = useRef<((error: unknown) => void) | undefined>(onError);
+  const textRef = useRef<string | undefined>(text);
+
   useEffect(() => {
     settingsRef.current = settings;
     onReadyRef.current = onReady;
+    onErrorRef.current = onError;
     textRef.current = text;
   });
 
   useEffect(() => {
     const root = rootRef.current;
     const canvas = canvasRef.current;
-    const gl = canvas?.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false });
-    if (!root || !canvas || !gl) return undefined;
+    if (!root || !canvas) return undefined;
+
+    const gl = canvas.getContext('webgl2', {
+      alpha: true,
+      premultipliedAlpha: true,
+      antialias: false,
+    });
+    if (!gl) {
+      onErrorRef.current?.(new Error('WebGL2 is not supported in this environment.'));
+      return undefined;
+    }
 
     const vertex = compile(gl, gl.VERTEX_SHADER, VERTEX);
     const fragment = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT);
     const program = gl.createProgram();
-    if (!vertex || !fragment || !program) return undefined;
+    if (!vertex || !fragment || !program) {
+      if (vertex) gl.deleteShader(vertex);
+      if (fragment) gl.deleteShader(fragment);
+      if (program) gl.deleteProgram(program);
+      onErrorRef.current?.(new Error('Failed to create or compile WebGL shaders.'));
+      return undefined;
+    }
     gl.attachShader(program, vertex);
     gl.attachShader(program, fragment);
     gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return undefined;
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      gl.deleteShader(vertex);
+      gl.deleteShader(fragment);
+      gl.deleteProgram(program);
+      onErrorRef.current?.(new Error('Failed to link WebGL program.'));
+      return undefined;
+    }
     gl.useProgram(program);
 
     const buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    const position = gl.getAttribLocation(program, 'aPosition');
-    gl.enableVertexAttribArray(position);
-    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-
-    const uniforms = {};
-    for (const name of ['uImage', 'uField', 'uGrid', 'uCover', 'uSoftness', 'uChroma', 'uReveal']) {
-      uniforms[name] = gl.getUniformLocation(program, name);
+    if (!buffer) {
+      gl.deleteShader(vertex);
+      gl.deleteShader(fragment);
+      gl.deleteProgram(program);
+      onErrorRef.current?.(new Error('Failed to create WebGL buffer.'));
+      return undefined;
     }
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([-1, -1, 3, -1, -1, 3]),
+      gl.STATIC_DRAW,
+    );
+    const position = gl.getAttribLocation(program, 'aPosition');
+    if (position !== -1) {
+      gl.enableVertexAttribArray(position);
+      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+    }
+
+    const uniforms = {
+      uImage: gl.getUniformLocation(program, 'uImage'),
+      uField: gl.getUniformLocation(program, 'uField'),
+      uGrid: gl.getUniformLocation(program, 'uGrid'),
+      uCover: gl.getUniformLocation(program, 'uCover'),
+      uSoftness: gl.getUniformLocation(program, 'uSoftness'),
+      uChroma: gl.getUniformLocation(program, 'uChroma'),
+      uReveal: gl.getUniformLocation(program, 'uReveal'),
+    };
     gl.uniform1i(uniforms.uImage, 0);
     gl.uniform1i(uniforms.uField, 1);
 
     const imageTexture = gl.createTexture();
+    const fieldTexture = gl.createTexture();
+    if (!imageTexture || !fieldTexture) {
+      if (imageTexture) gl.deleteTexture(imageTexture);
+      if (fieldTexture) gl.deleteTexture(fieldTexture);
+      gl.deleteBuffer(buffer);
+      gl.deleteShader(vertex);
+      gl.deleteShader(fragment);
+      gl.deleteProgram(program);
+      onErrorRef.current?.(new Error('Failed to create WebGL textures.'));
+      return undefined;
+    }
+
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, imageTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      1,
+      1,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      new Uint8Array([0, 0, 0, 0]),
+    );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
-    const fieldTexture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, fieldTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -166,9 +362,11 @@ const GridDistortion = ({
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const reduce =
+      typeof window !== 'undefined' &&
+      (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
     const pointer = { x: 0, y: 0, px: 0, py: 0, inside: false };
-    const state = {
+    const state: DistortionState = {
       width: 1,
       height: 1,
       cols: 0,
@@ -182,7 +380,7 @@ const GridDistortion = ({
       imageAspect: 1,
       request: 0,
       lastMove: -10,
-      phantom: 1
+      phantom: 1,
     };
     let raf = 0;
     let last = 0;
@@ -198,7 +396,17 @@ const GridDistortion = ({
       state.sim = new Float32Array(cols * rows * 2);
       state.out = new Float32Array(cols * rows * 2);
       gl.activeTexture(gl.TEXTURE1);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, cols, rows, 0, gl.RG, gl.FLOAT, state.out);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RG32F,
+        cols,
+        rows,
+        0,
+        gl.RG,
+        gl.FLOAT,
+        state.out,
+      );
     };
 
     const scramble = () => {
@@ -213,7 +421,14 @@ const GridDistortion = ({
       }
     };
 
-    const brush = (s, x, y, dx, dy, weight) => {
+    const brush = (
+      s: InternalSettings,
+      x: number,
+      y: number,
+      dx: number,
+      dy: number,
+      weight: number,
+    ) => {
       const { sim, cols, rows, width, height } = state;
       const reach = Math.max(1, s.radius * width);
       const cellWidth = width / cols;
@@ -244,19 +459,22 @@ const GridDistortion = ({
           const px = sim[i] * width + vx * k;
           const py = sim[i + 1] * height + vy * k;
           const length = Math.hypot(px, py);
-          const scale = length > 0 ? (limit * Math.tanh(length / limit)) / length : 0;
+          const scale =
+            length > 0 ? (limit * Math.tanh(length / limit)) / length : 0;
           sim[i] = (px * scale) / width;
           sim[i + 1] = (py * scale) / height;
         }
       }
     };
 
-    const wander = t => [
-      state.width * (0.5 + 0.34 * Math.sin(t * 0.43) + 0.08 * Math.sin(t * 1.21 + 1.7)),
-      state.height * (0.5 + 0.3 * Math.sin(t * 0.61 + 0.9) + 0.08 * Math.cos(t * 1.03 + 0.4))
+    const wander = (t: number): [number, number] => [
+      state.width *
+        (0.5 + 0.34 * Math.sin(t * 0.43) + 0.08 * Math.sin(t * 1.21 + 1.7)),
+      state.height *
+        (0.5 + 0.3 * Math.sin(t * 0.61 + 0.9) + 0.08 * Math.cos(t * 1.03 + 0.4)),
     ];
 
-    const simulate = (s, dt) => {
+    const simulate = (s: InternalSettings, dt: number): number => {
       const { sim } = state;
       const decay = Math.pow(s.relaxation, dt * 60);
       let peak = 0;
@@ -288,7 +506,7 @@ const GridDistortion = ({
       return peak;
     };
 
-    const compose = s => {
+    const compose = (s: InternalSettings) => {
       const { sim, out, cols, rows, width, height, time } = state;
       out.set(sim);
       if (state.ripples.length) {
@@ -297,7 +515,9 @@ const GridDistortion = ({
         const span = Math.hypot(width, height);
         const band = Math.max(cellWidth, cellHeight) * 1.2 + span * 0.03;
         const amount = width * (0.03 + s.strength * 0.3);
-        state.ripples = state.ripples.filter(ripple => time - ripple.start < RIPPLE_LIFE);
+        state.ripples = state.ripples.filter(
+          (ripple) => time - ripple.start < RIPPLE_LIFE,
+        );
         for (const ripple of state.ripples) {
           const age = (time - ripple.start) / RIPPLE_LIFE;
           const front = age * span * 0.75;
@@ -321,10 +541,23 @@ const GridDistortion = ({
     const render = () => {
       const { width, height } = state;
       const aspect = width / height;
-      const cover = aspect > state.imageAspect ? [1, state.imageAspect / aspect] : [aspect / state.imageAspect, 1];
+      const cover: [number, number] =
+        aspect > state.imageAspect
+          ? [1, state.imageAspect / aspect]
+          : [aspect / state.imageAspect, 1];
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.activeTexture(gl.TEXTURE1);
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, state.cols, state.rows, gl.RG, gl.FLOAT, state.out);
+      gl.texSubImage2D(
+        gl.TEXTURE_2D,
+        0,
+        0,
+        0,
+        state.cols,
+        state.rows,
+        gl.RG,
+        gl.FLOAT,
+        state.out,
+      );
       const s = settingsRef.current;
       gl.uniform2f(uniforms.uGrid, state.cols, state.rows);
       gl.uniform2f(uniforms.uCover, cover[0], cover[1]);
@@ -336,7 +569,7 @@ const GridDistortion = ({
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
 
-    const frame = now => {
+    const frame = (now: number) => {
       raf = 0;
       if (!alive || !visible) return;
       const s = settingsRef.current;
@@ -344,11 +577,17 @@ const GridDistortion = ({
       last = now;
       state.time += dt;
       layout();
-      if (state.loaded) state.reveal = reduce ? 1 : Math.min(1, state.reveal + dt / 0.6);
+      if (state.loaded) {
+        state.reveal = reduce ? 1 : Math.min(1, state.reveal + dt / 0.6);
+      }
       const peak = simulate(s, dt);
       compose(s);
       render();
-      const busy = peak > 0 || state.ripples.length > 0 || (s.idle > 0 && !reduce) || state.reveal < 1;
+      const busy =
+        peak > 0 ||
+        state.ripples.length > 0 ||
+        (s.idle > 0 && !reduce) ||
+        state.reveal < 1;
       if (busy) raf = requestAnimationFrame(frame);
       else last = 0;
     };
@@ -358,9 +597,10 @@ const GridDistortion = ({
       raf = requestAnimationFrame(frame);
     };
 
-    const offscreenCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+    const offscreenCanvas =
+      typeof document !== 'undefined' ? document.createElement('canvas') : null;
 
-    const renderText = (targetCanvas, textContent) => {
+    const renderText = (targetCanvas: HTMLCanvasElement, textContent: string) => {
       const ctx = targetCanvas.getContext('2d');
       if (!ctx) return;
       const w = targetCanvas.width;
@@ -387,8 +627,8 @@ const GridDistortion = ({
       ctx.shadowOffsetY = 3 * dpr;
 
       const words = textContent.trim().split(/\s+/);
-      const lines = [];
-      let currentLine = words[0];
+      const lines: string[] = [];
+      let currentLine = words[0] ?? '';
       const maxLineWidth = w * 0.96;
 
       for (let i = 1; i < words.length; i++) {
@@ -397,7 +637,7 @@ const GridDistortion = ({
           currentLine = testLine;
         } else {
           lines.push(currentLine);
-          currentLine = words[i];
+          currentLine = words[i] ?? '';
         }
       }
       lines.push(currentLine);
@@ -414,12 +654,23 @@ const GridDistortion = ({
       if (!alive || !offscreenCanvas || !canvas) return;
       offscreenCanvas.width = canvas.width;
       offscreenCanvas.height = canvas.height;
-      renderText(offscreenCanvas, textRef.current);
+      renderText(offscreenCanvas, textRef.current ?? '');
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, imageTexture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, offscreenCanvas);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        offscreenCanvas,
+      );
       gl.generateMipmap(gl.TEXTURE_2D);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_MIN_FILTER,
+        gl.LINEAR_MIPMAP_LINEAR,
+      );
       state.imageAspect = canvas.width / Math.max(1, canvas.height);
       layout();
       if (settingsRef.current.intro && !reduce) scramble();
@@ -428,10 +679,10 @@ const GridDistortion = ({
       wake();
     };
 
-    const load = (src, textValue) => {
+    const load = (src?: string, textValue?: string) => {
       if (textValue) {
         updateTextTexture();
-        if (typeof document !== 'undefined' && document.fonts) {
+        if (typeof document !== 'undefined' && 'fonts' in document) {
           document.fonts.ready.then(() => {
             if (alive) updateTextTexture();
           });
@@ -447,9 +698,20 @@ const GridDistortion = ({
         if (!alive || request !== state.request) return;
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, imageTexture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          gl.RGBA,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          image,
+        );
         gl.generateMipmap(gl.TEXTURE_2D);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.texParameteri(
+          gl.TEXTURE_2D,
+          gl.TEXTURE_MIN_FILTER,
+          gl.LINEAR_MIPMAP_LINEAR,
+        );
         state.imageAspect = image.naturalWidth / Math.max(1, image.naturalHeight);
         layout();
         if (settingsRef.current.intro && !reduce) scramble();
@@ -459,12 +721,12 @@ const GridDistortion = ({
       };
       image.onerror = (err) => {
         if (!alive || request !== state.request) return;
-        console.warn(`GridDistortion failed to load image from "${src}"`, err);
+        onErrorRef.current?.(err);
       };
       image.src = src;
     };
 
-    const onPointerMove = event => {
+    const onPointerMove = (event: PointerEvent) => {
       const rect = root.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
@@ -479,7 +741,7 @@ const GridDistortion = ({
       if (inside) wake();
     };
 
-    const onPointerDown = event => {
+    const onPointerDown = (event: PointerEvent) => {
       if (!settingsRef.current.clickRipple || reduce) return;
       const rect = root.getBoundingClientRect();
       const x = event.clientX - rect.left;
@@ -502,7 +764,14 @@ const GridDistortion = ({
         renderText(offscreenCanvas, textRef.current);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, imageTexture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, offscreenCanvas);
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          gl.RGBA,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          offscreenCanvas,
+        );
         gl.generateMipmap(gl.TEXTURE_2D);
         state.imageAspect = canvas.width / Math.max(1, canvas.height);
       }
@@ -518,8 +787,8 @@ const GridDistortion = ({
 
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(root);
-    const visibility = new IntersectionObserver(entries => {
-      visible = entries.some(entry => entry.isIntersecting);
+    const visibility = new IntersectionObserver((entries) => {
+      visible = entries.some((entry) => entry.isIntersecting);
       if (visible) {
         last = 0;
         wake();
@@ -556,8 +825,16 @@ const GridDistortion = ({
   });
 
   return (
-    <div ref={rootRef} className={`distortion-container${className ? ` ${className}` : ''}`} style={style}>
-      <canvas ref={canvasRef} className="distortion-container__canvas" aria-hidden="true" />
+    <div
+      ref={rootRef}
+      className={`distortion-container${className ? ` ${className}` : ''}`}
+      style={style}
+    >
+      <canvas
+        ref={canvasRef}
+        className="distortion-container__canvas"
+        aria-hidden="true"
+      />
     </div>
   );
 };
