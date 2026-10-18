@@ -152,7 +152,7 @@ export const checks: SampleCheck[] = [
   },
 ];
 
-export const categoryDefinitions: {
+const categoryDefinitions: {
   id: CategoryId;
   name: string;
   shortName: string;
@@ -189,11 +189,6 @@ export const sampleScore = categories.reduce(
 );
 
 export const missingChecks = checks.filter((check) => !check.passed);
-export const passedChecks = checks.filter((check) => check.passed);
-
-export const projectedScore =
-  sampleScore +
-  missingChecks.reduce((sum, check) => sum + check.maxPoints, 0);
 
 export const proposedFiles: ProposedFile[] = [
   {
@@ -230,6 +225,3 @@ export const proposedFiles: ProposedFile[] = [
     ],
   },
 ];
-
-export const badgeMarkdown =
-  "[![Repodoc health](https://img.shields.io/endpoint?url=https://your-repodoc-instance.example/api/badge/owner/repo)](https://your-repodoc-instance.example/report/owner/repo)";

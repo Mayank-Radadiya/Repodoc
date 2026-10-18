@@ -201,38 +201,3 @@ export const MOCK_RUBRIC_CATEGORIES: RubricCategoryMock[] = [
   },
 ];
 
-export interface AtomicPrStageMock {
-  step: number;
-  api: string;
-  title: string;
-  description: string;
-  detail: string;
-  status: "idle" | "running" | "done";
-}
-
-export const MOCK_PR_STAGES: AtomicPrStageMock[] = [
-  {
-    step: 1,
-    api: "POST /repos/{owner}/{repo}/git/blobs",
-    title: "1. Create File Blobs",
-    description: "Uploads standardized .gitignore and CI workflow content directly as immutable Git blobs.",
-    detail: "2 blobs created (SHA b94e... and SHA 4c7a...)",
-    status: "idle",
-  },
-  {
-    step: 2,
-    api: "POST /repos/{owner}/{repo}/git/trees",
-    title: "2. Construct New Tree",
-    description: "Appends the 2 new blobs to the base commit tree without downloading or checking out repository code.",
-    detail: "Tree pointer built against base tree a1c4...",
-    status: "idle",
-  },
-  {
-    step: 3,
-    api: "POST /git/commits & /git/refs",
-    title: "3. Commit & Open Atomic PR",
-    description: "Signs single atomic commit and creates idempotently named branch 'repodoc/health-remediation'.",
-    detail: "PR #14 created: Fix missing repository hygiene",
-    status: "idle",
-  },
-];
