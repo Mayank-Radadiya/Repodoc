@@ -5,8 +5,8 @@ import {
   formatPoints,
   getPotentialPoints,
 } from "@/components/report/report-preview";
-import { calculateCategoryScores } from "@/src/lib/scoring/engine";
-import type { AuditReport, CategoryId, CheckResult } from "@/src/lib/types";
+import { calculateCategoryScores } from "@/lib/scoring/engine";
+import type { AuditReport, CategoryId, CheckResult } from "@/lib/types";
 
 function makeCheck(
   id: string,

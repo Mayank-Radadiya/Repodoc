@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { requestAudit } from "@/src/lib/request-audit";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
+import { requestAudit } from "@/lib/request-audit";
+import { ScoringEngine } from "@/lib/scoring/engine";
 
 const repository = { owner: "Owner", repo: "Repo" };
 const report = {

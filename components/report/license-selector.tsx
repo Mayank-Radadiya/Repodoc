@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Radio, RadioGroup } from "@/components/ui/radio-group";
-import type { SupportedLicenseId } from "@/src/lib/templates/licenses";
+import type { SupportedLicenseId } from "@/lib/templates/licenses";
 import { useReportTheme } from "./theme-scope";
 
 export type LicenseChoice = Exclude<SupportedLicenseId, "GPL-3.0">;

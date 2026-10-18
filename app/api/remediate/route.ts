@@ -3,20 +3,20 @@ import {
   auditRepository,
   IncompleteTreeError,
   InvalidRepositoryError,
-} from "@/src/lib/audit";
-import { GitHubApiError } from "@/src/lib/github/client";
-import { isRepositoryCoordinates } from "@/src/lib/report-validation";
+} from "@/lib/audit";
+import { GitHubApiError } from "@/lib/github/client";
+import { isRepositoryCoordinates } from "@/lib/report-validation";
 import {
   REMEDIATION_FEEDBACK,
   type RemediationFeedbackCode,
-} from "@/src/lib/remediation-feedback";
+} from "@/lib/remediation-feedback";
 import {
   RemediationEngine,
   RemediationError,
   type RemediationEngineInput,
   type RemediationResult,
-} from "@/src/lib/remediation/engine";
-import { SUPPORTED_LICENSE_IDS } from "@/src/lib/templates/licenses";
+} from "@/lib/remediation/engine";
+import { SUPPORTED_LICENSE_IDS } from "@/lib/templates/licenses";
 
 type RemediationRequest = Pick<
   RemediationEngineInput,

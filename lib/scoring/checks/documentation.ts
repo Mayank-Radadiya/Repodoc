@@ -1,5 +1,5 @@
-import type { CheckResult } from "@/src/lib/types";
-import { findFile } from "@/src/lib/scoring/utils";
+import type { CheckResult } from "@/lib/types";
+import { findFile } from "@/lib/scoring/utils";
 
 export const README_PRESENCE_MAX_POINTS = 8;
 export const README_HEADINGS_MAX_POINTS = 10;

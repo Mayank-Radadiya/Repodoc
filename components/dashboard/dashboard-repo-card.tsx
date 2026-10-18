@@ -13,7 +13,7 @@ import {
   ScanLine,
   Star,
 } from "lucide-react";
-import type { DashboardRepoItem } from "@/src/lib/dashboard";
+import type { DashboardRepoItem } from "@/lib/dashboard";
 import { formatAuditDate, getHealthBand, hasHealthScore, type RepositoryAuditState } from "./dashboard-model";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

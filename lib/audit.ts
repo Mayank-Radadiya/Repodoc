@@ -1,9 +1,9 @@
 import "server-only";
 
-import { GitHubService, findReadmeEntry } from "@/src/lib/github/service";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
-import { buildPathSet } from "@/src/lib/scoring/utils";
-import type { AuditReport } from "@/src/lib/types";
+import { GitHubService, findReadmeEntry } from "@/lib/github/service";
+import { ScoringEngine } from "@/lib/scoring/engine";
+import { buildPathSet } from "@/lib/scoring/utils";
+import type { AuditReport } from "@/lib/types";
 
 export class IncompleteTreeError extends Error {
   constructor(

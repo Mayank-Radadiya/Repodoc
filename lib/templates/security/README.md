@@ -1,9 +1,9 @@
 # Security Policy Template
 
-Import `renderSecurityPolicy` and related types/constants from `@/src/lib/templates/security`:
+Import `renderSecurityPolicy` and related types/constants from `@/lib/templates/security`:
 
 ```ts
-import { renderSecurityPolicy } from "@/src/lib/templates/security";
+import { renderSecurityPolicy } from "@/lib/templates/security";
 
 // Default rendering with sensible defaults
 const markdown = renderSecurityPolicy();

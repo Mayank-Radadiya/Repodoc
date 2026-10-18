@@ -9,12 +9,12 @@ import { nanoid } from "nanoid";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/audit/route";
 import { GET } from "@/app/api/report/[shareId]/route";
-import { findCachedReport, findReportByRepository, findReportByShareId, saveReport } from "@/src/lib/reports";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
-import type { AuditReport } from "@/src/lib/types";
+import { findCachedReport, findReportByRepository, findReportByShareId, saveReport } from "@/lib/reports";
+import { ScoringEngine } from "@/lib/scoring/engine";
+import type { AuditReport } from "@/lib/types";
 
 const database = vi.hoisted(() => ({ client: undefined as PrismaClient | undefined }));
-vi.mock("@/src/lib/db", () => ({
+vi.mock("@/lib/db", () => ({
   get prisma() {
     if (!database.client) throw new Error("Test database is not initialized.");
     return database.client;

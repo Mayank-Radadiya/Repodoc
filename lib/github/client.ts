@@ -2,8 +2,8 @@ import "server-only";
 
 import { Octokit } from "octokit";
 import { RequestError } from "@octokit/request-error";
-import type { GitHubTreeResponse, RepoTree, TreeEntry } from "@/src/lib/types";
-import { README_CANDIDATES } from "@/src/lib/scoring/checks/documentation";
+import type { GitHubTreeResponse, RepoTree, TreeEntry } from "@/lib/types";
+import { README_CANDIDATES } from "@/lib/scoring/checks/documentation";
 
 export interface GitHubRepoMetadata {
   defaultBranch: string;

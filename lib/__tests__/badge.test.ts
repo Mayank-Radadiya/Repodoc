@@ -5,7 +5,7 @@ import {
   formatBadgeError,
   formatBadgeResponse,
   getBadgeColor,
-} from "@/src/lib/badge";
+} from "@/lib/badge";
 
 describe("badge utilities", () => {
   describe("getBadgeColor", () => {

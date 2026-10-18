@@ -1,4 +1,4 @@
-import type { RepoTree, TreeEntry } from "@/src/lib/types";
+import type { RepoTree, TreeEntry } from "@/lib/types";
 
 /**
  * Converts a Git tree into a Set of lowercased paths for fast, case-insensitive presence checks.

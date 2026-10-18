@@ -6,7 +6,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardRepoCard } from "../dashboard-repo-card";
-import type { DashboardRepoItem } from "@/src/lib/dashboard";
+import type { DashboardRepoItem } from "@/lib/dashboard";
 
 const sampleUnauditedRepo: DashboardRepoItem = {
   id: 1,

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { buildReportMetadata } from "@/lib/report-metadata";
-import { findReportByShareId } from "@/src/lib/reports";
-import { isShareId } from "@/src/lib/report-validation";
+import { findReportByShareId } from "@/lib/reports";
+import { isShareId } from "@/lib/report-validation";
 import { ShareController } from "@/components/report/share-controller";
 
 type SharePageProps = {

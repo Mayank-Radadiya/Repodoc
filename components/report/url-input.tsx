@@ -7,8 +7,8 @@ import { motion, useReducedMotion } from "motion/react";
 import { cn, parseGitHubUrl, type ParsedGitHubUrl } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { requestAudit } from "@/src/lib/request-audit";
-import type { AuditReport, PersistedAuditReport } from "@/src/lib/types";
+import { requestAudit } from "@/lib/request-audit";
+import type { AuditReport, PersistedAuditReport } from "@/lib/types";
 
 export interface UrlInputProps {
   /** Visible, associated field label. */

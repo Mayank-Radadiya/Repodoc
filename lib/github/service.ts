@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { TreeEntry } from "@/src/lib/types";
+import type { TreeEntry } from "@/lib/types";
 import {
   fetchDefaultBranch,
   fetchFileContent,

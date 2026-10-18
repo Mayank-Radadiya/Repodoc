@@ -2,7 +2,7 @@
 
 import React, { useMemo, useRef, useState } from "react";
 import { Info, FolderSearch, RotateCcw } from "lucide-react";
-import type { DashboardData, DashboardRepoItem } from "@/src/lib/dashboard";
+import type { DashboardData, DashboardRepoItem } from "@/lib/dashboard";
 import { DashboardProfileCard } from "./dashboard-profile-card";
 import {
   DashboardToolbar,
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { DashboardSummary } from "./dashboard-summary";
 import { DashboardInsightsPanel } from "./dashboard-insights";
 import { getDashboardInsights, type RepositoryAuditState } from "./dashboard-model";
-import { requestAudit } from "@/src/lib/request-audit";
+import { requestAudit } from "@/lib/request-audit";
 import styles from "./dashboard.module.css";
 
 export interface DashboardViewProps {

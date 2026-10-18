@@ -27,7 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { AuditReport, CategoryId, CheckResult } from "@/src/lib/types";
+import type { AuditReport, CategoryId, CheckResult } from "@/lib/types";
 import { REPORT_CATEGORIES, REPORT_CATEGORY_IDS } from "./categories";
 import {
   formatPoints,

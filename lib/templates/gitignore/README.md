@@ -1,8 +1,8 @@
 # Bundled .gitignore templates
 
 ```ts
-import { buildPathSet } from "@/src/lib/scoring/utils";
-import { detectLanguages, renderGitignore } from "@/src/lib/templates/gitignore";
+import { buildPathSet } from "@/lib/scoring/utils";
+import { detectLanguages, renderGitignore } from "@/lib/templates/gitignore";
 
 const paths = buildPathSet(tree);
 detectLanguages(paths); // e.g. ["node", "python"]

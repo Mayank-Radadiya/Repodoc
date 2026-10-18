@@ -23,8 +23,8 @@ import {
   requestRemediation,
   type RemediationFixId,
   type RemediationResponse,
-} from "@/src/lib/request-remediation";
-import type { CheckResult, ParsedGitHubUrl } from "@/src/lib/types";
+} from "@/lib/request-remediation";
+import type { CheckResult, ParsedGitHubUrl } from "@/lib/types";
 import { LicenseSelector, type LicenseChoice } from "./license-selector";
 import { useReportTheme } from "./theme-scope";
 

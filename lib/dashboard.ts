@@ -1,7 +1,7 @@
 import "server-only";
 
-import { createOctokit, toGitHubApiError } from "@/src/lib/github/client";
-import { prisma } from "@/src/lib/db";
+import { createOctokit, toGitHubApiError } from "@/lib/github/client";
+import { prisma } from "@/lib/db";
 
 export interface UserProfileData {
   username: string;

@@ -2,13 +2,13 @@ import {
   auditRepository,
   IncompleteTreeError,
   validateRepoCoordinates,
-} from "@/src/lib/audit";
+} from "@/lib/audit";
 import {
   BADGE_CACHE_CONTROL,
   formatBadgeError,
   formatBadgeResponse,
-} from "@/src/lib/badge";
-import { GitHubApiError } from "@/src/lib/github/client";
+} from "@/lib/badge";
+import { GitHubApiError } from "@/lib/github/client";
 
 interface RouteContext {
   params: Promise<{

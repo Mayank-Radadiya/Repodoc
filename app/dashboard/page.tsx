@@ -4,7 +4,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { getGitHubSession } from "@/lib/auth";
-import { getDashboardData } from "@/src/lib/dashboard";
+import { getDashboardData } from "@/lib/dashboard";
 import { DashboardView } from "@/components/dashboard";
 import { DashboardRetry } from "@/components/dashboard/dashboard-retry";
 import styles from "@/components/dashboard/dashboard.module.css";

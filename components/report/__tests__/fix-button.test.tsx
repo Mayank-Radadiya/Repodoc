@@ -10,7 +10,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { signIn } from "next-auth/react";
 import { TestAuthSession } from "@/components/auth/__tests__/fixtures";
 import { FixButton, type FixButtonProps } from "../fix-button";
-import { FixButton as CompatibilityFixButton } from "@/src/components/report/fix-button";
 import { ReportController } from "../report-controller";
 import { ShareController } from "../share-controller";
 import { ReportThemeScope } from "../theme-scope";
@@ -126,8 +125,6 @@ describe("Fix All flow", () => {
     expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body)).fixes).toEqual(["gitignore"]);
   });
 
-  it("exports the compatibility entry point", () =>
-    expect(CompatibilityFixButton).toBe(FixButton));
   it.each(["loading", "unauthenticated", "authenticated"] as const)(
     "gates for %s",
     (status) => {

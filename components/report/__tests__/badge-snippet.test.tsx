@@ -22,11 +22,9 @@ import {
   sanitizeBaseUrl,
   sanitizeRepoCoordinate,
 } from "@/components/report/badge-snippet";
-import { BadgeSnippet as SrcBadgeSnippet } from "@/src/components/report/badge-snippet";
 import { BadgeSnippet as RootBarrelBadgeSnippet } from "@/components/report";
-import { BadgeSnippet as SrcBarrelBadgeSnippet } from "@/src/components/report";
 import { BADGE_COLOR_PALETTE } from "@/components/report/score-gauge";
-import type { AuditReport } from "@/src/lib/types";
+import type { AuditReport } from "@/lib/types";
 
 function createMockReport(overrides?: Partial<AuditReport>): AuditReport {
   return {
@@ -68,16 +66,8 @@ describe("BadgeSnippet Component", () => {
   });
 
   describe("Re-export and Barrel Integrity", () => {
-    it("exports identical component from @/src/components/report/badge-snippet", () => {
-      expect(SrcBadgeSnippet).toBe(BadgeSnippet);
-    });
-
     it("exports identical component from root barrel @/components/report", () => {
       expect(RootBarrelBadgeSnippet).toBe(BadgeSnippet);
-    });
-
-    it("exports identical component from src barrel @/src/components/report", () => {
-      expect(SrcBarrelBadgeSnippet).toBe(BadgeSnippet);
     });
   });
 

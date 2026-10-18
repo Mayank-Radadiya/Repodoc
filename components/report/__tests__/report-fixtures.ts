@@ -1,4 +1,4 @@
-import type { AuditReport, CategoryId, CheckResult } from "@/src/lib/types";
+import type { AuditReport, CategoryId, CheckResult } from "@/lib/types";
 
 export function makeCheck(
   id: string,

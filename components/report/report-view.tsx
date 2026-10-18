@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import type { AuditReport, CategoryId } from "@/src/lib/types";
+import type { AuditReport, CategoryId } from "@/lib/types";
 import { computeReportPreview } from "./report-preview";
 import { ReportHero } from "./report-hero";
 import { ReportSectionNav } from "./report-section-nav";

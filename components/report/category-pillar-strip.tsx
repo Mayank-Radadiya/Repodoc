@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { CategoryId } from "@/src/lib/types";
+import type { CategoryId } from "@/lib/types";
 import { REPORT_CATEGORIES } from "./categories";
 import { formatPoints, type ReportPreview } from "./report-preview";
 import styles from "./report.module.css";

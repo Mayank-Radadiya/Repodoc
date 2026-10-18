@@ -4,14 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   auditRepository,
   IncompleteTreeError,
-} from "@/src/lib/audit";
-import { BADGE_CACHE_CONTROL, BADGE_LABEL } from "@/src/lib/badge";
-import { GitHubApiError } from "@/src/lib/github/client";
-import type { AuditReport } from "@/src/lib/types";
+} from "@/lib/audit";
+import { BADGE_CACHE_CONTROL, BADGE_LABEL } from "@/lib/badge";
+import { GitHubApiError } from "@/lib/github/client";
+import type { AuditReport } from "@/lib/types";
 import { GET } from "../[owner]/[repo]/route";
 
-vi.mock("@/src/lib/audit", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/src/lib/audit")>();
+vi.mock("@/lib/audit", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/audit")>();
   return {
     ...actual,
     auditRepository: vi.fn(),

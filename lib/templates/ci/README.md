@@ -2,7 +2,7 @@
 
 Generates minimal, valid GitHub Actions CI workflows (`.github/workflows/ci.yml`) based on repository language detection or explicit caller configuration.
 
-Import `detectLanguage`, `renderCIWorkflow`, and `generateCIWorkflow` from `@/src/lib/templates/ci`:
+Import `detectLanguage`, `renderCIWorkflow`, and `generateCIWorkflow` from `@/lib/templates/ci`:
 
 ```ts
 import {
@@ -10,7 +10,7 @@ import {
   renderCIWorkflow,
   generateCIWorkflow,
   CI_WORKFLOW_TARGET_PATH,
-} from "@/src/lib/templates/ci";
+} from "@/lib/templates/ci";
 
 // 1. Detect language from Git tree paths
 const language = detectLanguage(repoTree); // "node" | "python" | "go" | "rust" | "generic"

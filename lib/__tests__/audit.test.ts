@@ -4,12 +4,12 @@ import {
   IncompleteTreeError,
   InvalidRepositoryError,
   validateRepoCoordinates,
-} from "@/src/lib/audit";
-import { GitHubApiError } from "@/src/lib/github/client";
-import { GitHubService } from "@/src/lib/github/service";
-import type { TreeEntry } from "@/src/lib/types";
+} from "@/lib/audit";
+import { GitHubApiError } from "@/lib/github/client";
+import { GitHubService } from "@/lib/github/service";
+import type { TreeEntry } from "@/lib/types";
 
-vi.mock("@/src/lib/github/service", () => ({
+vi.mock("@/lib/github/service", () => ({
   GitHubService: {
     getRepoData: vi.fn(),
     fetchFileContent: vi.fn(),

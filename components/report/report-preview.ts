@@ -2,8 +2,8 @@ import {
   calculateCategoryScores,
   computeHealthScore,
   type CategoryScoreSummary,
-} from "@/src/lib/scoring/engine";
-import type { AuditReport, CategoryId, CheckResult } from "@/src/lib/types";
+} from "@/lib/scoring/engine";
+import type { AuditReport, CategoryId, CheckResult } from "@/lib/types";
 
 const MAX_TOP_BOOSTERS = 3;
 

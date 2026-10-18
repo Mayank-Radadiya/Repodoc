@@ -1,5 +1,5 @@
-import type { CheckResult, RepoTree, TreeEntry } from "@/src/lib/types";
-import { buildPathSet, findFile } from "@/src/lib/scoring/utils";
+import type { CheckResult, RepoTree, TreeEntry } from "@/lib/types";
+import { buildPathSet, findFile } from "@/lib/scoring/utils";
 
 /**
  * Category identifier for Security Baseline checks.

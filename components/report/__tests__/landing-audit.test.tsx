@@ -8,7 +8,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { HeroPromptCard } from "@/components/landing/sections/hero/hero-prompt-card";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
+import { ScoringEngine } from "@/lib/scoring/engine";
 
 const navigation = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => navigation }));

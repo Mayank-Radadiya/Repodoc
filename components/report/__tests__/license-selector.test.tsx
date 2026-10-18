@@ -14,7 +14,6 @@ import {
   LicenseSelector,
   type LicenseSelectorProps,
 } from "../license-selector";
-import { LicenseSelector as CompatibilityLicenseSelector } from "@/src/components/report/license-selector";
 import { ReportThemeScope } from "../theme-scope";
 
 const choices = [
@@ -98,10 +97,6 @@ function confirmButton() {
 }
 
 describe("LicenseSelector", () => {
-  it("exposes the same component through the compatibility entry point", () => {
-    expect(CompatibilityLicenseSelector).toBe(LicenseSelector);
-  });
-
   it("does not render a dialog or make requests while closed", () => {
     renderSelector({ open: false });
     expect(screen.queryByRole("dialog")).toBeNull();

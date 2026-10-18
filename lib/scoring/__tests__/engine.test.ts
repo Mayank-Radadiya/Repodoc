@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { RUBRIC_VERSION } from "@/src/lib/constants";
-import type { CheckResult, RepoTree, TreeEntry } from "@/src/lib/types";
+import { RUBRIC_VERSION } from "@/lib/constants";
+import type { CheckResult, RepoTree, TreeEntry } from "@/lib/types";
 import * as documentation from "../checks/documentation";
 import * as hygiene from "../checks/hygiene";
 import * as testing from "../checks/testing";

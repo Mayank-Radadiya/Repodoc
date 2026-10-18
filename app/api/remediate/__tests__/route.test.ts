@@ -6,19 +6,19 @@ import {
   auditRepository,
   IncompleteTreeError,
   InvalidRepositoryError,
-} from "@/src/lib/audit";
-import { GitHubApiError, type GitHubErrorCode } from "@/src/lib/github/client";
+} from "@/lib/audit";
+import { GitHubApiError, type GitHubErrorCode } from "@/lib/github/client";
 import {
   RemediationEngine,
   RemediationError,
-} from "@/src/lib/remediation/engine";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
-import { SUPPORTED_LICENSE_IDS } from "@/src/lib/templates/licenses";
+} from "@/lib/remediation/engine";
+import { ScoringEngine } from "@/lib/scoring/engine";
+import { SUPPORTED_LICENSE_IDS } from "@/lib/templates/licenses";
 import { POST } from "../route";
 
 vi.mock("@/lib/auth", () => ({ getGitHubSession: vi.fn() }));
-vi.mock("@/src/lib/audit", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/src/lib/audit")>()),
+vi.mock("@/lib/audit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/audit")>()),
   auditRepository: vi.fn(),
 }));
 

@@ -1,15 +1,15 @@
 // @vitest-environment node
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { RUBRIC_VERSION } from "@/src/lib/constants";
-import { GitHubApiError, type GitHubErrorCode } from "@/src/lib/github/client";
-import { GitHubService } from "@/src/lib/github/service";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
-import type { AuditReport, TreeEntry } from "@/src/lib/types";
-import { findCachedReport, saveReport } from "@/src/lib/reports";
+import { RUBRIC_VERSION } from "@/lib/constants";
+import { GitHubApiError, type GitHubErrorCode } from "@/lib/github/client";
+import { GitHubService } from "@/lib/github/service";
+import { ScoringEngine } from "@/lib/scoring/engine";
+import type { AuditReport, TreeEntry } from "@/lib/types";
+import { findCachedReport, saveReport } from "@/lib/reports";
 import { POST } from "../route";
 
-vi.mock("@/src/lib/reports", () => ({ findCachedReport: vi.fn(), saveReport: vi.fn() }));
+vi.mock("@/lib/reports", () => ({ findCachedReport: vi.fn(), saveReport: vi.fn() }));
 
 const fetchMock = vi.fn<typeof fetch>();
 const metadata = { default_branch: "release/docs", description: "Repository tools", topics: ["tools"] };

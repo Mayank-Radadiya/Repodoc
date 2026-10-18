@@ -10,7 +10,7 @@ import { ReportThemeScope } from "@/components/report/theme-scope";
 import { ReportPending } from "@/components/report/report-pending";
 import { ReportErrorCard } from "@/components/report/report-error-card";
 import { Button } from "@/components/ui/button";
-import type { AuditReport } from "@/src/lib/types";
+import type { AuditReport } from "@/lib/types";
 
 const base: AuditReport = {
   owner: "acme", repo: "orbit-cli", defaultBranch: "main", rubricVersion: "1.0.0",

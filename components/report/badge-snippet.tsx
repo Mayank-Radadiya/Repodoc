@@ -12,12 +12,12 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTab, TabsPanel } from "@/components/ui/tabs";
-import { BADGE_LABEL, getBadgeColor } from "@/src/lib/badge";
+import { BADGE_LABEL, getBadgeColor } from "@/lib/badge";
 import {
   BADGE_COLOR_PALETTE,
   normalizeScore,
 } from "@/components/report/score-gauge";
-import type { AuditReport } from "@/src/lib/types";
+import type { AuditReport } from "@/lib/types";
 
 export const DEFAULT_BASE_URL = "https://repodoc.dev";
 export const DEFAULT_BADGE_LABEL = "Repo Health";

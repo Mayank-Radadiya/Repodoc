@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { GitHubTreeResponse, TreeEntry } from "@/src/lib/types";
+import type { GitHubTreeResponse, TreeEntry } from "@/lib/types";
 import {
   fetchDefaultBranch,
   fetchFileContent,

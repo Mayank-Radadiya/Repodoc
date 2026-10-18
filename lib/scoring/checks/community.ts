@@ -1,4 +1,4 @@
-import type { CheckResult, RepoTree, TreeEntry } from "@/src/lib/types";
+import type { CheckResult, RepoTree, TreeEntry } from "@/lib/types";
 import { buildPathSet, findFile, findFilesInDir } from "../utils";
 
 export const COMMUNITY_CATEGORY_ID = "community" as const;

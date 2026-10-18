@@ -3,8 +3,8 @@
 import React from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { getBadgeColor } from "@/src/lib/badge";
-import type { BadgeResponse } from "@/src/lib/types";
+import { getBadgeColor } from "@/lib/badge";
+import type { BadgeResponse } from "@/lib/types";
 
 export type ScoreGaugeSize = "sm" | "md" | "lg" | number;
 

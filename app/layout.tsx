@@ -74,7 +74,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-white text-slate-900 antialiased">
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+          }}
         />
         <AuthProvider>{children}</AuthProvider>
       </body>

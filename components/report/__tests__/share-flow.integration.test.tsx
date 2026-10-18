@@ -1,7 +1,7 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
+import { ScoringEngine } from "@/lib/scoring/engine";
 import { ReportController } from "../report-controller";
 import { ShareController } from "../share-controller";
 import { renderSignedOut as render } from "@/components/auth/__tests__/fixtures";

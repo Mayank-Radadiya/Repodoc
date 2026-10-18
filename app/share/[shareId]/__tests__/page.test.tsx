@@ -1,13 +1,13 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
-import { findReportByShareId } from "@/src/lib/reports";
+import { ScoringEngine } from "@/lib/scoring/engine";
+import { findReportByShareId } from "@/lib/reports";
 import Page, { generateMetadata } from "../page";
 import ShareError from "../error";
 import ShareNotFound from "../not-found";
 
-vi.mock("@/src/lib/reports", () => ({ findReportByShareId: vi.fn() }));
+vi.mock("@/lib/reports", () => ({ findReportByShareId: vi.fn() }));
 vi.mock("next/navigation", () => ({
   notFound: () => {
     throw new Error("NEXT_NOT_FOUND");

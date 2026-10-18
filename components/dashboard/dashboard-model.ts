@@ -1,5 +1,5 @@
-import type { DashboardRepoItem } from "@/src/lib/dashboard";
-import { getBadgeColor } from "@/src/lib/badge";
+import type { DashboardRepoItem } from "@/lib/dashboard";
+import { getBadgeColor } from "@/lib/badge";
 
 export const healthBands = [
   { key: "excellent", label: "Excellent", color: "brightgreen" },

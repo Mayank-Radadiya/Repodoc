@@ -7,10 +7,9 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { AuditReport, CategoryId } from "@/src/lib/types";
+import type { AuditReport, CategoryId } from "@/lib/types";
 import { CategoryBreakdown } from "@/components/report/category-breakdown";
 import { CategoryBreakdown as CategoryBreakdownFromBarrel } from "@/components/report";
-import { CategoryBreakdown as CategoryBreakdownFromShim } from "@/src/components/report/category-breakdown";
 import { computeReportPreview } from "@/components/report/report-preview";
 import { makeCheck, makeFixtureReport } from "./report-fixtures";
 
@@ -440,8 +439,7 @@ describe("CategoryBreakdown", () => {
     ).toThrow(/duplicate/i);
   });
 
-  it("exposes the same component from the barrel and the src shim", () => {
+  it("exposes the same component from the barrel", () => {
     expect(CategoryBreakdownFromBarrel).toBe(CategoryBreakdown);
-    expect(CategoryBreakdownFromShim).toBe(CategoryBreakdown);
   });
 });

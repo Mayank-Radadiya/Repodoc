@@ -3,9 +3,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getGitHubSession } from "@/lib/auth";
 import { POST } from "@/app/api/remediate/route";
-import { REPODOC_BRANCH } from "@/src/lib/constants";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
-import type { TreeEntry } from "@/src/lib/types";
+import { REPODOC_BRANCH } from "@/lib/constants";
+import { ScoringEngine } from "@/lib/scoring/engine";
+import type { TreeEntry } from "@/lib/types";
 import { RemediationEngine } from "../engine";
 
 vi.mock("@/lib/auth", () => ({ getGitHubSession: vi.fn() }));

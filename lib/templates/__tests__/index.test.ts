@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { describe, expect, it } from "vitest";
-import * as templates from "@/src/lib/templates";
+import * as templates from "@/lib/templates";
 import * as rootTemplates from "@/lib/templates";
 
 describe("Unified Remediation Templates Barrel Export", () => {

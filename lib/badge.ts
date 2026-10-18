@@ -1,5 +1,5 @@
-import { BADGE_COLORS } from "@/src/lib/constants";
-import type { BadgeResponse } from "@/src/lib/types";
+import { BADGE_COLORS } from "@/lib/constants";
+import type { BadgeResponse } from "@/lib/types";
 
 export const BADGE_LABEL = "repo health";
 export const BADGE_CACHE_CONTROL =

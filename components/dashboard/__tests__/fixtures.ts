@@ -1,4 +1,4 @@
-import type { DashboardData, DashboardRepoItem } from "@/src/lib/dashboard";
+import type { DashboardData, DashboardRepoItem } from "@/lib/dashboard";
 
 export const sampleDashboardData: DashboardData = {
   user: {

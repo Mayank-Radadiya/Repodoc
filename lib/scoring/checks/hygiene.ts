@@ -1,5 +1,5 @@
-import type { CheckResult } from "@/src/lib/types";
-import { findFile } from "@/src/lib/scoring/utils";
+import type { CheckResult } from "@/lib/types";
+import { findFile } from "@/lib/scoring/utils";
 
 export const LICENSE_MAX_POINTS = 10;
 export const GITIGNORE_MAX_POINTS = 5;

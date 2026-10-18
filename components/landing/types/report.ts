@@ -1,6 +1,6 @@
-import type { CategoryId } from "@/src/lib/types";
+import type { CategoryId } from "@/lib/types";
 
-export type { CategoryId } from "@/src/lib/types";
+export type { CategoryId } from "@/lib/types";
 
 export interface SampleCheck {
   id: string;

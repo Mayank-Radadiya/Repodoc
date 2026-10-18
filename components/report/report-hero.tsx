@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { AuditReport } from "@/src/lib/types";
+import type { AuditReport } from "@/lib/types";
 import { formatPoints, type ReportPreview } from "./report-preview";
 import {
   getScoreGaugePalette,

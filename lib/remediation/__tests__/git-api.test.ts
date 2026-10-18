@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GitHubApiError } from "@/src/lib/github/client";
+import { GitHubApiError } from "@/lib/github/client";
 import { createBlob, createCommit, createOrUpdateBranch, createTree, openPullRequest, type TreeBlob } from "../git-api";
 
 const fetchMock = vi.fn<typeof fetch>();

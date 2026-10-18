@@ -1,13 +1,13 @@
 import "server-only";
 
-import { REPODOC_BRANCH } from "@/src/lib/constants";
+import { REPODOC_BRANCH } from "@/lib/constants";
 import {
   createOctokit,
   GitHubApiError,
   toGitHubApiError,
   validatePathParameter,
-} from "@/src/lib/github/client";
-import type { TreeEntry } from "@/src/lib/types";
+} from "@/lib/github/client";
+import type { TreeEntry } from "@/lib/types";
 
 /** A previously created blob and its repository-relative destination. */
 export type TreeBlob = Pick<TreeEntry, "path" | "sha">;

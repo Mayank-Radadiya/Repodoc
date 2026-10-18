@@ -1,13 +1,13 @@
 import "server-only";
 
-import { REPODOC_BRANCH } from "@/src/lib/constants";
+import { REPODOC_BRANCH } from "@/lib/constants";
 import {
   createOctokit,
   GitHubApiError,
   toGitHubApiError,
   validatePathParameter,
-} from "@/src/lib/github/client";
-import { isRepositoryCoordinates } from "@/src/lib/report-validation";
+} from "@/lib/github/client";
+import { isRepositoryCoordinates } from "@/lib/report-validation";
 import { RemediationError } from "./errors";
 import type { BaseCommit } from "./git-api";
 

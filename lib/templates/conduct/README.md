@@ -5,7 +5,7 @@ import {
   renderCodeOfConduct,
   CONTRIBUTOR_COVENANT_V2_1,
   CODE_OF_CONDUCT_VERSION,
-} from "@/src/lib/templates/conduct";
+} from "@/lib/templates/conduct";
 
 // Canonical template with default [INSERT CONTACT METHOD] placeholder:
 const defaultText = renderCodeOfConduct();

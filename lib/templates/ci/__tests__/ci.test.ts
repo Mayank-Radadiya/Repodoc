@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 import YAML from "yaml";
-import type { RepoTree, TreeEntry } from "@/src/lib/types";
+import type { RepoTree, TreeEntry } from "@/lib/types";
 import {
   CI_WORKFLOW_TARGET_PATH,
   SUPPORTED_CI_LANGUAGES,

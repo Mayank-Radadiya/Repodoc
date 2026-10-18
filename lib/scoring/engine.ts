@@ -1,11 +1,11 @@
-import { RUBRIC_VERSION } from "@/src/lib/constants";
+import { RUBRIC_VERSION } from "@/lib/constants";
 import type {
   AuditReport,
   CategoryId,
   CheckResult,
   RepoTree,
   TreeEntry,
-} from "@/src/lib/types";
+} from "@/lib/types";
 import { checkDocumentation } from "./checks/documentation";
 import { checkHygiene } from "./checks/hygiene";
 import { runTestingChecks } from "./checks/testing";

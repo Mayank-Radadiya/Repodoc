@@ -9,9 +9,9 @@ import {
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { getGitHubSession } from "@/lib/auth";
 import { POST } from "@/app/api/remediate/route";
-import { REPODOC_BRANCH } from "@/src/lib/constants";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
-import { renderLicense } from "@/src/lib/templates/licenses";
+import { REPODOC_BRANCH } from "@/lib/constants";
+import { ScoringEngine } from "@/lib/scoring/engine";
+import { renderLicense } from "@/lib/templates/licenses";
 import { TestAuthSession } from "@/components/auth/__tests__/fixtures";
 import { ReportController } from "../report-controller";
 import { ReportThemeScope } from "../theme-scope";

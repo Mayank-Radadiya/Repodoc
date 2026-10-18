@@ -1,8 +1,8 @@
 // @vitest-environment node
 
 import { describe, expect, it } from "vitest";
-import type { CheckResult } from "@/src/lib/types";
-import { buildPathSet } from "@/src/lib/scoring/utils";
+import type { CheckResult } from "@/lib/types";
+import { buildPathSet } from "@/lib/scoring/utils";
 import {
   checkReadmePresence,
   checkReadmeHeadings,

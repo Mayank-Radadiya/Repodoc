@@ -1,6 +1,6 @@
 # Bundled license templates
 
-Import `renderLicense` and `SUPPORTED_LICENSE_IDS` from `@/src/lib/templates/licenses`:
+Import `renderLicense` and `SUPPORTED_LICENSE_IDS` from `@/lib/templates/licenses`:
 
 ```ts
 renderLicense("MIT", 2026, "Example Contributors");

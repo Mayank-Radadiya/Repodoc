@@ -1,7 +1,7 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
-import type { UserProfileData } from "@/src/lib/dashboard";
+import type { UserProfileData } from "@/lib/dashboard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import styles from "./dashboard.module.css";
 

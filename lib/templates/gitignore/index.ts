@@ -1,5 +1,5 @@
-import { buildPathSet } from "@/src/lib/scoring/utils";
-import type { RepoTree, TreeEntry } from "@/src/lib/types";
+import { buildPathSet } from "@/lib/scoring/utils";
+import type { RepoTree, TreeEntry } from "@/lib/types";
 import { GENERIC_GITIGNORE } from "./generic";
 import { GO_GITIGNORE } from "./go";
 import { NODE_GITIGNORE } from "./node";

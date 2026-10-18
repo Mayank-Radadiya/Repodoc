@@ -1,4 +1,4 @@
-import type { CheckResult, RepoTree, TreeEntry } from "@/src/lib/types";
+import type { CheckResult, RepoTree, TreeEntry } from "@/lib/types";
 import { buildPathSet, findFilesInDir } from "../utils";
 
 export const CHECK_CI_WORKFLOW_ID = "ci-workflow";

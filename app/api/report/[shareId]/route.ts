@@ -1,4 +1,4 @@
-import { findReportByShareId } from "@/src/lib/reports";
+import { findReportByShareId } from "@/lib/reports";
 
 interface RouteContext {
   params: Promise<{ shareId: string }>;

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ReportController } from "@/components/report/report-controller";
 import { buildReportMetadata } from "@/lib/report-metadata";
-import { isRepositoryCoordinates } from "@/src/lib/report-validation";
-import { findReportByRepository } from "@/src/lib/reports";
+import { isRepositoryCoordinates } from "@/lib/report-validation";
+import { findReportByRepository } from "@/lib/reports";
 
 type ReportPageProps = {
   params: Promise<{ owner: string; repo: string }>;

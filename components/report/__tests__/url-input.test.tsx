@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
+import { ScoringEngine } from "@/lib/scoring/engine";
 import { UrlInput } from "@/components/report/url-input";
-import { UrlInput as SrcUrlInput } from "@/src/components/report/url-input";
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -37,10 +36,6 @@ describe("UrlInput component", () => {
 
     const button = screen.getByRole("button", { name: /audit/i });
     expect(button).toBeDefined();
-  });
-
-  it("exports identical component from @/src/components/report/url-input", () => {
-    expect(SrcUrlInput).toBe(UrlInput);
   });
 
   it("renders initialValue when provided", () => {

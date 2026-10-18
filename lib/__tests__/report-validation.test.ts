@@ -3,8 +3,8 @@ import {
   isShareId,
   isPersistedAuditReport,
   isRepositoryCoordinates,
-} from "@/src/lib/report-validation";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
+} from "@/lib/report-validation";
+import { ScoringEngine } from "@/lib/scoring/engine";
 
 describe("report-validation", () => {
   describe("isShareId", () => {

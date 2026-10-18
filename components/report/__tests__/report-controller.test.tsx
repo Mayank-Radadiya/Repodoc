@@ -7,7 +7,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
+import { ScoringEngine } from "@/lib/scoring/engine";
 import { ReportController } from "../report-controller";
 import { buildMarkdownSnippet } from "../badge-snippet";
 import { renderSignedOut as render } from "@/components/auth/__tests__/fixtures";

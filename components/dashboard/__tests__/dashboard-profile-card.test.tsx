@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { DashboardProfileCard } from "../dashboard-profile-card";
-import type { UserProfileData } from "@/src/lib/dashboard";
+import type { UserProfileData } from "@/lib/dashboard";
 
 const sampleUser: UserProfileData = {
   username: "octocat",

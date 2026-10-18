@@ -7,7 +7,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
+import { ScoringEngine } from "@/lib/scoring/engine";
 import { ShareController } from "../share-controller";
 
 const saved = {

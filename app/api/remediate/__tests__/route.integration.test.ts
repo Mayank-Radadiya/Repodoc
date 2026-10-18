@@ -2,13 +2,13 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getGitHubSession } from "@/lib/auth";
-import { REPODOC_BRANCH } from "@/src/lib/constants";
+import { REPODOC_BRANCH } from "@/lib/constants";
 import {
   generateCIWorkflow,
   renderGitignore,
   renderLicense,
-} from "@/src/lib/templates";
-import type { TreeEntry } from "@/src/lib/types";
+} from "@/lib/templates";
+import type { TreeEntry } from "@/lib/types";
 import { POST } from "../route";
 
 vi.mock("@/lib/auth", () => ({ getGitHubSession: vi.fn() }));

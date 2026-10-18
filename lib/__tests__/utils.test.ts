@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseGitHubUrl, type ParsedGitHubUrl } from "@/src/lib/utils";
+import { parseGitHubUrl, type ParsedGitHubUrl } from "@/lib/utils";
 import { parseGitHubUrl as parseGitHubUrlFromRoot } from "@/lib/utils";
 
 describe("parseGitHubUrl", () => {

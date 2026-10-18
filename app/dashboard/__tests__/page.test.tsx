@@ -3,7 +3,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { redirect } from "next/navigation";
 import { getGitHubSession } from "@/lib/auth";
-import { getDashboardData } from "@/src/lib/dashboard";
+import { getDashboardData } from "@/lib/dashboard";
 import DashboardPage from "../page";
 
 vi.mock("next/navigation", () => ({
@@ -14,7 +14,7 @@ vi.mock("@/lib/auth", () => ({
   getGitHubSession: vi.fn(),
 }));
 
-vi.mock("@/src/lib/dashboard", () => ({
+vi.mock("@/lib/dashboard", () => ({
   getDashboardData: vi.fn(),
 }));
 

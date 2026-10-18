@@ -4,7 +4,7 @@ import { useId } from "react";
 import { CheckCircle2, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import type { AuditReport } from "@/src/lib/types";
+import type { AuditReport } from "@/lib/types";
 import { getReportCategory } from "./categories";
 import {
   formatPoints,

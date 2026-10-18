@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { REPODOC_BRANCH } from "@/src/lib/constants";
+import { REPODOC_BRANCH } from "@/lib/constants";
 import { ensureForkReady, fetchRemediationRepository } from "../fork-api";
 
 vi.mock("octokit", async (importOriginal) => {

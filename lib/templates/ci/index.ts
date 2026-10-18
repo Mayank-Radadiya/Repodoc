@@ -1,5 +1,5 @@
-import { buildPathSet } from "@/src/lib/scoring/utils";
-import type { RepoTree, TreeEntry } from "@/src/lib/types";
+import { buildPathSet } from "@/lib/scoring/utils";
+import type { RepoTree, TreeEntry } from "@/lib/types";
 import { renderGenericWorkflow } from "./generic";
 import { renderGoWorkflow } from "./go";
 import { renderNodeWorkflow } from "./node";

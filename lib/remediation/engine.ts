@@ -1,20 +1,20 @@
 import "server-only";
 
-import { REPODOC_BRANCH } from "@/src/lib/constants";
-import { REMEDIATION_FEEDBACK } from "@/src/lib/remediation-feedback";
-import { fetchRepoTree, GitHubApiError } from "@/src/lib/github/client";
+import { REPODOC_BRANCH } from "@/lib/constants";
+import { REMEDIATION_FEEDBACK } from "@/lib/remediation-feedback";
+import { fetchRepoTree, GitHubApiError } from "@/lib/github/client";
 import {
   isAuditReport,
   isRepositoryCoordinates,
-} from "@/src/lib/report-validation";
+} from "@/lib/report-validation";
 import {
   checkCodeOfConduct,
   checkGitignore,
   checkLicense,
-} from "@/src/lib/scoring/checks/hygiene";
-import { checkSecurityPolicy } from "@/src/lib/scoring/checks/security";
-import { checkCIWorkflow } from "@/src/lib/scoring/checks/testing";
-import { buildPathSet } from "@/src/lib/scoring/utils";
+} from "@/lib/scoring/checks/hygiene";
+import { checkSecurityPolicy } from "@/lib/scoring/checks/security";
+import { checkCIWorkflow } from "@/lib/scoring/checks/testing";
+import { buildPathSet } from "@/lib/scoring/utils";
 import {
   CI_WORKFLOW_TARGET_PATH,
   CODE_OF_CONDUCT_TARGET_PATH,
@@ -27,8 +27,8 @@ import {
   renderLicense,
   renderSecurityPolicy,
   type SupportedLicenseId,
-} from "@/src/lib/templates";
-import type { AuditReport, TreeEntry } from "@/src/lib/types";
+} from "@/lib/templates";
+import type { AuditReport, TreeEntry } from "@/lib/types";
 import {
   createBlob,
   createCommit,

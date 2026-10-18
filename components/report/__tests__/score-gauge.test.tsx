@@ -7,7 +7,6 @@ import {
   normalizeScore,
   getScoreGaugePalette,
 } from "@/components/report/score-gauge";
-import { ScoreGauge as ReExportedScoreGauge } from "@/src/components/report/score-gauge";
 
 describe("ScoreGauge Component", () => {
   beforeEach(() => {
@@ -284,12 +283,6 @@ describe("ScoreGauge Component", () => {
       expect(color).toBe("brightgreen");
       expect(palette.hex).toBe(BADGE_COLOR_PALETTE.brightgreen.hex);
       expect(palette.label).toBe("Excellent");
-    });
-  });
-
-  describe("Re-Export Integrity", () => {
-    it("exports identical component from @/src/components/report/score-gauge", () => {
-      expect(ReExportedScoreGauge).toBe(ScoreGauge);
     });
   });
 });

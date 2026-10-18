@@ -2,9 +2,9 @@ import "server-only";
 
 import { Prisma, type RepoReport } from "@prisma/client";
 import { nanoid } from "nanoid";
-import { prisma } from "@/src/lib/db";
-import { RUBRIC_VERSION } from "@/src/lib/constants";
-import type { AuditReport, PersistedAuditReport } from "@/src/lib/types";
+import { prisma } from "@/lib/db";
+import { RUBRIC_VERSION } from "@/lib/constants";
+import type { AuditReport, PersistedAuditReport } from "@/lib/types";
 import { isAuditReport, isRepositoryCoordinates } from "./report-validation";
 
 function decodeReport(row: RepoReport): PersistedAuditReport | null {

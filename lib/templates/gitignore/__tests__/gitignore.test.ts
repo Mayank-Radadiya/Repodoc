@@ -6,8 +6,8 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildPathSet } from "@/src/lib/scoring/utils";
-import type { RepoTree, TreeEntry } from "@/src/lib/types";
+import { buildPathSet } from "@/lib/scoring/utils";
+import type { RepoTree, TreeEntry } from "@/lib/types";
 import {
   detectLanguages,
   GITIGNORE_TARGET_PATH,

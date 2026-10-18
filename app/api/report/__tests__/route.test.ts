@@ -1,11 +1,11 @@
 // @vitest-environment node
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { findReportByShareId } from "@/src/lib/reports";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
+import { findReportByShareId } from "@/lib/reports";
+import { ScoringEngine } from "@/lib/scoring/engine";
 import { GET } from "../[shareId]/route";
 
-vi.mock("@/src/lib/reports", () => ({ findReportByShareId: vi.fn() }));
+vi.mock("@/lib/reports", () => ({ findReportByShareId: vi.fn() }));
 
 const report = {
   ...ScoringEngine.run({

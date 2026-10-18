@@ -1,4 +1,4 @@
-import type { DashboardData } from "@/src/lib/dashboard";
+import type { DashboardData } from "@/lib/dashboard";
 import styles from "./dashboard.module.css";
 
 export function DashboardSummary({ stats, onReviewUnaudited }: {

@@ -1,10 +1,10 @@
 // @vitest-environment node
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { prisma } from "@/src/lib/db";
+import { prisma } from "@/lib/db";
 import { getDashboardData } from "../dashboard";
 
-vi.mock("@/src/lib/db", () => ({
+vi.mock("@/lib/db", () => ({
   prisma: {
     repoReport: {
       findMany: vi.fn(),

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CategoryPillarStrip } from "@/components/report/category-pillar-strip";
 import { computeReportPreview } from "@/components/report/report-preview";
 import { makeCheck, makeFixtureReport } from "./report-fixtures";
-import type { AuditReport } from "@/src/lib/types";
+import type { AuditReport } from "@/lib/types";
 
 afterEach(cleanup);
 

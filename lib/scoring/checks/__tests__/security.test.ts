@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { describe, expect, it } from "vitest";
-import type { RepoTree, TreeEntry } from "@/src/lib/types";
+import type { RepoTree, TreeEntry } from "@/lib/types";
 import { buildPathSet } from "../../utils";
 import {
   checkSecurityPolicy,

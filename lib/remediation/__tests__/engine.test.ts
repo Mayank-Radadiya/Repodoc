@@ -1,17 +1,17 @@
 // @vitest-environment node
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { REPODOC_BRANCH } from "@/src/lib/constants";
-import { GitHubApiError } from "@/src/lib/github/client";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
+import { REPODOC_BRANCH } from "@/lib/constants";
+import { GitHubApiError } from "@/lib/github/client";
+import { ScoringEngine } from "@/lib/scoring/engine";
 import {
   generateCIWorkflow,
   renderCodeOfConduct,
   renderGitignore,
   renderLicense,
   renderSecurityPolicy,
-} from "@/src/lib/templates";
-import type { TreeEntry } from "@/src/lib/types";
+} from "@/lib/templates";
+import type { TreeEntry } from "@/lib/types";
 import {
   RemediationEngine,
   RemediationError,

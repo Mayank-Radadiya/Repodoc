@@ -6,7 +6,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import type { CategoryId } from "@/src/lib/types";
+import type { CategoryId } from "@/lib/types";
 
 export interface ReportCategoryMeta {
   id: CategoryId;

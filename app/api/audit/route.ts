@@ -1,8 +1,8 @@
-import { GitHubApiError } from "@/src/lib/github/client";
-import { GitHubService, findReadmeEntry } from "@/src/lib/github/service";
-import { ScoringEngine } from "@/src/lib/scoring/engine";
-import { buildPathSet } from "@/src/lib/scoring/utils";
-import { findCachedReport, saveReport } from "@/src/lib/reports";
+import { GitHubApiError } from "@/lib/github/client";
+import { GitHubService, findReadmeEntry } from "@/lib/github/service";
+import { ScoringEngine } from "@/lib/scoring/engine";
+import { buildPathSet } from "@/lib/scoring/utils";
+import { findCachedReport, saveReport } from "@/lib/reports";
 
 function parseRepository(body: unknown): { owner: string; repo: string } | null {
   if (

@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { describe, expect, it } from "vitest";
-import type { RepoTree, TreeEntry } from "@/src/lib/types";
+import type { RepoTree, TreeEntry } from "@/lib/types";
 import {
   CHECK_CI_WORKFLOW_ID,
   CHECK_TESTS_ID,
