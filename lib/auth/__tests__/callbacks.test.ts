@@ -1,8 +1,10 @@
 // @vitest-environment node
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { authCallbacks } from "../callbacks";
-import { account, claims, jwtParams, profile } from "./fixtures";
+import { createAuthCallbacks } from "../callbacks";
+import { account, claims, jwtParams, oauthClientId, profile } from "./fixtures";
+
+const authCallbacks = createAuthCallbacks(oauthClientId);
 
 const { upsert } = vi.hoisted(() => ({ upsert: vi.fn() }));
 vi.mock("@/lib/db", () => ({ prisma: { user: { upsert } } }));
@@ -25,6 +27,7 @@ describe("GitHub authentication callbacks", () => {
     expect(result).toMatchObject({
       sub: "db-user-id", userId: "db-user-id", githubId: "123", username: "octocat",
       accessToken: account.access_token, picture: profile.avatar_url,
+      oauthClientId,
     });
   });
 
@@ -41,6 +44,8 @@ describe("GitHub authentication callbacks", () => {
     { account: { ...account, providerAccountId: "999" } },
     { account: { ...account, access_token: undefined } },
     { account: { ...account, access_token: " " } },
+    { account: { ...account, access_token: "ghu_wrong_app_token" } },
+    { account: { ...account, access_token: "ghs_installation_token" } },
     { profile: undefined },
     { profile: { ...profile, id: "123" } },
     { profile: { ...profile, id: 0 } },
@@ -66,7 +71,7 @@ describe("GitHub authentication callbacks", () => {
     expect(await authCallbacks.jwt(jwtParams({ token, account: null, profile: undefined, trigger: undefined }))).toBe(token);
     expect(await authCallbacks.jwt(jwtParams({
       token, account: null, profile: undefined, trigger: "update",
-      session: { userId: "attacker", accessToken: "attacker", accessTokenExpiresAt: Infinity },
+      session: { userId: "attacker", accessToken: "attacker", accessTokenExpiresAt: Infinity, oauthClientId: "attacker" },
     }))).toEqual(claims);
     expect(upsert).not.toHaveBeenCalled();
   });
@@ -81,6 +86,8 @@ describe("GitHub authentication callbacks", () => {
 
   it.each([
     {}, { ...claims, userId: "" }, { ...claims, accessToken: " " },
+    { ...claims, oauthClientId: undefined }, { ...claims, oauthClientId: "another-client" },
+    { ...claims, accessToken: "ghu_old_session_token" },
     { ...claims, accessTokenExpiresAt: 1 }, { ...claims, accessTokenExpiresAt: NaN },
     { ...claims, exp: 1 },
   ])("invalidates incomplete or expired claims: %j", async (token) => {
@@ -100,5 +107,7 @@ describe("GitHub authentication callbacks", () => {
     });
     expect(JSON.stringify(result)).not.toContain("Token");
     expect(JSON.stringify(result)).not.toContain("private-");
+    expect(result).not.toHaveProperty("oauthClientId");
+    expect(result.user).not.toHaveProperty("oauthClientId");
   });
 });

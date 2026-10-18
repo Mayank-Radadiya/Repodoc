@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, RefreshCw, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { requestAudit } from "@/src/lib/request-audit";
 import type { ParsedGitHubUrl, PersistedAuditReport } from "@/src/lib/types";
 import { buildReportUrl, copyToClipboard } from "./badge-snippet";
@@ -130,12 +131,13 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
           <label htmlFor="report-share-url" className="block font-medium">
             Copy the report link manually
           </label>
-          <input
+          <Input
             id="report-share-url"
+            nativeInput
             readOnly
             value={reportUrl}
             onFocus={(event) => event.target.select()}
-            className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3"
+            className="min-h-11"
           />
         </div>
       )}

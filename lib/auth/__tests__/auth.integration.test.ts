@@ -6,12 +6,13 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { NextRequest } from "next/server";
+import { encode } from "next-auth/jwt";
 import { headers } from "next/headers";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET, POST } from "@/app/api/auth/[...nextauth]/route";
 import { getGitHubSession } from "@/lib/auth";
 import { GITHUB_SCOPES } from "../config";
-import { accessToken, authEnvironment, profile } from "./fixtures";
+import { accessToken, authEnvironment, claims, oauthClientId, profile, secret } from "./fixtures";
 
 const database = vi.hoisted(() => ({ client: undefined as PrismaClient | undefined }));
 vi.mock("@/lib/db", () => ({
@@ -150,6 +151,7 @@ describe("GitHub OAuth handlers with SQLite persistence", () => {
       expect(new Date(session.expires).getTime()).toBeGreaterThan(Date.now() + 29 * 86400000);
       expect(JSON.stringify(session)).not.toContain(accessToken);
       expect(session).not.toHaveProperty("accessToken");
+      expect(JSON.stringify(session)).not.toContain("oauthClientId");
     }
     vi.mocked(headers).mockResolvedValue(new Headers({ cookie: cookieHeader(jar) }));
     expect(await getGitHubSession()).toEqual({ userId: user.id, githubId: "123", username: "octocat", accessToken });
@@ -162,6 +164,7 @@ describe("GitHub OAuth handlers with SQLite persistence", () => {
     const authorization = await beginSignIn(jar);
     expect(authorization.origin).toBe("https://github.com");
     expect(authorization.searchParams.get("scope")).toBe(GITHUB_SCOPES);
+    expect(authorization.searchParams.has("prompt")).toBe(false);
     expect(authorization.searchParams.get("redirect_uri")).toBe(`${origin}/api/auth/callback/github`);
     expect(authorization.searchParams.get("code_challenge_method")).toBe("S256");
     expect(authorization.searchParams.get("state")).toBeTruthy();
@@ -188,6 +191,38 @@ describe("GitHub OAuth handlers with SQLite persistence", () => {
     expect((await prisma.repoReport.findUniqueOrThrow({ where: { id: report.id } })).userId).toBe(user.id);
     vi.mocked(headers).mockResolvedValue(new Headers({ cookie: cookieHeader(jar) }));
     expect(await getGitHubSession()).toMatchObject({ userId: user.id, username: "renamed-user", accessToken: "new-token" });
+  });
+
+  it("invalidates sessions after switching OAuth clients and allows a fresh sign-in without duplicating the user", async () => {
+    const jar: CookieJar = new Map();
+    await signIn(jar);
+    const user = await prisma.user.findUniqueOrThrow({ where: { githubId: "123" } });
+    vi.stubEnv("GITHUB_CLIENT_ID", "Ov23.new-oauth-client");
+    vi.mocked(headers).mockResolvedValue(new Headers({ cookie: cookieHeader(jar) }));
+    expect(await getGitHubSession()).toBeNull();
+    expect(await (await request("/session", jar)).json()).toBeNull();
+    expect(jar.has("authjs.session-token")).toBe(false);
+    const authorization = await beginSignIn(jar);
+    expect(authorization.searchParams.get("client_id")).toBe("Ov23.new-oauth-client");
+    const response = await request(`/callback/github?${new URLSearchParams({ code: "new-code", state: authorization.searchParams.get("state")! })}`, jar);
+    expect(response.headers.get("location")).toBe(origin);
+    vi.mocked(headers).mockResolvedValue(new Headers({ cookie: cookieHeader(jar) }));
+    expect(await getGitHubSession()).toMatchObject({ userId: user.id });
+    expect(await prisma.user.count()).toBe(1);
+  });
+
+  it.each([
+    { ...claims, oauthClientId: undefined },
+    { ...claims, accessToken: "ghu_stale_github_app_token", oauthClientId },
+  ])("clears legacy and GitHub App sessions at both session boundaries", async (token) => {
+    const name = "authjs.session-token";
+    const value = await encode({ token, secret, salt: name });
+    const jar: CookieJar = new Map([[name, value]]);
+    vi.mocked(headers).mockResolvedValue(new Headers({ cookie: cookieHeader(jar) }));
+    expect(await getGitHubSession()).toBeNull();
+    expect(await (await request("/session", jar)).json()).toBeNull();
+    expect(jar.has(name)).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("supports GitHub accounts with private email", async () => {
@@ -316,6 +351,22 @@ describe("GitHub OAuth handlers with SQLite persistence", () => {
     const jar: CookieJar = new Map([["authjs.session-token", "tampered-token"]]);
     expect(await (await request("/session", jar)).json()).toBeNull();
     expect(jar.has("authjs.session-token")).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns an actionable setup error for GitHub App credentials without redirecting or exposing secrets", async () => {
+    vi.stubEnv("GITHUB_CLIENT_ID", "Iv1.wrong-app-client");
+    const response = await request("/signin/github", new Map(), {
+      body: new URLSearchParams({ csrfToken: "unused" }),
+    });
+    expect(response.status).toBe(500);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    const body = await response.json();
+    expect(body).toMatchObject({ code: "oauth_app_required", error: expect.stringContaining("requires OAuth App credentials") });
+    expect(JSON.stringify(body)).not.toMatch(/Iv1\.wrong-app-client|test-client-secret/);
+    expect(JSON.stringify(vi.mocked(console.error).mock.calls)).not.toMatch(/Iv1\.wrong-app-client|test-client-secret/);
+    expect(await getGitHubSession()).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

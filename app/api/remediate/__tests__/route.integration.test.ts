@@ -359,7 +359,7 @@ describe("POST /api/remediate real pipeline with mocked GitHub HTTP", () => {
     const response = await POST(request());
     expect(response.status).toBe(403);
     expect(await response.json()).toEqual({
-      error: expect.stringContaining("write permissions"),
+      error: expect.stringContaining("Reconnect GitHub"),
     });
     expect(writes().map(({ path }) => path)).toEqual(["/git/blobs"]);
   });

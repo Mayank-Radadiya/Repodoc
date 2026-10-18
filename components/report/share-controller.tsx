@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { PersistedAuditReport } from "@/src/lib/types";
 import { isPersistedAuditReport } from "@/src/lib/report-validation";
 import { buildShareUrl, copyToClipboard } from "./badge-snippet";
@@ -147,12 +148,13 @@ function ShareSession({ shareId, initialReport = null }: ShareControllerProps) {
           <label htmlFor="share-page-url" className="block font-medium">
             Copy the share link manually
           </label>
-          <input
+          <Input
             id="share-page-url"
+            nativeInput
             readOnly
             value={shareUrl}
             onFocus={(event) => event.target.select()}
-            className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3"
+            className="min-h-11"
           />
         </div>
       )}

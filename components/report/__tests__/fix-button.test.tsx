@@ -7,6 +7,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { signIn } from "next-auth/react";
 import { TestAuthSession } from "@/components/auth/__tests__/fixtures";
 import { FixButton, type FixButtonProps } from "../fix-button";
 import { FixButton as CompatibilityFixButton } from "@/src/components/report/fix-button";
@@ -14,6 +15,11 @@ import { ReportController } from "../report-controller";
 import { ShareController } from "../share-controller";
 import { ReportThemeScope } from "../theme-scope";
 import { makeCheck, makeFixtureReport } from "./report-fixtures";
+
+vi.mock("next-auth/react", async (importOriginal) => ({
+  ...await importOriginal<typeof import("next-auth/react")>(),
+  signIn: vi.fn(),
+}));
 
 function finding(id: string, name = id, path = id) {
   return makeCheck(id, name, "hygiene", 0, 5, false, {
@@ -71,6 +77,7 @@ function fill(name: string, value: string) {
 }
 
 beforeEach(() => {
+  vi.mocked(signIn).mockReset().mockResolvedValue({ error: undefined, code: undefined, status: 200, ok: true, url: "https://github.com/login/oauth/authorize" });
   fetchMock.mockReset().mockResolvedValue(Response.json(result));
   vi.stubGlobal("fetch", fetchMock);
 });
@@ -81,6 +88,44 @@ afterEach(() => {
 });
 
 describe("Fix All flow", () => {
+  it("offers authorization recovery and prevents duplicate reconnect requests", async () => {
+    fetchMock.mockResolvedValueOnce(Response.json({ code: "workflow_scope_required" }, { status: 403 }));
+    show();
+    await open();
+    fireEvent.click(screen.getByRole("button", { name: "Create pull request" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("deselect Automated CI workflow");
+    const reconnect = screen.getByRole("button", { name: "Reconnect GitHub" });
+    fireEvent.click(reconnect);
+    fireEvent.click(reconnect);
+    await waitFor(() => expect(signIn).toHaveBeenCalledExactlyOnceWith("github", { redirectTo: window.location.href }));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows retrying a failed authorization redirect", async () => {
+    vi.mocked(signIn).mockRejectedValueOnce(new Error("private"));
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 403 }));
+    show();
+    await open();
+    fireEvent.click(screen.getByRole("button", { name: "Create pull request" }));
+    const reconnect = await screen.findByRole("button", { name: "Reconnect GitHub" });
+    fireEvent.click(reconnect);
+    await screen.findByText("Unable to reconnect GitHub. Please try again.");
+    fireEvent.click(reconnect);
+    await waitFor(() => expect(signIn).toHaveBeenCalledTimes(2));
+  });
+
+  it("lets the user exclude CI and create a PR for the remaining fixes", async () => {
+    fetchMock.mockResolvedValueOnce(Response.json({ code: "workflow_scope_required" }, { status: 403 }));
+    show({ checks: [failed, finding("ci-workflow", "Automated CI workflow")] });
+    await open();
+    fireEvent.click(screen.getByRole("button", { name: "Create pull request" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Continue without CI workflow" }));
+    expect(screen.getByRole("checkbox", { name: "Automated CI workflow" }).getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(screen.getByRole("button", { name: "Create pull request" }));
+    await screen.findByRole("link", { name: /View pull request/ });
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body)).fixes).toEqual(["gitignore"]);
+  });
+
   it("exports the compatibility entry point", () =>
     expect(CompatibilityFixButton).toBe(FixButton));
   it.each(["loading", "unauthenticated", "authenticated"] as const)(

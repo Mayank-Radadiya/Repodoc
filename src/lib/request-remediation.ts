@@ -1,4 +1,9 @@
 import type { SupportedLicenseId } from "./templates/licenses";
+import {
+  isRemediationFeedbackCode,
+  REMEDIATION_FEEDBACK,
+  type RemediationFeedbackCode,
+} from "./remediation-feedback";
 import type { ParsedGitHubUrl } from "./types";
 
 export const REMEDIATION_FIX_IDS = [
@@ -27,6 +32,7 @@ export class RemediationRequestError extends Error {
     message: string,
     readonly status: number,
     readonly retryAt?: number,
+    readonly code?: RemediationFeedbackCode,
   ) {
     super(message);
     this.name = "RemediationRequestError";
@@ -54,7 +60,7 @@ function errorMessage(status: number): string {
     case 401:
       return "Your GitHub session could not authorize this request. Sign out and sign in again.";
     case 403:
-      return "Check repository write permissions and GitHub OAuth scopes, including workflow access for CI fixes.";
+      return "GitHub denied the pull request operation. Reconnect GitHub to refresh authorization. If access is still denied, check the repository or organization restrictions.";
     case 404:
       return "The repository or GitHub resource is unavailable. Check access and re-audit.";
     case 409:
@@ -130,14 +136,32 @@ export async function requestRemediation(
       0,
     );
   }
-  if (!response.ok)
+  if (!response.ok) {
+    let code: RemediationFeedbackCode | undefined;
+    if (response.status === 403) {
+      try {
+        const failure: unknown = await response.json();
+        if (
+          failure &&
+          typeof failure === "object" &&
+          "code" in failure &&
+          isRemediationFeedbackCode(failure.code)
+        ) {
+          code = failure.code;
+        }
+      } catch {
+        // Fall back to safe status guidance for non-JSON errors.
+      }
+    }
     throw new RemediationRequestError(
-      errorMessage(response.status),
+      code ? REMEDIATION_FEEDBACK[code] : errorMessage(response.status),
       response.status,
       response.status === 429
         ? retryAt(response.headers.get("Retry-After"))
         : undefined,
+      code,
     );
+  }
   let data: unknown;
   try {
     data = await response.json();

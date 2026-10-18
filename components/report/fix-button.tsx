@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { GitPullRequest } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { AuthGate } from "@/components/auth/auth-gate";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -82,6 +83,9 @@ function FixFlow({
   const [licenseFullName, setLicenseFullName] = useState("");
   const [codeOfConductContact, setCodeOfConductContact] = useState("");
   const [pending, setPending] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
+  const [reconnectError, setReconnectError] = useState<string | null>(null);
+  const reconnectRequest = useRef(false);
   const [error, setError] = useState<RemediationRequestError | null>(null);
   const [result, setResult] = useState<RemediationResponse | null>(null);
   const [retrySeconds, setRetrySeconds] = useState(0);
@@ -117,7 +121,21 @@ function FixFlow({
     selected.size > 0 &&
     (!needsLicense || singleLine(licenseFullName)) &&
     (!needsContact || singleLine(codeOfConductContact));
-  const blocked = disabled || pending || retrySeconds > 0;
+  const blocked = disabled || pending || reconnecting || retrySeconds > 0;
+
+  async function reconnect() {
+    if (reconnectRequest.current) return;
+    reconnectRequest.current = true;
+    setReconnecting(true);
+    setReconnectError(null);
+    try {
+      await signIn("github", { redirectTo: window.location.href });
+    } catch {
+      reconnectRequest.current = false;
+      setReconnecting(false);
+      setReconnectError("Unable to reconnect GitHub. Please try again.");
+    }
+  }
 
   async function submit(licenseChoice?: LicenseChoice) {
     if (
@@ -187,10 +205,49 @@ function FixFlow({
             : ""}
       </p>
       {error && (
-        <p role="alert" className="text-sm text-destructive-foreground">
-          {error.message}{" "}
-          {retrySeconds > 0 && `Try again in ${retrySeconds} seconds.`}
-        </p>
+        <div className="space-y-2">
+          <p role="alert" className="text-sm text-destructive-foreground">
+            {error.message}{" "}
+            {retrySeconds > 0 && `Try again in ${retrySeconds} seconds.`}
+          </p>
+          {(error.status === 401 || error.status === 403) && (
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11"
+              loading={reconnecting}
+              disabled={blocked}
+              onClick={() => void reconnect()}
+            >
+              Reconnect GitHub
+            </Button>
+          )}
+          {error.code === "workflow_scope_required" &&
+            selected.has("ci-workflow") && selected.size > 1 && (
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11"
+              disabled={blocked}
+              onClick={() => {
+                setSelected((current) => {
+                  const next = new Set(current);
+                  next.delete("ci-workflow");
+                  return next;
+                });
+                setError(null);
+                setStep("configure");
+              }}
+            >
+              Continue without CI workflow
+            </Button>
+          )}
+          {reconnectError && (
+            <p role="alert" className="text-sm text-destructive-foreground">
+              {reconnectError}
+            </p>
+          )}
+        </div>
       )}
       {result && (
         <div className="space-y-2 text-sm">
@@ -244,7 +301,8 @@ function FixFlow({
             <DialogTitle>Fix repository findings</DialogTitle>
             <DialogDescription>
               Select fixes for {owner}/{repo}. Missing files are proposed
-              together in one pull request.
+              together in one pull request. If you cannot push to this
+              repository, we use a fork in your GitHub account.
             </DialogDescription>
           </DialogHeader>
           <DialogPanel>
@@ -259,7 +317,7 @@ function FixFlow({
               className="space-y-4"
             >
               <fieldset
-                disabled={pending || disabled || Boolean(result)}
+                disabled={pending || reconnecting || disabled || Boolean(result)}
                 className="space-y-3"
               >
                 <legend className="mb-2 text-sm font-medium">

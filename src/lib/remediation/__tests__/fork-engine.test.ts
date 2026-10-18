@@ -33,6 +33,7 @@ let tree: TreeEntry[];
 let existing: boolean;
 let forkFailure: number | undefined;
 let push: boolean;
+let oauthScopes: string | undefined;
 
 function input() {
   return {
@@ -74,6 +75,7 @@ beforeEach(() => {
   existing = false;
   forkFailure = undefined;
   push = false;
+  oauthScopes = undefined;
   vi.mocked(getGitHubSession).mockResolvedValue({
     userId: "user",
     githubId: "3",
@@ -99,7 +101,7 @@ beforeEach(() => {
         permissions: { push },
         description: null,
         topics: [],
-      });
+      }, { headers: oauthScopes === undefined ? {} : { "x-oauth-scopes": oauthScopes } });
     if (path === `${upstream}/git/ref/heads/develop`)
       return Response.json({
         ref: "refs/heads/develop",
@@ -201,6 +203,32 @@ afterEach(() => {
 });
 
 describe("fork remediation through real GitHub helpers", () => {
+  it.each([false, true])("rejects missing workflow permission before writes (push: %s)", async (canPush) => {
+    push = canPush;
+    oauthScopes = "read:user, public_repo";
+    const response = await POST(request());
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ code: "workflow_scope_required" });
+    expect(writes()).toEqual([]);
+  });
+
+  it.each(["", "read:user, user:email", "workflow"])("rejects missing repository permission before writes (%s)", async (scopes) => {
+    oauthScopes = scopes;
+    await expect(RemediationEngine.execute(input())).rejects.toMatchObject({ code: "repository_scope_required" });
+    expect(writes()).toEqual([]);
+  });
+
+  it("creates a fork PR without workflow scope when CI is deselected", async () => {
+    oauthScopes = "read:user, public_repo";
+    await expect(RemediationEngine.execute({ ...input(), fixes: ["gitignore"] })).resolves.toEqual({ prUrl, filesCreated: [".gitignore"] });
+    expect(writes().find(({ path }) => path.endsWith("/pulls"))?.body.head).toBe(`caller:${REPODOC_BRANCH}`);
+  });
+
+  it.each(["public_repo, workflow", "repo, workflow"])("accepts granted OAuth scopes (%s)", async (scopes) => {
+    oauthScopes = scopes;
+    await expect(RemediationEngine.execute(input())).resolves.toMatchObject({ prUrl });
+  });
+
   it.each([false, true])(
     "creates one upstream-based commit and PR (existing fork branch/PR: %s)",
     async (reuse) => {

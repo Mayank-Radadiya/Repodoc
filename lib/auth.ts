@@ -15,10 +15,10 @@ export async function getGitHubSession(): Promise<GitHubSession | null> {
     if (error instanceof AuthConfigurationError) return null;
     throw error;
   }
-  const { secret, useSecureCookies } = settings;
+  const { secret, clientId, useSecureCookies } = settings;
   const incoming = await headers();
   // Accept only the session cookie, not arbitrary Authorization header tokens.
   const cookieHeaders = new Headers({ cookie: incoming.get("cookie") ?? "" });
   const token = await getToken({ req: { headers: cookieHeaders }, secret, secureCookie: useSecureCookies });
-  return readGitHubClaims(token);
+  return readGitHubClaims(token, clientId);
 }

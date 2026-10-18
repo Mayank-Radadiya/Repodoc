@@ -16,6 +16,8 @@ export interface RemediationRepository {
   push: boolean;
   repositoryId: number;
   networkId: number;
+  /** Missing for credentials that do not use OAuth scopes. Empty means no scopes. */
+  oauthScopes?: readonly string[];
 }
 
 function record(value: unknown): value is Record<string, unknown> {
@@ -81,7 +83,19 @@ export async function fetchRemediationRepository(
   validateInput(owner, repo, token);
   const octokit = createOctokit(token);
   try {
-    return metadata((await octokit.rest.repos.get({ owner, repo })).data);
+    const response = await octokit.rest.repos.get({ owner, repo });
+    const scopes = response.headers["x-oauth-scopes"];
+    return {
+      ...metadata(response.data),
+      ...(typeof scopes === "string"
+        ? {
+            oauthScopes: scopes
+              .split(",")
+              .map((scope) => scope.trim())
+              .filter(Boolean),
+          }
+        : {}),
+    };
   } catch (error) {
     throw toGitHubApiError(error);
   }

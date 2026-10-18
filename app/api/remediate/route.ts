@@ -7,6 +7,10 @@ import {
 import { GitHubApiError } from "@/src/lib/github/client";
 import { isRepositoryCoordinates } from "@/src/lib/report-validation";
 import {
+  REMEDIATION_FEEDBACK,
+  type RemediationFeedbackCode,
+} from "@/src/lib/remediation-feedback";
+import {
   RemediationEngine,
   RemediationError,
   type RemediationEngineInput,
@@ -109,7 +113,7 @@ function parseBody(body: unknown): RemediationRequest {
 }
 
 function json(
-  body: RemediationResult | { error: string },
+  body: RemediationResult | { error: string; code?: RemediationFeedbackCode },
   status = 200,
   extraHeaders?: HeadersInit,
 ): Response {
@@ -185,6 +189,12 @@ export async function POST(request: Request): Promise<Response> {
       );
     if (error instanceof RemediationError) {
       switch (error.code) {
+        case "repository_scope_required":
+        case "workflow_scope_required":
+          return json(
+            { error: REMEDIATION_FEEDBACK[error.code], code: error.code },
+            403,
+          );
         case "fork_not_ready":
           return json(
             {
@@ -248,7 +258,7 @@ export async function POST(request: Request): Promise<Response> {
           return json(
             {
               error:
-                "GitHub denied access. Check repository write permissions and OAuth scopes.",
+                "GitHub denied the pull request operation. Reconnect GitHub to refresh authorization. If access is still denied, check the repository or organization restrictions.",
             },
             403,
           );

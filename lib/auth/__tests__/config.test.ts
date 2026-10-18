@@ -33,6 +33,26 @@ describe("request-time auth configuration", () => {
       },
     });
     expect(GITHUB_SCOPES).toBe("read:user user:email public_repo workflow");
+    expect(provider).not.toMatchObject({ options: { authorization: { params: { prompt: "consent" } } } });
+  });
+
+  it.each(["GITHUB_CLIENT_ID", "AUTH_GITHUB_ID"])("rejects GitHub App credentials from %s before authorization", (key) => {
+    vi.stubEnv("GITHUB_CLIENT_ID", "");
+    vi.stubEnv(key, "Iv1.test-github-app");
+    expect(getAuthConfig).toThrow(AuthConfigurationError);
+    expect(getAuthSettings).toThrow(/requires OAuth App credentials/);
+    try {
+      getAuthSettings();
+    } catch (error) {
+      expect(error).toMatchObject({ code: "oauth_app_required" });
+      expect(String(error)).not.toContain("Iv1.test-github-app");
+      expect(String(error)).not.toContain("test-client-secret");
+    }
+  });
+
+  it.each(["Ov23.test-oauth-app", "legacy-client-id"])("accepts OAuth and legacy client IDs (%s)", (clientId) => {
+    vi.stubEnv("GITHUB_CLIENT_ID", clientId);
+    expect(getAuthSettings().clientId).toBe(clientId);
   });
 
   it.each(["NEXTAUTH_SECRET", "NEXTAUTH_URL", "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET"])("requires %s without disclosing values", (key) => {

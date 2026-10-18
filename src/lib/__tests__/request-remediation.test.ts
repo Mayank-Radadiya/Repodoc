@@ -110,7 +110,7 @@ describe("response validation", () => {
 it.each([
   [400, /inputs and selections/],
   [401, /Sign out and sign in/],
-  [403, /write permissions.*OAuth scopes/],
+  [403, /Reconnect GitHub.*organization restrictions/],
   [404, /Check access/],
   [409, /Re-audit.*path conflicts/],
   [429, /rate limit/],
@@ -168,6 +168,22 @@ it("sanitizes network failures", async () => {
   }).catch((cause) => cause);
   expect(caught.status).toBe(0);
   expect(caught.message).toMatch(/connection.*open pull requests/);
+});
+it.each(["repository_scope_required", "workflow_scope_required"])("uses allowlisted scope guidance for %s", async (code) => {
+  const caught = await requestRemediation(input, {
+    fetcher: vi.fn().mockResolvedValue(Response.json({ code, error: "private upstream data" }, { status: 403 })),
+  }).catch((cause) => cause);
+  expect(caught.code).toBe(code);
+  expect(caught.message).toContain("Reconnect GitHub");
+  expect(caught.message).not.toContain("private");
+});
+it("ignores unrecognized server error codes and raw provider messages", async () => {
+  const caught = await requestRemediation(input, {
+    fetcher: vi.fn().mockResolvedValue(Response.json({ code: "__proto__", error: "private upstream data" }, { status: 403 })),
+  }).catch((cause) => cause);
+  expect(caught.code).toBeUndefined();
+  expect(caught.message).toContain("Reconnect GitHub");
+  expect(caught.message).not.toContain("private");
 });
 it("preserves abort cancellation", async () => {
   const controller = new AbortController();

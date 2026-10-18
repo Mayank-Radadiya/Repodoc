@@ -137,7 +137,7 @@ export function UrlInput({
     <form
       role="search"
       onSubmit={handleSubmit}
-      className={cn("flex flex-col gap-2 w-full outline:none", className)}
+      className={cn("flex flex-col gap-2 w-full outline-none", className)}
       aria-busy={isLoading}
       data-appearance={appearance}
       noValidate
@@ -165,7 +165,7 @@ export function UrlInput({
             aria-invalid={Boolean(error)}
             aria-describedby={error ? errorId : undefined}
             className={cn(
-              "min-h-11 w-full text-base transition-colors [&_input]:min-h-11",
+              "min-h-11 w-full text-base transition-colors [&_input]:min-h-11 [&_input]:outline-none [&_input]:focus:outline-none [&_input]:focus-visible:outline-none",
               error &&
                 "border-destructive text-destructive-foreground focus-visible:ring-destructive/20",
             )}

@@ -1,9 +1,10 @@
 import type { Account } from "next-auth";
 import type { JWT } from "next-auth/jwt";
-import type { authCallbacks } from "../callbacks";
+import type { createAuthCallbacks } from "../callbacks";
 
 export const secret = "test-secret-for-authentication-only-0123456789";
 export const accessToken = "gho_test_access_token";
+export const oauthClientId = "test-client-id";
 export const profile = {
   id: 123,
   login: "octocat",
@@ -26,9 +27,10 @@ export const claims: JWT = {
   email: "octocat@example.test",
   picture: "https://avatars.githubusercontent.com/u/123",
   accessToken,
+  oauthClientId,
 };
 
-export function jwtParams(overrides: Partial<Parameters<typeof authCallbacks.jwt>[0]> = {}) {
+export function jwtParams(overrides: Partial<Parameters<ReturnType<typeof createAuthCallbacks>["jwt"]>[0]> = {}) {
   return {
     token: {},
     user: { id: "provider-user" },
@@ -43,11 +45,13 @@ export function authEnvironment(origin = "http://localhost:3000") {
   return {
     NEXTAUTH_SECRET: secret,
     NEXTAUTH_URL: origin,
-    GITHUB_CLIENT_ID: "test-client-id",
+    GITHUB_CLIENT_ID: oauthClientId,
     GITHUB_CLIENT_SECRET: "test-client-secret",
     // Prevent developer-specific Auth.js settings from changing test behavior.
     AUTH_URL: undefined,
     AUTH_SECRET: undefined,
+    AUTH_GITHUB_ID: undefined,
+    AUTH_GITHUB_SECRET: undefined,
     AUTH_REDIRECT_PROXY_URL: undefined,
   };
 }

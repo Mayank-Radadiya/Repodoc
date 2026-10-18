@@ -165,8 +165,9 @@
   box-shadow: none;
 }
 
-.repositoryForm [data-slot="input-control"]:has(:focus-visible) {
-  outline-offset: -3px;
+.repositoryForm [data-slot="input-control"]:has(:focus-visible),
+.repositoryForm [data-slot="input-control"]:focus-within {
+  outline: none;
   box-shadow: none;
 }
 
@@ -176,6 +177,12 @@
   color: #172b47;
   font-size: 16px;
   letter-spacing: -0.02em;
+  outline: none;
+}
+
+.repositoryForm input:focus,
+.repositoryForm input:focus-visible {
+  outline: none;
 }
 
 .repositoryForm input::placeholder {

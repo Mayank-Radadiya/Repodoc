@@ -9,8 +9,11 @@ export async function GET(request: NextRequest) {
     return await handlers[request.method === "POST" ? "POST" : "GET"](request);
   } catch (error) {
     if (!(error instanceof AuthConfigurationError)) throw error;
-    console.error("[auth] Authentication configuration is missing or invalid.");
-    return Response.json({ error: "Authentication is not configured." }, {
+    console.error("[auth]", error.message);
+    const body = error.code === "oauth_app_required"
+      ? { error: error.message, code: error.code }
+      : { error: "Authentication is not configured." };
+    return Response.json(body, {
       status: 500,
       headers: { "Cache-Control": "no-store" },
     });

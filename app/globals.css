@@ -246,6 +246,19 @@
     @apply font-sans;
     scroll-padding-top: 6rem;
   }
+  input,
+  textarea,
+  select {
+    outline: none;
+  }
+  input:focus,
+  input:focus-visible,
+  textarea:focus,
+  textarea:focus-visible,
+  select:focus,
+  select:focus-visible {
+    outline: none;
+  }
 }
 
 h1,
@@ -258,12 +271,6 @@ h3,
 h4 {
   letter-spacing: -0.02em;
   line-height: 1.25;
-}
-
-:focus-visible {
-  outline: 2px solid #005fd6;
-  outline-offset: 2px;
-  border-radius: 4px;
 }
 
 @keyframes line-pulse-travel-corner {

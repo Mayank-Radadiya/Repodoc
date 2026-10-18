@@ -1,6 +1,7 @@
 import "server-only";
 
 import { REPODOC_BRANCH } from "@/src/lib/constants";
+import { REMEDIATION_FEEDBACK } from "@/src/lib/remediation-feedback";
 import { fetchRepoTree, GitHubApiError } from "@/src/lib/github/client";
 import {
   isAuditReport,
@@ -239,6 +240,27 @@ async function execute(
       "no_changes",
       "All selected remediation findings are already resolved.",
     );
+  }
+
+  // Inspect the live token grants, including sessions created before scopes changed.
+  // Fine-grained credentials omit this header; GitHub enforces their permissions.
+  if (repository.oauthScopes !== undefined) {
+    const scopes = new Set(repository.oauthScopes);
+    if (!scopes.has("public_repo") && !scopes.has("repo")) {
+      throw new RemediationError(
+        "repository_scope_required",
+        REMEDIATION_FEEDBACK.repository_scope_required,
+      );
+    }
+    if (
+      files.some(({ path }) => path === CI_WORKFLOW_TARGET_PATH) &&
+      !scopes.has("workflow")
+    ) {
+      throw new RemediationError(
+        "workflow_scope_required",
+        REMEDIATION_FEEDBACK.workflow_scope_required,
+      );
+    }
   }
 
   const target = repository.push

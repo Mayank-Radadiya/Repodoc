@@ -55,6 +55,8 @@ describe("server-only GitHub session", () => {
 
   it.each([
     {}, { ...claims, username: "" }, { ...claims, accessToken: "" },
+    { ...claims, oauthClientId: undefined }, { ...claims, oauthClientId: "another-client" },
+    { ...claims, accessToken: "ghu_old_session_token" },
     { ...claims, accessTokenExpiresAt: 1 }, { ...claims, accessTokenExpiresAt: NaN },
   ])("rejects incomplete or expired provider claims", async (token) => {
     vi.mocked(headers).mockResolvedValue(new Headers({ cookie: (await sessionCookie(token)).cookie }));

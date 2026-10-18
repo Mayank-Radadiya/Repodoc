@@ -1,14 +1,16 @@
 import "server-only";
 import { AuthError, type NextAuthConfig } from "next-auth";
 import GitHub from "next-auth/providers/github";
-import { authCallbacks } from "./callbacks";
+import { createAuthCallbacks } from "./callbacks";
 
 export const SESSION_MAX_AGE = 30 * 24 * 60 * 60;
 export const GITHUB_SCOPES = "read:user user:email public_repo workflow";
 
 export class AuthConfigurationError extends Error {
-  constructor() {
-    super("GitHub authentication configuration is missing or invalid.");
+  constructor(readonly code: "invalid_configuration" | "oauth_app_required" = "invalid_configuration") {
+    super(code === "oauth_app_required"
+      ? "GitHub sign-in requires OAuth App credentials. Register an OAuth App under GitHub Settings > Developer settings > OAuth Apps, replace GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET, then restart the server."
+      : "GitHub authentication configuration is missing or invalid.");
     this.name = "AuthConfigurationError";
   }
 }
@@ -20,6 +22,8 @@ export function getAuthSettings() {
   const clientSecret = (process.env.GITHUB_CLIENT_SECRET?.trim() || process.env.AUTH_GITHUB_SECRET?.trim());
   const origin = (process.env.NEXTAUTH_URL?.trim() || process.env.AUTH_URL?.trim());
   if (!secret || !clientId || !clientSecret || !origin) throw new AuthConfigurationError();
+  // GitHub App client IDs use Iv; legacy OAuth App IDs may have no prefix.
+  if (clientId.startsWith("Iv")) throw new AuthConfigurationError("oauth_app_required");
 
   let url: URL;
   try { url = new URL(origin); } catch { throw new AuthConfigurationError(); }
@@ -48,7 +52,7 @@ export function getAuthConfig(): NextAuthConfig {
       authorization: { params: { scope: GITHUB_SCOPES } },
       checks: ["pkce", "state"],
     })],
-    callbacks: authCallbacks,
+    callbacks: createAuthCallbacks(clientId),
     // Auth.js error causes can contain provider payloads. Log error codes only.
     logger: {
       error(error) { console.error("[auth]", error instanceof AuthError ? error.type : "AuthenticationError"); },

@@ -1,6 +1,8 @@
 import "server-only";
+import type { RemediationFeedbackCode } from "../remediation-feedback";
 
 export type RemediationErrorCode =
+  | RemediationFeedbackCode
   | "invalid_input"
   | "path_conflict"
   | "no_changes"

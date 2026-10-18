@@ -261,7 +261,7 @@ it("surfaces real API permission guidance and short-circuits GitHub writes", asy
   fail = true;
   await start();
   expect((await screen.findByRole("alert")).textContent).toMatch(
-    /write permissions.*OAuth scopes/,
+    /Reconnect GitHub.*organization restrictions/,
   );
   expect(screen.queryByRole("link", { name: /View pull request/ })).toBeNull();
   expect(
