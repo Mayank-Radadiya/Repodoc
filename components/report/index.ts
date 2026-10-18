@@ -4,6 +4,8 @@ export {
   CategoryBreakdown,
   type CategoryBreakdownProps,
 } from "./category-breakdown";
+export { CheckRow, type CheckRowProps } from "./check-row";
+export { EvidenceExcerpt, type EvidenceExcerptProps } from "./evidence-excerpt";
 export {
   ScoreGauge,
   BADGE_COLOR_PALETTE,

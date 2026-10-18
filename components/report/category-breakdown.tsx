@@ -2,14 +2,8 @@
 
 import { useId, useMemo, useState } from "react";
 import {
-  CheckCircle2,
   ArrowUpDown,
-  CircleAlert,
   ChevronDown,
-  ExternalLink,
-  FilePlus2,
-  Undo2,
-  Plus,
   Search,
   X,
 } from "lucide-react";
@@ -19,21 +13,13 @@ import {
   AccordionPanel,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  Collapsible,
-  CollapsiblePanel,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { AuditReport, CategoryId, CheckResult } from "@/lib/types";
 import { REPORT_CATEGORIES, REPORT_CATEGORY_IDS } from "./categories";
-import {
-  formatPoints,
-  getPotentialPoints,
-  type ReportPreview,
-} from "./report-preview";
+import { formatPoints, getPotentialPoints, type ReportPreview } from "./report-preview";
+import { CheckRow } from "./check-row";
 import styles from "./report.module.css";
 
 export interface CategoryBreakdownProps {
@@ -52,169 +38,6 @@ export interface CategoryBreakdownProps {
 
 export type CheckFilter = "all" | "failed" | "passed";
 type CheckSort = "rubric" | "impact" | "name";
-
-interface CheckRowProps {
-  check: CheckResult;
-  owner: string;
-  repo: string;
-  defaultBranch: string;
-  isPreviewed: boolean;
-  onTogglePreview: (checkId: string) => void;
-}
-
-function CheckRow({
-  check,
-  owner,
-  repo,
-  defaultBranch,
-  isPreviewed,
-  onTogglePreview,
-}: CheckRowProps) {
-  const [evidenceOpen, setEvidenceOpen] = useState(false);
-  const potential = getPotentialPoints(check);
-  const showPreviewToggle = isPreviewed || (!check.passed && potential > 0);
-  const StatusIcon = check.passed ? CheckCircle2 : CircleAlert;
-  const statusLabel = isPreviewed
-    ? "Previewed"
-    : check.passed
-      ? "Passed"
-      : "Failed";
-  const remediation = check.remediation;
-
-  return (
-    <li className={styles.checkRow}>
-      <div className={styles.checkRowLayout}>
-        <StatusIcon
-          aria-hidden="true"
-          className={cn(
-            "mt-0.5 size-4 shrink-0",
-            isPreviewed
-              ? "text-info-foreground"
-              : check.passed
-                ? "text-success-foreground"
-                : "text-warning-foreground",
-          )}
-        />
-        <div className="min-w-0 flex-1">
-          <div className={styles.checkHeading}>
-            <p className={styles.checkTitle}>{check.name}</p>
-            <span
-              className={cn(
-                styles.statusBadge,
-                isPreviewed
-                  ? "bg-info/8 text-info-foreground"
-                  : check.passed
-                    ? "bg-success/8 text-success-foreground"
-                    : "bg-warning/10 text-warning-foreground",
-              )}
-            >
-              {statusLabel}
-            </span>
-            <span className={styles.checkPoints}>
-              {formatPoints(check.pointsAwarded)}/{check.maxPoints} pts
-            </span>
-          </div>
-          {!evidenceOpen && (
-            <p className={styles.evidenceExcerpt}>
-              {check.evidence.details.trim() || "No evidence details available"}
-            </p>
-          )}
-          <Collapsible open={evidenceOpen} onOpenChange={setEvidenceOpen}>
-            <div className={styles.checkActions}>
-              <CollapsibleTrigger
-                aria-label={`Evidence and remediation for ${check.name}`}
-                className="group flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md py-1 text-xs font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                Evidence &amp; remediation
-                <ChevronDown
-                  aria-hidden="true"
-                  className="size-3.5 transition-transform group-data-panel-open:rotate-180 motion-reduce:transition-none"
-                />
-              </CollapsibleTrigger>
-              {showPreviewToggle && (
-                <button
-                  type="button"
-                  aria-pressed={isPreviewed}
-                  aria-label={
-                    isPreviewed
-                      ? `Remove preview for ${check.name}`
-                      : `Preview fix for ${check.name}: +${formatPoints(potential)} pts`
-                  }
-                  onClick={() => onTogglePreview(check.id)}
-                  className={styles.previewButton}
-                >
-                  {isPreviewed ? (
-                    <Undo2 aria-hidden="true" className="size-3.5" />
-                  ) : (
-                    <Plus aria-hidden="true" className="size-3.5" />
-                  )}
-                  {isPreviewed
-                    ? "Undo preview"
-                    : `Preview +${formatPoints(potential)} pts`}
-                </button>
-              )}
-            </div>
-            <CollapsiblePanel className="motion-reduce:transition-none">
-              <div className="mt-2 space-y-4 rounded-lg border border-border bg-muted/30 p-4 text-sm leading-relaxed">
-                <p className="max-w-prose whitespace-pre-wrap break-words text-muted-foreground">
-                  {check.evidence.details.trim()
-                    ? check.evidence.details
-                    : "No evidence details available"}
-                </p>
-                <p className="text-muted-foreground">
-                  Evidence: {check.evidence.found ? "Found" : "Not found"}
-                </p>
-                <div>
-                  <p className="font-medium text-foreground">Files checked</p>
-                  {check.evidence.filesChecked.length > 0 ? (
-                    <ul className="mt-1 space-y-1 text-muted-foreground">
-                      {check.evidence.filesChecked.map((path, index) => (
-                        <li key={`${index}-${path}`}>
-                          <code className="whitespace-pre-wrap break-all">
-                            {path}
-                          </code>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="mt-1 text-muted-foreground">
-                      No files checked
-                    </p>
-                  )}
-                </div>
-                {remediation && (
-                  <div className="rounded-lg border border-border bg-muted/40 p-3">
-                    <p className="font-medium text-foreground">How to fix</p>
-                    <p className="mt-1 text-muted-foreground">
-                      {remediation.description}
-                    </p>
-                    <p className="mt-1">
-                      <code className="rounded-sm bg-muted px-1.5 py-0.5 break-all">
-                        {remediation.targetPath}
-                      </code>
-                    </p>
-                    {remediation.canAutomate && (
-                      <a
-                        href={`https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/new/${encodeURIComponent(defaultBranch)}?filename=${encodeURIComponent(remediation.targetPath)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-info-foreground underline-offset-4 hover:underline"
-                      >
-                        <FilePlus2 aria-hidden="true" className="size-3.5" />
-                        Create {remediation.targetPath} on GitHub
-                        <ExternalLink aria-hidden="true" className="size-3" />
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CollapsiblePanel>
-          </Collapsible>
-        </div>
-      </div>
-    </li>
-  );
-}
 
 export function CategoryBreakdown({
   report,
