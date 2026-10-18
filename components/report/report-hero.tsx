@@ -60,13 +60,10 @@ export function ReportHero({
   }).format(new Date(report.generatedAt));
 
   return (
-    <section
-      aria-labelledby="report-title"
-      className={cn("min-w-0", className)}
-    >
+    <section aria-labelledby="report-title" className={cn("min-w-0", className)}>
       <div className={styles.headingRow}>
         <div className={styles.identity}>
-          <p className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+          <p className="mb-2.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
             <ShieldCheck aria-hidden="true" className="size-4" />
             Repository health report
           </p>
@@ -80,7 +77,8 @@ export function ReportHero({
         </div>
         {actions && <div className={styles.actions}>{actions}</div>}
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
         <span className="inline-flex min-w-0 items-center gap-1.5 [overflow-wrap:anywhere]">
           <GitBranch aria-hidden="true" className="size-3.5 shrink-0" />
           {report.defaultBranch}
@@ -104,7 +102,7 @@ export function ReportHero({
           <ExternalLink aria-hidden="true" className="size-3.5" />
         </Link>
       </div>
-      {feedback && <div className="mt-2">{feedback}</div>}
+      {feedback && <div className="mt-3">{feedback}</div>}
 
       <div id="report-overview" className={cn(styles.overview, "mt-6")}>
         <div className={styles.summary}>
@@ -112,7 +110,7 @@ export function ReportHero({
           <div className={styles.scoreLine}>
             <ScoreGauge
               healthScore={preview.score}
-              size={112}
+              size={104}
               strokeWidth={6}
               animated={false}
               showStatus={false}
@@ -122,27 +120,30 @@ export function ReportHero({
               <p
                 data-testid="hero-status-pill"
                 data-badge-color={color}
-                className="text-sm leading-5 font-semibold text-foreground"
+                className="text-base leading-6 font-semibold text-foreground"
               >
                 <span
                   aria-hidden="true"
-                  className="mr-1.5 inline-block size-1.5 rounded-full align-middle"
+                  className="mr-2 inline-block size-2 rounded-full align-middle"
                   style={{ backgroundColor: palette.hex }}
                 />
                 {preview.totalChecks > 0 ? palette.label : "No checks yet"}
                 <span className="sr-only"> · {score}/100</span>
               </p>
-              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+              <p className="mt-1.5 text-xs leading-5 text-muted-foreground">
                 {preview.passedChecks} of {preview.totalChecks} checks passed
               </p>
               <div
                 role="img"
                 aria-label={`Pass rate: ${passPercent}% (${preview.passedChecks} of ${preview.totalChecks} checks)`}
-                className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted"
+                className="sr-only"
               >
                 <div
-                  className="h-full rounded-full bg-success"
-                  style={{ width: `${passPercent}%` }}
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${passPercent}%`,
+                    backgroundColor: palette.hex,
+                  }}
                 />
               </div>
               <p className="mt-1.5 text-xs tabular-nums text-muted-foreground">
@@ -176,7 +177,7 @@ export function ReportHero({
         </div>
         {pillars && (
           <div className={styles.rubric}>
-            <div className="mb-2 flex items-center justify-between gap-3 px-2 lg:px-3">
+            <div className={styles.categoryHeading}>
               <h3 className="text-sm font-semibold">Score by category</h3>
               <span className="text-xs text-muted-foreground">
                 Earned / possible
@@ -187,7 +188,7 @@ export function ReportHero({
         )}
         {hasPreview && (
           <div
-            className="col-span-full flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-primary/20 bg-primary/5 px-5 py-2.5 sm:px-6"
+            className="col-span-full flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-info/20 bg-info/5 px-5 py-2.5 sm:px-6"
             role="status"
             aria-live="polite"
           >
@@ -216,7 +217,7 @@ export function ReportHero({
             </p>
           </div>
         )}
-        <p className="col-span-full flex items-start gap-2 border-t border-border bg-background/40 px-5 py-3 text-xs leading-5 text-muted-foreground sm:px-6">
+        <p className={styles.methodNote}>
           <Info aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
           Based on repository files and metadata. Tests and workflows are
           inspected for presence, not executed.

@@ -79,7 +79,7 @@ describe("ReportShell", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
 
     fireEvent.click(
-      screen.getByRole("button", { name: /audit another repository/i }),
+      screen.getByRole("button", { name: /audit a github repository/i }),
     );
     const dialog = await screen.findByRole("dialog");
 
@@ -102,7 +102,7 @@ describe("ReportShell", () => {
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: /audit another repository/i }),
+      screen.getByRole("button", { name: /audit a github repository/i }),
     );
     await screen.findByRole("dialog");
 
@@ -110,7 +110,7 @@ describe("ReportShell", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await waitFor(() =>
       expect(document.activeElement).toBe(
-        screen.getByRole("button", { name: /audit another repository/i }),
+        screen.getByRole("button", { name: /audit a github repository/i }),
       ),
     );
   });
@@ -136,15 +136,15 @@ describe("ReportShell", () => {
     await waitFor(() => expect(document.activeElement).toBe(originalFocus));
   });
 
-  it("exposes the theme toggle in the header", () => {
+  it("does not render dark mode theme toggle in the unified header", () => {
     render(
-      <ReportThemeScope initialTheme="dark">
+      <ReportThemeScope initialTheme="light">
         <ReportShell>content</ReportShell>
       </ReportThemeScope>,
     );
 
     expect(
-      screen.getByRole("button", { name: /switch to light theme/i }),
-    ).toBeDefined();
+      screen.queryByRole("button", { name: /switch to (dark|light) theme/i }),
+    ).toBeNull();
   });
 });

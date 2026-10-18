@@ -13,3 +13,4 @@ export {
   DashboardRepoCard,
   type DashboardRepoCardProps,
 } from "./dashboard-repo-card";
+export { DashboardNavbar } from "./dashboard-navbar";

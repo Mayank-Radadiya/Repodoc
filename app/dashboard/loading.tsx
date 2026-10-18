@@ -22,7 +22,7 @@ export default function DashboardLoading() {
         <div className={styles.skeleton} style={{ width: 180, height: 44 }} />
       </div>
       <div className={styles.summary} aria-hidden="true">
-        {[0, 1, 2].map((item) => (
+        {[0, 1, 2, 3].map((item) => (
           <div
             key={item}
             className={`${styles.metric} ${item === 1 ? styles.coverage : ""}`}

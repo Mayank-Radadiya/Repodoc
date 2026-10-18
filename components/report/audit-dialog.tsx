@@ -8,7 +8,7 @@ import {
   DialogPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useReportTheme } from "./theme-scope";
+import { useOptionalReportTheme } from "./theme-scope";
 import { UrlInput } from "./url-input";
 
 export interface AuditRepositoryDialogProps {
@@ -29,7 +29,8 @@ export function AuditRepositoryDialog({
   initialValue,
   returnFocus,
 }: AuditRepositoryDialogProps) {
-  const { scopeElement } = useReportTheme();
+  const theme = useOptionalReportTheme();
+  const scopeElement = theme?.scopeElement;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

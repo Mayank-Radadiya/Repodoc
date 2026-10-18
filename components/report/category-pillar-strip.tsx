@@ -19,9 +19,9 @@ export function getPillarTone(
 }
 
 const TONE_CLASSES: Record<PillarTone, string> = {
-  success: "bg-emerald-500",
-  warning: "bg-amber-500",
-  danger: "bg-rose-500",
+  success: "bg-success",
+  warning: "bg-warning",
+  danger: "bg-destructive",
 };
 
 export interface CategoryPillarStripProps {
@@ -64,7 +64,7 @@ export function CategoryPillarStrip({
                 />
                 <span>{name}</span>
               </span>
-              <span className="text-right text-xs tabular-nums text-muted-foreground">
+              <span className={styles.categoryPoints}>
                 <span className="font-semibold text-foreground">
                   {formatPoints(category.pointsAwarded)}
                 </span>

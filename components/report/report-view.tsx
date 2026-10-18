@@ -9,6 +9,8 @@ import { CategoryPillarStrip } from "./category-pillar-strip";
 import { CategoryBreakdown, type CheckFilter } from "./category-breakdown";
 import { HealthGaugeCard } from "./health-gauge-card";
 import { BadgeSnippet } from "./badge-snippet";
+import { REPORT_CATEGORIES } from "./categories";
+import { getPotentialPoints } from "./report-preview";
 import styles from "./report.module.css";
 
 export interface ReportViewProps {
@@ -20,6 +22,19 @@ export interface ReportViewProps {
 
 export function ReportView({
   report,
+  ...props
+}: ReportViewProps) {
+  return (
+    <ReportViewSession
+      key={`${report.owner}/${report.repo}/${report.generatedAt}`}
+      report={report}
+      {...props}
+    />
+  );
+}
+
+function ReportViewSession({
+  report,
   baseUrl,
   actions,
   feedback,
@@ -27,9 +42,18 @@ export function ReportView({
   const [previewedIds, setPreviewedIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
-  const [openCategories, setOpenCategories] = useState<CategoryId[]>([
-    "documentation",
-  ]);
+  const [openCategories, setOpenCategories] = useState<CategoryId[]>(() => {
+    const populated = REPORT_CATEGORIES.filter(({ id }) =>
+      report.checks.some((check) => check.category === id),
+    );
+    const ranked = populated.map(({ id }) => ({
+      id,
+      potential: report.checks
+        .filter((check) => check.category === id)
+        .reduce((total, check) => total + getPotentialPoints(check), 0),
+    })).sort((a, b) => b.potential - a.potential);
+    return ranked.length ? [ranked[0].id] : [];
+  });
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<CheckFilter>("all");
 
@@ -96,6 +120,14 @@ export function ReportView({
           />
         }
       />
+      <div className={styles.sectionBar}>
+        <nav aria-label="Report sections" className={styles.sectionNav}>
+          <a href="#report-overview">Overview</a>
+          <a href="#report-findings">Findings</a>
+          <a href="#report-improvements">Improvements</a>
+          <a href="#report-badge">Badge</a>
+        </nav>
+      </div>
       <div className={styles.body}>
         <div className={styles.findingsPanel}>
           <CategoryBreakdown
@@ -125,9 +157,9 @@ export function ReportView({
             ) : (
               <div
                 aria-busy="true"
-                className="min-h-64 rounded-xl border border-border bg-card p-6"
+                className={styles.badgePlaceholder}
               >
-                <h2 className="font-display text-lg font-semibold">
+                <h2 className="text-sm font-semibold">
                   Embed your badge
                 </h2>
                 <p className="mt-3 text-sm text-muted-foreground">

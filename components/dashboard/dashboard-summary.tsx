@@ -43,11 +43,6 @@ export function DashboardSummary({ stats, onReviewUnaudited }: {
               ? "Every repository has an audit"
               : "Your audits will appear here"}
         </p>
-        {stats.unauditedCount > 0 && onReviewUnaudited && (
-          <button type="button" className={styles.summaryAction} onClick={onReviewUnaudited}>
-            Review unaudited repositories
-          </button>
-        )}
       </div>
       <div className={styles.metric}>
         <h2>Average health</h2>
@@ -60,6 +55,24 @@ export function DashboardSummary({ stats, onReviewUnaudited }: {
             ? "Across scored repositories"
             : "Run an audit to see your score"}
         </p>
+      </div>
+      <div className={styles.metric}>
+        <h2>Needs attention</h2>
+        <p className={styles.metricValue}>
+          {stats.unauditedCount.toLocaleString("en-US")}
+        </p>
+        <p className={styles.secondary}>
+          {stats.unauditedCount
+            ? `${stats.unauditedCount === 1 ? "Repository" : "Repositories"} without a saved audit`
+            : stats.totalRepos
+              ? "All repositories are audited"
+              : "Nothing to review yet"}
+        </p>
+        {stats.unauditedCount > 0 && onReviewUnaudited && (
+          <button type="button" className={styles.summaryAction} onClick={onReviewUnaudited}>
+            Review unaudited repositories
+          </button>
+        )}
       </div>
     </section>
   );

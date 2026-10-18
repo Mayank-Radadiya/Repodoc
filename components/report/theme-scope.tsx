@@ -45,6 +45,10 @@ export function useReportTheme(): ReportThemeContextValue {
   return value;
 }
 
+export function useOptionalReportTheme(): ReportThemeContextValue | null {
+  return useContext(ReportThemeContext);
+}
+
 function persistTheme(theme: ReportTheme) {
   if (typeof document === "undefined") return;
   document.cookie = `${REPORT_THEME_COOKIE}=${theme}; path=/; max-age=31536000; samesite=lax`;

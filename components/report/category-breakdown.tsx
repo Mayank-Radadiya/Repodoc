@@ -68,6 +68,7 @@ function CheckRow({
   isPreviewed,
   onTogglePreview,
 }: CheckRowProps) {
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const potential = getPotentialPoints(check);
   const showPreviewToggle = isPreviewed || (!check.passed && potential > 0);
   const StatusIcon = check.passed ? CheckCircle2 : CircleAlert;
@@ -115,7 +116,12 @@ function CheckRow({
               {statusLabel}
             </span>
           </div>
-          <Collapsible>
+          {!evidenceOpen && (
+            <p className={styles.evidenceExcerpt}>
+              {check.evidence.details.trim() || "No evidence details available"}
+            </p>
+          )}
+          <Collapsible open={evidenceOpen} onOpenChange={setEvidenceOpen}>
             <CollapsibleTrigger
               aria-label={`Evidence and remediation for ${check.name}`}
               className="group flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md py-1 text-xs font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -296,11 +302,11 @@ export function CategoryBreakdown({
         <div className="min-w-0">
           <h2
             id={headingId}
-            className="text-base font-semibold text-foreground"
+            className="text-sm leading-6 font-semibold text-foreground"
           >
             Findings
           </h2>
-          <p className="mt-1 max-w-prose text-sm text-muted-foreground">
+          <p className="mt-1 max-w-prose text-sm leading-6 text-muted-foreground">
             Explore the evidence behind each check and preview improvements.
           </p>
         </div>
@@ -326,82 +332,84 @@ export function CategoryBreakdown({
                 revealMatches();
               }}
               className={cn(
-                "inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 py-2 text-xs font-medium transition-colors sm:flex-none",
+                "inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 text-xs font-medium transition-colors sm:flex-none",
                 filter === value
-                  ? "border-border bg-card text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
+                  ? "bg-card text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {filterLabels[value]} ({count})
             </button>
           ))}
         </div>
-        <div className={styles.findingsSearch}>
-          <Search
-            aria-hidden="true"
-            className="pointer-events-none absolute left-3 z-10 size-4 text-muted-foreground"
-          />
-          <Input
-            type="search"
-            aria-label="Search checks"
-            placeholder="Search checks or files…"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              revealMatches();
-            }}
-            className="w-full flex-1 [&_input]:pr-11 [&_input]:pl-9"
-          />
-          {search && (
-            <button
-              type="button"
-              aria-label="Clear search"
-              onClick={() => setSearch("")}
-              className="absolute right-0 z-10 inline-flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <X aria-hidden="true" className="size-3.5" />
-            </button>
-          )}
-        </div>
-      </div>
 
-      <div className={styles.findingsOptions}>
-        <div className="flex min-w-0 items-center gap-2">
-          <ArrowUpDown
-            aria-hidden="true"
-            className="size-3.5 shrink-0 text-muted-foreground"
-          />
-          <label htmlFor={sortId} className="sr-only">
-            Sort checks within categories
-          </label>
-          <select
-            id={sortId}
-            value={sort}
-            onChange={(event) => setSort(event.target.value as CheckSort)}
-            className={styles.sortSelect}
-          >
-            <option value="impact">Highest impact</option>
-            <option value="rubric">Rubric order</option>
-            <option value="name">Name (A–Z)</option>
-          </select>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => onOpenCategoriesChange([...REPORT_CATEGORY_IDS])}
-          >
-            Expand all
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => onOpenCategoriesChange([])}
-          >
-            Collapse all
-          </Button>
+        <div className={styles.toolbarControls}>
+          <div className={styles.findingsSearch}>
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 z-10 size-4 text-muted-foreground"
+            />
+            <Input
+              type="search"
+              aria-label="Search checks"
+              placeholder="Search checks or files…"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                revealMatches();
+              }}
+              className="w-full flex-1 [&_input]:pr-11 [&_input]:pl-9"
+            />
+            {search && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setSearch("")}
+                className="absolute right-0 z-10 inline-flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <X aria-hidden="true" className="size-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex min-w-0 items-center gap-1.5">
+            <ArrowUpDown
+              aria-hidden="true"
+              className="size-3.5 shrink-0 text-muted-foreground"
+            />
+            <label htmlFor={sortId} className="sr-only">
+              Sort checks within categories
+            </label>
+            <select
+              id={sortId}
+              value={sort}
+              onChange={(event) => setSort(event.target.value as CheckSort)}
+              className={styles.sortSelect}
+            >
+              <option value="impact">Highest impact</option>
+              <option value="rubric">Rubric order</option>
+              <option value="name">Name (A–Z)</option>
+            </select>
+          </div>
+
+          <div className={styles.viewActions}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenCategoriesChange([...REPORT_CATEGORY_IDS])}
+            >
+              Expand all
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenCategoriesChange([])}
+            >
+              Collapse all
+            </Button>
+          </div>
         </div>
       </div>
       {isFiltering && (
@@ -479,7 +487,7 @@ export function CategoryBreakdown({
               >
                 <AccordionTrigger
                   aria-label={`${name}: ${formatPoints(category.pointsAwarded)} out of ${category.maxPoints} points`}
-                  className="items-center gap-3 rounded-none px-5 py-4 text-foreground hover:bg-muted/40 sm:px-6"
+              className="items-center gap-3 rounded-none px-5 py-4 text-foreground hover:bg-muted/40 sm:px-6"
                 >
                   <span className="flex min-w-0 flex-1 items-center gap-3">
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted/70">
@@ -490,10 +498,10 @@ export function CategoryBreakdown({
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
-                        <span className="min-w-0 truncate text-sm font-medium">
+                        <span className="min-w-0 text-sm font-medium [overflow-wrap:anywhere]">
                           {name}
                         </span>
-                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                        <span className="text-xs tabular-nums text-muted-foreground">
                           {categoryPassed} of {category.checks.length} passed
                         </span>
                       </span>

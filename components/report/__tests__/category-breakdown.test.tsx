@@ -302,6 +302,16 @@ describe("CategoryBreakdown", () => {
     }
   });
 
+  it("shows evidence excerpts before opening full details", () => {
+    render(<BreakdownHarness />);
+    const row = checkRow("README");
+    expect(within(row).getByText("Evidence details for README")).toBeDefined();
+    expect(within(row).queryByText("Files checked")).toBeNull();
+    fireEvent.click(within(row).getByRole("button", { name: /evidence and remediation/i }));
+    expect(within(row).getAllByText("Evidence details for README")).toHaveLength(1);
+    expect(within(row).getByText("Files checked")).toBeDefined();
+  });
+
   it("reveals evidence for a check independently", () => {
     render(<BreakdownHarness />);
 

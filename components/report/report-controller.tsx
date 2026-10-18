@@ -176,6 +176,16 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
             disabled={pending}
             onPendingChange={setRemediationPending}
           />
+          <Button
+            variant="outline"
+            className="min-h-11"
+            loading={pending}
+            disabled={pending || remediationPending}
+            onClick={() => void runAudit()}
+          >
+            <RefreshCw aria-hidden="true" />
+            Re-audit
+          </Button>
           {report.shareId && (
             <Link
               href={`/share/${encodeURIComponent(report.shareId)}`}
@@ -193,16 +203,6 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
           >
             <Copy aria-hidden="true" />
             {copyStatus === "copied" ? "Link copied" : "Copy report link"}
-          </Button>
-          <Button
-            variant="outline"
-            className="min-h-11"
-            loading={pending}
-            disabled={pending || remediationPending}
-            onClick={() => void runAudit()}
-          >
-            <RefreshCw aria-hidden="true" />
-            Re-audit
           </Button>
         </>
       }

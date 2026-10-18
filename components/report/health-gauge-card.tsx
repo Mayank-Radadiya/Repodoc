@@ -11,6 +11,7 @@ import {
   getPotentialPoints,
   type ReportPreview,
 } from "./report-preview";
+import styles from "./report.module.css";
 
 export interface HealthGaugeCardProps {
   report: AuditReport;
@@ -38,9 +39,10 @@ export function HealthGaugeCard({
 
   return (
     <section
+      id="report-improvements"
       aria-labelledby={headingId}
       className={cn(
-        "min-w-0 rounded-xl border border-border bg-card p-5 sm:p-6",
+        styles.improvements,
         className,
       )}
     >
@@ -91,7 +93,7 @@ export function HealthGaugeCard({
                   aria-pressed={previewedIds.has(check.id)}
                   aria-label={`${check.name} (${categoryName}): preview +${formatPoints(potential)} pts`}
                   onClick={() => onTogglePreview(check.id)}
-                  className="group flex w-full items-center justify-between gap-3 rounded-md px-1 py-4 text-left transition-colors hover:bg-muted/60"
+                  className={styles.improvementButton}
                 >
                   <span className="min-w-0">
                     <span className="block text-sm leading-5 font-medium [overflow-wrap:anywhere]">
@@ -99,9 +101,6 @@ export function HealthGaugeCard({
                     </span>
                     <span className="mt-1 block text-xs leading-5 text-muted-foreground">
                       {categoryName}
-                    </span>
-                    <span className="mt-1 block text-xs text-primary">
-                      Preview fix
                     </span>
                   </span>
                   <span className="shrink-0 rounded-md bg-primary/8 px-2 py-1 text-xs font-semibold text-info-foreground tabular-nums">

@@ -8,7 +8,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReportView } from "../report-view";
-import { makeFixtureReport } from "./report-fixtures";
+import { makeCheck, makeFixtureReport } from "./report-fixtures";
 
 let scrollIntoViewMock: ReturnType<typeof vi.fn>;
 
@@ -70,9 +70,6 @@ describe("ReportView", () => {
   it("applies a previewed fix across hero, gauge, and breakdown", () => {
     renderView();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /^Security Baseline:/ }),
-    );
     fireEvent.click(
       screen.getByRole("button", {
         name: /preview fix for security policy: \+10 pts/i,
@@ -146,5 +143,62 @@ describe("ReportView", () => {
       screen.queryByRole("heading", { name: /add a health badge/i }),
     ).toBeNull();
     expect(document.querySelector('[aria-busy="true"]')).not.toBeNull();
+  });
+
+  it("opens the category with the most recoverable points and keeps all checks selected", () => {
+    renderView();
+    expect(screen.getByRole("button", { name: /^Security Baseline:/ }).getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: /^Documentation:/ }).getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByRole("button", { name: "All checks (7)" }).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("sums recoverable points within each category and breaks ties in rubric order", () => {
+    const report = makeFixtureReport();
+    report.checks = [
+      makeCheck("security", "Security", "security", 0, 10, false),
+      makeCheck("docs-a", "Documentation A", "documentation", 0, 5, false),
+      makeCheck("docs-b", "Documentation B", "documentation", 0, 5, false),
+    ];
+    render(<ReportView report={report} baseUrl={null} />);
+    expect(screen.getByRole("button", { name: /^Documentation:/ }).getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: /^Security Baseline:/ }).getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("opens the first populated category when all checks pass", () => {
+    const report = makeFixtureReport();
+    report.checks = [makeCheck("ci", "CI", "testing_ci", 15, 15, true)];
+    render(<ReportView report={report} baseUrl={null} />);
+    expect(screen.getByRole("button", { name: /^Testing & CI\/CD:/ }).getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText(/every check passes/i)).toBeDefined();
+  });
+
+  it("handles an empty report without expanding a category", () => {
+    const report = { ...makeFixtureReport(), checks: [], healthScore: 0 };
+    render(<ReportView report={report} baseUrl={null} />);
+    expect(screen.getByText("No checks in this report")).toBeDefined();
+    expect(document.querySelector('[data-slot="accordion-trigger"][aria-expanded="true"]')).toBeNull();
+  });
+
+  it("preserves expanded categories during previews and resets transient state for a new audit", () => {
+    const report = makeFixtureReport();
+    const { rerender } = render(<ReportView report={report} baseUrl={null} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Documentation:/ }));
+    fireEvent.click(screen.getByRole("button", { name: /preview fix for security policy/i }));
+    expect(screen.getByRole("button", { name: /^Documentation:/ }).getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: /^Security Baseline:/ }).getAttribute("aria-expanded")).toBe("true");
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "security" } });
+    rerender(<ReportView report={{ ...report, generatedAt: "2026-10-18T12:00:00.000Z" }} baseUrl={null} />);
+    expect(screen.getByRole("searchbox")).toHaveProperty("value", "");
+    expect(screen.queryByTestId("hero-preview-pill")).toBeNull();
+    expect(screen.getByRole("button", { name: /^Documentation:/ }).getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByRole("button", { name: /^Security Baseline:/ }).getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("links each section navigation item to an existing report section", () => {
+    renderView();
+    const nav = screen.getByRole("navigation", { name: "Report sections" });
+    for (const link of within(nav).getAllByRole("link")) {
+      expect(document.querySelector(link.getAttribute("href")!)).not.toBeNull();
+    }
   });
 });
