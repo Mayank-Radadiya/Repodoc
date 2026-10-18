@@ -37,7 +37,11 @@ describe("CheckRow component", () => {
 
   it("renders failed badge and preview button when check is not passed with potential points", () => {
     const check = makeCheck("license", "Open Source License", "documentation", 0, 10, false, {
-      details: "No license file found",
+      evidence: {
+        filesChecked: ["LICENSE"],
+        found: false,
+        details: "No license file found",
+      },
     });
 
     render(
@@ -63,7 +67,11 @@ describe("CheckRow component", () => {
 
   it("renders previewed state when isPreviewed is true", () => {
     const check = makeCheck("license", "Open Source License", "documentation", 0, 10, false, {
-      details: "No license file found",
+      evidence: {
+        filesChecked: ["LICENSE"],
+        found: false,
+        details: "No license file found",
+      },
     });
 
     render(

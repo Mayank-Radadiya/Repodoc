@@ -25,6 +25,8 @@ export interface CheckResult {
   };
 }
 
+export type CheckRemediation = NonNullable<CheckResult["remediation"]>;
+
 export interface AuditReport {
   owner: string;
   repo: string;
