@@ -3,7 +3,6 @@
 import { useId, useMemo, useState } from "react";
 import {
   ArrowUpDown,
-  ChevronDown,
   Search,
   X,
 } from "lucide-react";

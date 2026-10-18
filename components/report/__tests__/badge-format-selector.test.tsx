@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import React from "react";
 import { BadgeCopyButton } from "../badge-copy-button";
-import { BadgeFormatSelector, FORMATS } from "../badge-format-selector";
+import { BadgeFormatSelector } from "../badge-format-selector";
 import { Tabs } from "@/components/ui/tabs";
 
 describe("BadgeCopyButton component", () => {

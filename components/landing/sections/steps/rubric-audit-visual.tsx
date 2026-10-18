@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   AlertCircle,
   FileCode,
-  ShieldCheck,
   RotateCw,
   Scale,
 } from "lucide-react";

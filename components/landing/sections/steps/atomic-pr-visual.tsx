@@ -14,7 +14,6 @@ import {
 export function AtomicPrVisual() {
   const [activeStage, setActiveStage] = useState<number>(3); // 1 = Blobs, 2 = Tree, 3 = Commit & PR
   const [isSimulating, setIsSimulating] = useState(false);
-  const [simulatedSuccess, setSimulatedSuccess] = useState(false);
 
   const runSimulation = () => {
     if (isSimulating) return;

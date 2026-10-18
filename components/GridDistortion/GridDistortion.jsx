@@ -111,8 +111,12 @@ const GridDistortion = ({
     intro
   };
   const settingsRef = useRef(settings);
+  const onReadyRef = useRef(onReady);
+  const textRef = useRef(text);
   useEffect(() => {
     settingsRef.current = settings;
+    onReadyRef.current = onReady;
+    textRef.current = text;
   });
 
   useEffect(() => {
@@ -410,7 +414,7 @@ const GridDistortion = ({
       if (!alive || !offscreenCanvas || !canvas) return;
       offscreenCanvas.width = canvas.width;
       offscreenCanvas.height = canvas.height;
-      renderText(offscreenCanvas, text);
+      renderText(offscreenCanvas, textRef.current);
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, imageTexture);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, offscreenCanvas);
@@ -420,7 +424,7 @@ const GridDistortion = ({
       layout();
       if (settingsRef.current.intro && !reduce) scramble();
       state.loaded = true;
-      onReady?.();
+      onReadyRef.current?.();
       wake();
     };
 
@@ -450,7 +454,7 @@ const GridDistortion = ({
         layout();
         if (settingsRef.current.intro && !reduce) scramble();
         state.loaded = true;
-        onReady?.();
+        onReadyRef.current?.();
         wake();
       };
       image.onerror = (err) => {
@@ -492,10 +496,10 @@ const GridDistortion = ({
       state.height = Math.max(1, root.clientHeight);
       canvas.width = Math.round(state.width * dpr);
       canvas.height = Math.round(state.height * dpr);
-      if (text && state.loaded && offscreenCanvas) {
+      if (textRef.current && state.loaded && offscreenCanvas) {
         offscreenCanvas.width = canvas.width;
         offscreenCanvas.height = canvas.height;
-        renderText(offscreenCanvas, text);
+        renderText(offscreenCanvas, textRef.current);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, imageTexture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, offscreenCanvas);
