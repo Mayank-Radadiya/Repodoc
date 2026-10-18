@@ -13,10 +13,22 @@ export function getHealthBand(score: number) {
   return healthBands.find((band) => band.color === getBadgeColor(score))!;
 }
 
+export type DashboardRepository = DashboardRepoItem;
+
 export function hasHealthScore(
   repo: DashboardRepoItem,
 ): repo is DashboardRepoItem & { healthScore: number } {
   return repo.hasReport && repo.healthScore !== null && Number.isFinite(repo.healthScore);
+}
+
+export function hasValidAuditDate(
+  repo: DashboardRepository,
+): repo is DashboardRepository & { lastAuditedAt: string } {
+  return Boolean(
+    repo.hasReport &&
+    repo.lastAuditedAt &&
+    Number.isFinite(Date.parse(repo.lastAuditedAt)),
+  );
 }
 
 export function formatAuditDate(value: string | null): string | null {
@@ -55,8 +67,9 @@ export function getDashboardInsights(repos: DashboardRepoItem[]) {
     })),
     unscoredCount: repos.length - scored.length,
     languageMix,
-    latestAudits: repos.filter((repo) => repo.hasReport && repo.lastAuditedAt && Number.isFinite(Date.parse(repo.lastAuditedAt)))
-      .sort((a, b) => Date.parse(b.lastAuditedAt!) - Date.parse(a.lastAuditedAt!) || a.name.localeCompare(b.name))
+    latestAudits: repos
+      .filter(hasValidAuditDate)
+      .sort((a, b) => Date.parse(b.lastAuditedAt) - Date.parse(a.lastAuditedAt) || a.name.localeCompare(b.name))
       .slice(0, 4),
   };
 }

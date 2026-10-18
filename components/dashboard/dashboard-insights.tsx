@@ -55,7 +55,7 @@ export function DashboardInsightsPanel({ insights }: { insights: DashboardInsigh
             {latestAudits.map((repo) => (
               <li key={repo.id}>
                 <Link href={`/report/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.name)}`} className={styles.latestAuditLink} aria-label={`View latest audit for ${repo.name}`}>
-                  <span className={styles.latestAuditDetails}><span className={styles.latestAuditName}>{repo.name}</span><time dateTime={repo.lastAuditedAt!}>{formatAuditDate(repo.lastAuditedAt)}</time></span>
+                  <span className={styles.latestAuditDetails}><span className={styles.latestAuditName}>{repo.name}</span><time dateTime={repo.lastAuditedAt ?? undefined}>{formatAuditDate(repo.lastAuditedAt)}</time></span>
                   <span className={`${styles.latestScore} ${hasHealthScore(repo) ? styles[getHealthBand(repo.healthScore).key] : ""}`}>{hasHealthScore(repo) ? <>{repo.healthScore}<span>/100</span></> : "Unscored"}</span>
                   <ArrowUpRight size={14} aria-hidden="true" />
                 </Link>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatAuditDate, getDashboardInsights, getHealthBand } from "../dashboard-model";
+import { formatAuditDate, getDashboardInsights, getHealthBand, hasValidAuditDate } from "../dashboard-model";
 import { sampleDashboardData } from "./fixtures";
 
 describe("dashboard insights", () => {
@@ -44,6 +44,14 @@ describe("dashboard insights", () => {
     expect(formatAuditDate("invalid")).toBeNull();
     expect(formatAuditDate(null)).toBeNull();
     expect(formatAuditDate("2026-10-18T23:00:00Z")).toBe("Oct 18, 2026");
+  });
+
+  it("narrows valid audit dates with hasValidAuditDate type guard", () => {
+    const base = sampleDashboardData.repositories[0];
+    expect(hasValidAuditDate({ ...base, hasReport: true, lastAuditedAt: "2026-10-18T10:00:00Z" })).toBe(true);
+    expect(hasValidAuditDate({ ...base, hasReport: false, lastAuditedAt: "2026-10-18T10:00:00Z" })).toBe(false);
+    expect(hasValidAuditDate({ ...base, hasReport: true, lastAuditedAt: null })).toBe(false);
+    expect(hasValidAuditDate({ ...base, hasReport: true, lastAuditedAt: "not-a-date" })).toBe(false);
   });
 
   it("returns a truthful empty state", () => {

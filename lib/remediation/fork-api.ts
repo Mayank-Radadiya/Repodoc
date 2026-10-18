@@ -159,7 +159,7 @@ export async function ensureForkReady(
       "fork_not_ready",
       "GitHub is still preparing the fork. Try again shortly.",
     );
-  let deadlineTimer: ReturnType<typeof setTimeout>;
+  let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
   const deadline = new Promise<never>((_, reject) => {
     deadlineTimer = setTimeout(() => {
       reject(notReady());
@@ -245,7 +245,9 @@ export async function ensureForkReady(
   try {
     return await Promise.race([poll(), deadline]);
   } finally {
-    clearTimeout(deadlineTimer!);
+    if (deadlineTimer !== undefined) {
+      clearTimeout(deadlineTimer);
+    }
     controller.abort();
   }
 }
