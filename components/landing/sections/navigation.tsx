@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useScroll, useMotionValueEvent } from "motion/react";
+import { useSession } from "next-auth/react";
 import {
   Navbar,
   NavBody,
@@ -23,6 +24,7 @@ export interface LandingNavigationProps {
 export function LandingNavigation({
   overPhoto = true,
 }: LandingNavigationProps) {
+  const { status } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
@@ -51,12 +53,21 @@ export function LandingNavigation({
         />
         <div className="relative z-20 flex transform-gpu items-center gap-3">
           <AuthControls onPhoto={onPhoto} />
-          <CandyLink
-            href="#observatory"
-            className="hidden px-4 py-2 text-sm xl:inline-flex"
-          >
-            Explore Audit
-          </CandyLink>
+          {status === "authenticated" ? (
+            <CandyLink
+              href="/dashboard"
+              className="hidden px-4 py-2 text-sm xl:inline-flex"
+            >
+              Dashboard
+            </CandyLink>
+          ) : (
+            <CandyLink
+              href="#observatory"
+              className="hidden px-4 py-2 text-sm xl:inline-flex"
+            >
+              Explore Audit
+            </CandyLink>
+          )}
         </div>
       </NavBody>
 
@@ -91,13 +102,23 @@ export function LandingNavigation({
             </a>
           ))}
           <div className="mt-3 flex w-full flex-col">
-            <CandyLink
-              href="#observatory"
-              className="w-full py-2.5 text-sm"
-              onClick={closeMobile}
-            >
-              Explore Audit
-            </CandyLink>
+            {status === "authenticated" ? (
+              <CandyLink
+                href="/dashboard"
+                className="w-full py-2.5 text-sm"
+                onClick={closeMobile}
+              >
+                Dashboard
+              </CandyLink>
+            ) : (
+              <CandyLink
+                href="#observatory"
+                className="w-full py-2.5 text-sm"
+                onClick={closeMobile}
+              >
+                Explore Audit
+              </CandyLink>
+            )}
           </div>
         </MobileNavMenu>
       </MobileNav>

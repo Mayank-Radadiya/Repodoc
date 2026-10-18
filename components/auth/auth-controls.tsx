@@ -1,8 +1,9 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
+import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { LogIn, LogOut } from "lucide-react";
+import { LayoutDashboard, LogIn, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,6 +109,14 @@ export function AuthControls({
                 Signed in as @{user.username}
               </MenuGroupLabel>
               <MenuSeparator />
+              <MenuItem
+                render={<Link href="/dashboard" />}
+                className="min-h-11 cursor-pointer px-3"
+                disabled={pending}
+              >
+                <LayoutDashboard aria-hidden="true" />
+                Dashboard
+              </MenuItem>
               <MenuItem
                 className="min-h-11 cursor-pointer px-3"
                 disabled={pending}

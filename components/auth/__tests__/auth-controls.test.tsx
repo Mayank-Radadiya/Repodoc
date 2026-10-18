@@ -199,17 +199,29 @@ describe("authentication controls", () => {
     expect(signOut).toHaveBeenCalledTimes(2);
   });
 
-  it("opens with the keyboard, focuses Sign out, and restores focus on Escape", async () => {
+  it("opens with the keyboard, focuses first item, and restores focus on Escape", async () => {
     show();
     const trigger = screen.getByRole("button", {
       name: "Account menu for octocat",
     });
     act(() => trigger.focus());
     fireEvent.keyDown(trigger, { key: "ArrowDown" });
-    const item = await screen.findByRole("menuitem", { name: "Sign out" });
+    const item = await screen.findByRole("menuitem", { name: "Dashboard" });
     await waitFor(() => expect(document.activeElement).toBe(item));
     fireEvent.keyDown(item, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(trigger));
+  });
+
+  it("includes Dashboard menu item linking to /dashboard when authenticated", async () => {
+    show("authenticated");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Account menu for octocat" }),
+    );
+    const dashboardItem = await screen.findByRole("menuitem", {
+      name: /dashboard/i,
+    });
+    expect(dashboardItem).toBeDefined();
+    expect(dashboardItem.getAttribute("href")).toBe("/dashboard");
   });
 });
