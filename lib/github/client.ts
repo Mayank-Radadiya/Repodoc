@@ -215,17 +215,19 @@ export function createOctokit(token?: string, options: { maxRetries?: number } =
     retry: { enabled: false },
     throttle: {
       retryAfterBaseValue: process.env.VITEST ? 0 : 1000,
+      // In Vitest, bypass Bottleneck's multi-second write/notification delays while
+      // retaining onRateLimit / onSecondaryRateLimit handlers for retry test assertions.
+      ...(process.env.VITEST
+        ? {
+            write: { key: () => ({ schedule: (_: unknown, fn: () => unknown) => fn() }) } as never,
+            notifications: { key: () => ({ schedule: (_: unknown, fn: () => unknown) => fn() }) } as never,
+          }
+        : {}),
       onRateLimit: (retryAfter: number, _opts: unknown, _oct: unknown, retryCount: number): boolean => {
-        if (retryCount < maxRetries && retryAfter <= 30) {
-          return true;
-        }
-        return false;
+        return retryCount < maxRetries && retryAfter <= 30;
       },
       onSecondaryRateLimit: (retryAfter: number, _opts: unknown, _oct: unknown, retryCount: number): boolean => {
-        if (retryCount < maxRetries && retryAfter <= 30) {
-          return true;
-        }
-        return false;
+        return retryCount < maxRetries && retryAfter <= 30;
       },
     },
     request: {
