@@ -119,6 +119,15 @@ describe("POST /api/remediate authentication and request boundary", () => {
     expect(RemediationEngine.execute).not.toHaveBeenCalled();
   });
 
+  it("rejects sec-fetch-site cross-site requests before GitHub", async () => {
+    await expectError(
+      await POST(request(validBody, { "sec-fetch-site": "cross-site" })),
+      403,
+    );
+    expect(auditRepository).not.toHaveBeenCalled();
+    expect(RemediationEngine.execute).not.toHaveBeenCalled();
+  });
+
   it.each([
     "text/plain",
     "application/x-www-form-urlencoded",

@@ -154,6 +154,13 @@ export async function POST(request: Request): Promise<Response> {
         403,
       );
     }
+    const secFetchSite = request.headers.get("sec-fetch-site");
+    if (secFetchSite === "cross-site") {
+      return json(
+        { error: "Cross-origin remediation requests are not allowed." },
+        403,
+      );
+    }
     if (
       request.headers
         .get("content-type")

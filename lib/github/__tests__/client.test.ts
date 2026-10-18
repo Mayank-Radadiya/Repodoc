@@ -116,6 +116,14 @@ describe("fetchDefaultBranch", () => {
     });
   });
 
+  it("rejects private repositories with 404 to prevent private repo data exposure", async () => {
+    fetchMock.mockResolvedValue(Response.json({ ...metadata, private: true }));
+    await expect(fetchDefaultBranch("owner", "repo")).rejects.toMatchObject({
+      code: "not_found",
+      status: 404,
+    });
+  });
+
   it("rejects an unexpected 304 without parsing a body", async () => {
     const response = new Response(null, { status: 304 });
     const jsonSpy = vi.spyOn(response, "json");

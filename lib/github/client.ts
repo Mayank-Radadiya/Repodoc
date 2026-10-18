@@ -287,6 +287,10 @@ export async function fetchDefaultBranch(
     throw new GitHubApiError("invalid_response", "GitHub returned invalid repository metadata.", { status: 200 });
   }
 
+  if (body.private === true) {
+    throw new GitHubApiError("not_found", "GitHub repository or Git reference was not found or is inaccessible.", { status: 404 });
+  }
+
   return {
     defaultBranch: body.default_branch,
     description: body.description,
