@@ -29,6 +29,7 @@ export function ReportController(props: ReportControllerProps) {
 function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
   const [report, setReport] = useState(initialReport);
   const [pending, setPending] = useState(!initialReport);
+  const [remediationPending, setRemediationPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [origin, setOrigin] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<
@@ -165,7 +166,14 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
       feedback={feedback}
       actions={
         <>
-          <FixButton checks={report.checks} />
+          <FixButton
+            owner={owner}
+            repo={repo}
+            checks={report.checks}
+            key={`${report.generatedAt}/${report.shareId}`}
+            disabled={pending}
+            onPendingChange={setRemediationPending}
+          />
           {report.shareId && (
             <Link
               href={`/share/${encodeURIComponent(report.shareId)}`}
@@ -187,7 +195,7 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
           <Button
             className="min-h-11"
             loading={pending}
-            disabled={pending}
+            disabled={pending || remediationPending}
             onClick={() => void runAudit()}
           >
             <RefreshCw aria-hidden="true" />

@@ -113,7 +113,7 @@ function isGitHubBlobResponse(value: unknown): value is GitHubBlobResponse {
   );
 }
 
-function validatePathParameter(value: string): string {
+export function validatePathParameter(value: string): string {
   if (!isNonEmptyString(value)) {
     throw new GitHubApiError("invalid_input", "GitHub path parameters must not be empty.");
   }
@@ -158,7 +158,7 @@ function isRequestError(error: unknown): error is RequestError {
   );
 }
 
-function toGitHubApiError(error: unknown): GitHubApiError {
+export function toGitHubApiError(error: unknown): GitHubApiError {
   if (error instanceof GitHubApiError) return error;
 
   if (isRequestError(error)) {

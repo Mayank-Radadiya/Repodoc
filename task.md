@@ -455,41 +455,46 @@
 
 ### 2.2 — Remediation Engine (Git Data API)
 
-- [ ] **2.2.1 — Implement `createBlob(owner, repo, content, token)`**
+- [x] **2.2.1 — Implement `createBlob(owner, repo, content, token)`**
   - In `src/lib/remediation/git-api.ts`
   - `POST /repos/{owner}/{repo}/git/blobs` with base64-encoded content
   - Returns blob SHA
   - **Acceptance:** Unit test with mocked API
+  - **Verified (2026-10-17):** Added server-only `createBlob(owner, repo, content, token): Promise<string>` using shared Octokit configuration, path validation, and typed error normalization. Requires an explicit nonempty caller token (no environment fallback), preserves UTF-8 text including empty content through base64 encoding, and validates the returned SHA. All 44 mocked API tests pass, covering payload/headers, Unicode, invalid input and responses, sanitized HTTP/network errors, and bounded rate-limit retries with timing metadata. `bun run test:run src/lib/remediation src/lib/github` passes (244 tests; 1 opt-in live test skipped); `bun run test:run` passes (1406 tests; 1 skipped); `tsc --noEmit --incremental false` and `bun run build -- --webpack` pass. `bun run lint` passes with 3 existing warnings in unrelated UI files. No live GitHub objects were created.
   - **Depends on:** 1.0.6
 
-- [ ] **2.2.2 — Implement `createTree(owner, repo, baseTreeSha, blobs, token)`**
+- [x] **2.2.2 — Implement `createTree(owner, repo, baseTreeSha, blobs, token)`**
   - Creates new tree with multiple blob entries
   - `POST /repos/{owner}/{repo}/git/trees` with `base_tree` set
   - **Acceptance:** Unit test with mocked API
+  - **Verified (2026-10-17):** Added server-only `createTree(owner, repo, baseTreeSha, blobs, token): Promise<string>` and exported `TreeBlob` (`path`, `sha`) in `src/lib/remediation/git-api.ts`. Preserves the required base tree, maps existing blobs to regular-file entries (`100644`, `blob`), requires an explicit caller token, validates inputs and returned SHA, rejects duplicate/invalid relative paths, and reuses sanitized errors and bounded retries. Added 75 mocked API tests covering payload/headers, Unicode and immutable inputs, extra-property filtering, malformed inputs/responses, HTTP/network errors, retry limits/metadata, and `createBlob` → `createTree` composition. `bun run test:run src/lib/remediation src/lib/github` passes (319 tests; 1 opt-in live test skipped); `bun run test:run` passes (1481 tests; 1 skipped); `./node_modules/.bin/tsc --noEmit --incremental false` passes when rerun after the build (the overlapping initial check encountered regenerating `.next` types); `bun run build -- --webpack` passes; `bun run lint` passes with 3 existing UI warnings. No live GitHub objects were created. Existing-file checks remain the responsibility of task 2.2.6.
   - **Depends on:** 2.2.1
 
-- [ ] **2.2.3 — Implement `createCommit(owner, repo, treeSha, parentSha, message, token)`**
+- [x] **2.2.3 — Implement `createCommit(owner, repo, treeSha, parentSha, message, token)`**
   - `POST /repos/{owner}/{repo}/git/commits`
   - Commit message: `chore(repodoc): resolve repository health audit findings`
   - **Acceptance:** Unit test with mocked API
+  - **Verified (2026-10-17):** Added server-only `createCommit(owner, repo, treeSha, parentSha, message, token): Promise<string>` using shared Octokit configuration, input validation, sanitized errors, and bounded rate-limit retries. Posts the supplied message verbatim with the tree SHA and exactly one parent, requires an explicit caller token, validates the returned commit SHA, and leaves author/committer attribution to GitHub. Added 59 mocked API tests covering the specified remediation message, custom/multiline/Unicode messages, payload/headers, invalid inputs/responses, HTTP/network errors, retry bounds/metadata, and `createBlob` → `createTree` → `createCommit` composition. `bun run test:run src/lib/remediation src/lib/github` passes (378 tests; 1 opt-in live test skipped); `bun run test:run` passes (1540 tests; 1 skipped); `bun run lint` passes with 3 existing UI warnings; `bun run build -- --webpack`, post-build `./node_modules/.bin/tsc --noEmit --incremental false`, and `git diff --check` pass. No live GitHub objects were created. Branch updates and PR creation remain subsequent tasks.
   - **Depends on:** 2.2.2
 
-- [ ] **2.2.4 — Implement `createOrUpdateBranch(owner, repo, sha, token)`**
+- [x] **2.2.4 — Implement `createOrUpdateBranch(owner, repo, sha, token)`**
   - Attempts `POST /git/refs` to create `refs/heads/repodoc/health-remediation`
   - On 422 (already exists): `PATCH /git/refs/heads/repodoc/health-remediation` to update
   - Idempotent — safe to call repeatedly
   - **Acceptance:** Unit test covering create + update paths
+  - **Verified (2026-10-17):** Added server-only `createOrUpdateBranch(owner, repo, sha, token): Promise<void>` using `REPODOC_BRANCH`, shared input validation, explicit caller authentication, sanitized errors, and bounded rate-limit retries. Creates the fixed branch first, falls back on HTTP 422 to a forced update of only `repodoc/health-remediation`, and validates the returned reference and commit SHA. Forced updates intentionally replace divergent history on this generated branch. Added 83 mocked API tests covering create/update payloads and headers, repeated calls, SHA replacement, URL encoding, invalid inputs/responses, HTTP/network failures at both stages, retry limits/metadata, and blob → tree → commit → branch composition. `bun run test:run src/lib/remediation src/lib/github` passes (461 tests; 1 opt-in live test skipped); `bun run test:run` passes (1623 tests; 1 skipped); `bun run lint` passes with 3 existing UI warnings; `bun run build -- --webpack`, post-build `./node_modules/.bin/tsc --noEmit --incremental false`, changed-file ESLint, and `git diff --check` pass. The repeated-call test also passes separately with a timeout allowing for real Octokit throttling. Existing Vite configuration compatibility warning remains unchanged. No live GitHub objects were created.
   - **Depends on:** 2.2.3
 
-- [ ] **2.2.5 — Implement `openPullRequest(owner, repo, head, base, token)`**
+- [x] **2.2.5 — Implement `openPullRequest(owner, repo, head, base, token)`**
   - `POST /repos/{owner}/{repo}/pulls`
   - Title: `chore(repodoc): resolve repository health audit findings`
   - Body: markdown summary of what was fixed (list of files added)
   - Handles 422 (PR already exists) — returns existing PR URL
   - **Acceptance:** Unit test covering create + already-exists paths
+  - **Verified (2026-10-17):** Added server-only `openPullRequest(owner, repo, head, base, token): Promise<string>` using explicit caller authentication, shared Octokit configuration, sanitized errors, and bounded retries. Compares branches to derive a sorted, Markdown-safe added-file summary, creates a PR with the specified title, and validates its HTTPS GitHub PR URL. Rejects comparisons at the 300-file limit to avoid incomplete summaries. On create-stage 422, paginates open PRs filtered by head/base and returns only a matching PR (owner casing ignored, branch casing preserved); otherwise retains the original error. Supports qualified fork heads without provisioning forks and preserves existing PR descriptions. Added 114 mocked API tests covering creation, existing-PR recovery, pagination, malformed inputs/responses, URL safety, rate-limit metadata/retries, and blob → tree → commit → branch → PR composition. `bun run test:run --maxWorkers=1 --reporter=verbose` passes (1737 tests; 1 opt-in live GitHub test skipped); `bun run build -- --webpack`, post-build `./node_modules/.bin/tsc --noEmit --incremental false`, changed-file ESLint, and `git diff --check` pass. `bun run lint` passes with 3 existing UI warnings. Multi-worker test invocations remained silent and were interrupted; single-worker validation completed successfully. Existing Vite configuration compatibility warning remains unchanged. No live GitHub objects were created.
   - **Depends on:** 2.2.4
 
-- [ ] **2.2.6 — Implement `RemediationEngine.execute()` orchestrator**
+- [x] **2.2.6 — Implement `RemediationEngine.execute()` orchestrator**
   - In `src/lib/remediation/engine.ts`
   - Input: `AuditReport` (with failed checks that have `canAutomate: true`), user selections, license choice
   - Verifies files don't already exist (from tree data)
@@ -497,6 +502,7 @@
   - Calls: `createBlob` (for each file) → `createTree` → `createCommit` → `createOrUpdateBranch` → `openPullRequest`
   - Returns `{ prUrl: string, filesCreated: string[] }`
   - **Acceptance:** Integration test (mocked) — given 3 missing files, creates correct blob/tree/commit sequence and returns PR URL
+  - **Verified (2026-10-17):** Added server-only `RemediationEngine` with static and instance `execute(input)` methods, typed inputs/results/errors, and support for the five existing automated templates. Validates the report, caller token, selected failed automatable checks, explicit license choice/holder, and conduct contact before network calls; defaults the license year to the current UTC year. Added `fetchBaseCommit` to resolve a branch reference and its exact commit tree. Refreshes the default branch and complete tree, rejects mismatched/truncated snapshots and remediation-as-default branches, skips already-resolved findings using existing presence checks, and rejects incompatible destinations/ancestors case-insensitively without losing conflicting entries that differ only by case. Uses fixed template paths, renders all files before writes, and performs sequential blobs → one tree → one commit → remediation branch → PR, preserving sanitized GitHub errors and retry metadata; returns typed `no_changes` when nothing remains. Added 101 mocked tests, including the required three-file integration with real templates/Git helpers, all five fixes, input validation, fresh language/branch detection, stale findings, path conflicts, existing branch/PR recovery, snapshot validation, and failure short-circuiting. Focused tests pass (101 tests); `bun run test:run --maxWorkers=1 --reporter=verbose` passes (1838 tests; 1 opt-in live GitHub test skipped); `bun run build -- --webpack`, post-build `./node_modules/.bin/tsc --noEmit --incremental false`, changed-module ESLint, new-file Prettier checks, and diff whitespace checks pass. `bun run lint` passes with 3 existing unrelated UI warnings. GitHub writes were mocked; API/UI and fork provisioning remain their later tasks.
   - **Depends on:** 2.2.1–2.2.5, 2.1.1–2.1.5
 
 ---
@@ -504,13 +510,17 @@
 ### 2.3 — Fix-with-PR UI & API
 
 - [ ] **2.3.1 — Implement `POST /api/remediate` route**
-  - In `src/app/api/remediate/route.ts`
+  - In `app/api/remediate/route.ts` (the active App Router is at the repository root)
   - Requires authenticated session (return 401 if not)
-  - Request body: `{ owner, repo, fixes: string[], licenseChoice?: string }`
+  - Request body: `{ owner, repo, fixes: string[], licenseChoice?: string, licenseFullName?: string, codeOfConductContact?: string }`
+  - **Agreed template inputs:** Selecting `license` requires an explicit supported license and copyright holder (`licenseFullName`); selecting `code-of-conduct` requires an explicit incident-reporting contact (`codeOfConductContact`). Never infer either from the signed-in identity.
   - `fixes` is array of check IDs to remediate (e.g., `["license", "gitignore", "ci-workflow"]`)
   - Calls `RemediationEngine.execute()` with user's GitHub token
   - Returns `{ prUrl: string, filesCreated: string[] }`
   - **Acceptance:** Authenticated request creates a PR on a test repo
+  - **Implemented and locally verified (2026-10-17):** Added the POST handler using server-only `getGitHubSession()` credentials, JSON content-type and same-origin checks, coordinate/selection/template validation before GitHub requests, deterministic fix deduplication, fresh authenticated `auditRepository()` reports without persistence, and `RemediationEngine.execute()`. Returns only PR URL and created files, with `no-store` on all responses, sanitized status-specific errors, and valid rate-limit retry timing. Added 123 route and HTTP integration tests, including the real audit → templates → three blobs → one tree → one commit → branch → PR pipeline with session-token verification despite an environment token, resolved findings, path conflicts, incomplete snapshots, and failure short-circuiting. `bun run test:run app/api/remediate --maxWorkers=1`, `bun run build -- --webpack` (registers `/api/remediate`), post-build `./node_modules/.bin/tsc --noEmit --incremental false`, changed-file Prettier checks, and `git diff --check` pass. `bun run lint` passes with 3 existing unrelated UI warnings. README documents the API contract and manual acceptance procedure.
+  - **Full regression verification:** `bun run test:run --maxWorkers=1` passes (1,988 tests passed; 1 opt-in live GitHub test skipped, across 62 test files). The existing Vite configuration compatibility warning remains unchanged. Existing Git API throttling tests account for most of the 467-second run.
+  - **Pending live acceptance (deferred by agreement):** No live GitHub objects were created. A signed-in session and disposable test repository are still required to verify real authenticated PR creation; keep this task unchecked until that acceptance criterion is verified. UI and fork provisioning remain their later tasks.
   - **Depends on:** 2.0.1, 2.2.6
 
 - [ ] **2.3.2 — Build License Selector modal**
@@ -519,9 +529,12 @@
   - Shows brief description of each license
   - Required before remediation if license check failed
   - **Acceptance:** Selection is passed through to remediation API, cannot proceed without choosing
+  - **Implemented and locally verified (2026-10-17):** Added the reusable client `LicenseSelector` in the active root report components, a report barrel export, and the documented `src/components/report/license-selector.tsx` compatibility entry point. Reuses real dialog/radio/button/scroll primitives within `ReportThemeScope`; offers five described choices with no default, a responsibility disclaimer, guarded explicit confirmation, cancellation, and fresh selection on every opening. Exports `LicenseChoice` and `LicenseSelectorProps`; GPL is explicitly version 3 only and emits `GPL-3.0-only`. The typed `onConfirm({ licenseChoice })` handoff owns no network requests; callers retain copyright attribution and API error handling. All 27 new component/handoff tests pass, including a test-only caller forwarding every choice unchanged to mocked `/api/remediate` and making no requests before confirmation or after cancellation. All 278 report-component tests pass. Chromium verification of the real component with application styles/built fonts passes at 1280×900, 375×667, and 667×375, including both themes, panel scrolling, visible footer actions, no horizontal overflow, keyboard selection, forward/backward focus trapping, focus restoration, Escape/outside dismissal, and reduced-motion popup transitions.
+  - **Validation:** `bun run test:run components/report --maxWorkers=1` passes (278 tests); `bun run test:run --maxWorkers=1 --reporter=verbose` passes (1,988 tests; 1 opt-in live GitHub test skipped). The initial nonverbose full-suite run was interrupted while silent; the verbose rerun completed in 467 seconds. `bun run build -- --webpack`, post-build `./node_modules/.bin/tsc --noEmit --incremental false`, changed-file ESLint and Prettier checks, and `git diff --check` pass. `bun run lint` passes with 3 existing unrelated UI warnings. No live GitHub objects were created.
+  - **Pending production integration (deferred by agreement):** Keep this task unchecked until the report's remediation caller opens the selector for a selected failed license fix, blocks submission without explicit choice, and forwards that choice to the real API. API ownership and Fix All orchestration remain tasks 2.3.1 and 2.3.3; this task implements and tests only the modal and callback boundary.
   - **Depends on:** 1.0.2
 
-- [ ] **2.3.3 — Build "Fix All" button and remediation flow**
+- [x] **2.3.3 — Build "Fix All" button and remediation flow**
   - In `src/components/report/fix-button.tsx`
   - Shows on report page when authenticated and automatable fixes exist
   - Checkbox list of available fixes (pre-checked)
@@ -529,6 +542,9 @@
   - Success: show link to created PR
   - Error: show error message with guidance
   - **Acceptance:** Full flow works: select fixes → choose license → PR created → link shown
+  - **Implemented and locally verified (2026-10-17):** Implemented the full Fix All remediation flow across `components/report/fix-button.tsx`, root barrel exports, and the documented compatibility entry point `src/components/report/fix-button.tsx`. Enforces authentication via `AuthGate` so unauthenticated users or session expiry unmount the component and abort active requests. Displays only failed automatable checks matching supported IDs (`license`, `gitignore`, `ci-workflow`, `security-policy`, `code-of-conduct`), preselected by default with names, descriptions, and target paths. Collects nonblank, single-line copyright holder and conduct contact fields with strict validation without account inference. Integrates seamless transition to `LicenseSelector` when `license` is selected (starting without default and returning on cancellation without requests), and direct submission otherwise. Freezes inputs during in-flight requests while allowing dialog closure, surfacing persistent background status beside the trigger. Implemented browser-safe `requestRemediation` helper in `src/lib/request-remediation.ts` with same-origin POST, payload filtering, response/PR URL validation, synchronous duplicate prevention, and abort-on-unmount. Displays accessible success state with PR link (`noopener noreferrer`), created file list, unchanged-score guidance, and accessible error handling with status-specific guidance and live retry countdowns. Integrated with `ReportController` to mutually disable re-auditing and remediation and reset state on report/repository identity changes. Fork provisioning remains intentionally outside this task; write permission failures surface actionable guidance. All 35 `FixButton` component tests, 27 `LicenseSelector` tests, 37 `requestRemediation` tests, and 2 full-flow UI/API/engine integration tests pass with mocked GitHub writes.
+  - **Validation:** Focused remediation tests pass (226 tests); full test suite `bun run test:run --maxWorkers=1` passes (2,121 tests passed; 1 opt-in live GitHub test skipped across 66 test files). `bun run lint` passes with 0 errors (3 preexisting UI warnings); Next.js production build `bun run build -- --webpack` succeeds; post-build `./node_modules/.bin/tsc --noEmit --incremental false` passes with 0 errors; Prettier formatting checks and `git diff --check` pass cleanly.
+  - **Pending live acceptance (deferred by agreement):** Live GitHub PR creation against a disposable repository remains a documented follow-up. Automated verification tests mock all GitHub writes.
   - **Depends on:** 2.3.1, 2.3.2, 2.0.2
 
 ---

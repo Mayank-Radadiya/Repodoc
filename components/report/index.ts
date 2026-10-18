@@ -1,5 +1,9 @@
 export { UrlInput, type UrlInputProps } from "./url-input";
-export { CategoryBreakdown, type CategoryBreakdownProps } from "./category-breakdown";
+export { FixButton, type FixButtonProps } from "./fix-button";
+export {
+  CategoryBreakdown,
+  type CategoryBreakdownProps,
+} from "./category-breakdown";
 export {
   ScoreGauge,
   BADGE_COLOR_PALETTE,
@@ -30,10 +34,7 @@ export {
 
 export { ReportView, type ReportViewProps } from "./report-view";
 export { ReportPending } from "./report-pending";
-export {
-  ShareController,
-  type ShareControllerProps,
-} from "./share-controller";
+export { ShareController, type ShareControllerProps } from "./share-controller";
 export {
   ReportErrorCard,
   classifyReportError,
@@ -57,6 +58,11 @@ export {
   type AuditRepositoryDialogProps,
 } from "./audit-dialog";
 export {
+  LicenseSelector,
+  type LicenseChoice,
+  type LicenseSelectorProps,
+} from "./license-selector";
+export {
   REPORT_CATEGORIES,
   REPORT_CATEGORY_IDS,
   getReportCategory,
@@ -68,5 +74,3 @@ export {
   getPotentialPoints,
   type ReportPreview,
 } from "./report-preview";
-
-
