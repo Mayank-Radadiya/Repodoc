@@ -26,7 +26,6 @@ export function AtomicPrVisual() {
 
     setTimeout(() => {
       setActiveStage(3);
-      setSimulatedSuccess(true);
       setIsSimulating(false);
     }, 1300);
   };
