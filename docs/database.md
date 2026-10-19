@@ -200,7 +200,7 @@ flowchart TD
   UpsertLoop --> UpsertQuery
   UpsertQuery -->|Success| Success
   UpsertQuery -->|Error| P2002Check
-  P2002Check -->|P2002 & Attempt < 2| UpsertLoop
+  P2002Check -->|"P2002 & Attempt < 2"| UpsertLoop
   P2002Check -->|Other Error or Attempt = 2| Rethrow
 ```
 
@@ -646,7 +646,7 @@ sequenceDiagram
   DB-->>API: Return cached row + ETag
 
   alt ETag exists and Rubric matches
-    API->>GitHub: GET /git/trees/{branch}?recursive=1<br/>Header: If-None-Match "etag"
+    API->>GitHub: GET /git/trees/{branch}?recursive=1<br/>Header: If-None-Match 'etag'
     alt GitHub returns 304 Not Modified
       GitHub-->>API: 304 Not Modified (0 quota cost)
       API-->>Client: 200 OK (Return cached report)

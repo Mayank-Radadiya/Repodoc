@@ -526,7 +526,7 @@ flowchart TD
     CheckExp -- Yes --> CheckProviderExp{"accessTokenExpiresAt valid and in future?"}
     CheckProviderExp -- No --> Invalidate
     CheckProviderExp -- Yes --> CheckAppToken{"isGitHubAppToken(accessToken)?"}
-    CheckAppToken -- Yes (ghu_/ghs_) --> Invalidate
+    CheckAppToken -->|"Yes (ghu_/ghs_)"| Invalidate
     CheckAppToken -- No --> ValidSession["Valid Session Established: Return GitHubSession"]
 ```
 
@@ -544,9 +544,8 @@ model User {
   username       String
   avatarUrl      String?
   installationId Int?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
   reports        RepoReport[]
+  createdAt      DateTime     @default(now())
 }
 ```
 
