@@ -11,7 +11,7 @@ export default function ShareError({
   reset?: () => void;
   retry?: () => void;
 }) {
-  const onRetry = reset ?? retry;
+  const onRetry = retry ?? reset;
   return (
     <ReportErrorCard
       error={error || "The shared report could not be retrieved. Try loading it again."}

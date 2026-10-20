@@ -11,6 +11,7 @@ import { buildShareUrl, copyToClipboard } from "./badge-snippet";
 import { ReportView } from "./report-view";
 import { ReportPending } from "./report-pending";
 import { ReportErrorCard } from "./report-error-card";
+import { READ_TIMEOUT_MS, withDeadline } from "@/lib/request-deadline";
 
 export interface ShareControllerProps {
   shareId: string;
@@ -34,6 +35,7 @@ function ShareSession({ shareId, initialReport = null }: ShareControllerProps) {
   const request = useRef<AbortController | null>(null);
   const mounted = useRef(false);
   const copying = useRef(false);
+  const reportRef = useRef(report);
 
   const loadReport = useCallback(async () => {
     if (request.current) return;
@@ -42,27 +44,30 @@ function ShareSession({ shareId, initialReport = null }: ShareControllerProps) {
     setPending(true);
     setError(null);
     try {
-      const response = await fetch(
-        `/api/report/${encodeURIComponent(shareId)}`,
-        {
-          signal: controller.signal,
-          headers: { Accept: "application/json" },
-        },
-      );
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        throw new Error(
-          payload?.error ||
-            "Unable to load this shared report. It may have expired or does not exist.",
+      const data = await withDeadline(READ_TIMEOUT_MS, controller.signal, async (signal) => {
+        const response = await fetch(
+          `/api/report/${encodeURIComponent(shareId)}`,
+          {
+            signal,
+            headers: { Accept: "application/json" },
+          },
         );
-      }
-      const data = await response.json();
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as {
+            error?: string;
+          } | null;
+          throw new Error(
+            payload?.error ||
+              "Unable to load this shared report. It may have expired or does not exist.",
+          );
+        }
+        return await response.json();
+      });
       if (!isPersistedAuditReport(data)) {
         throw new Error("Invalid report format received from server.");
       }
       if (mounted.current && request.current === controller) {
+        reportRef.current = data;
         setReport(data);
       }
     } catch (cause) {
@@ -91,7 +96,8 @@ function ShareSession({ shareId, initialReport = null }: ShareControllerProps) {
     queueMicrotask(() => {
       if (!active) return;
       setOrigin(window.location.origin);
-      if (!initialReport) void loadReport();
+      if (!request.current) setPending(false);
+      if (!reportRef.current) void loadReport();
     });
     return () => {
       active = false;

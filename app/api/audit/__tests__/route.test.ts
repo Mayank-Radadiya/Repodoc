@@ -341,7 +341,7 @@ describe("POST /api/audit failures", () => {
 
 describe("POST /api/audit persistence", () => {
   function cachedReport() {
-    return { ...ScoringEngine.run({ owner: "owner", repo: "repo", paths: new Set<string>() }), shareId: "share123" };
+    return { ...ScoringEngine.run({ owner: "owner", repo: "repo", paths: new Set<string>(), defaultBranch: metadata.default_branch, description: metadata.description, topics: metadata.topics }), shareId: "share123" };
   }
 
   it("persists the complete scored report and GitHub ETag before responding", async () => {
@@ -356,7 +356,7 @@ describe("POST /api/audit persistence", () => {
   });
 
   it("returns the unchanged saved report on 304 without blobs, scoring, or writes", async () => {
-    const report = cachedReport();
+    const report = JSON.parse(JSON.stringify(cachedReport())) as ReturnType<typeof cachedReport>;
     vi.mocked(findCachedReport).mockResolvedValue({ report, etag: '"cached-etag"' });
     fetchMock.mockResolvedValueOnce(Response.json(metadata));
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 304 }));
@@ -370,6 +370,26 @@ describe("POST /api/audit persistence", () => {
     expect(saveReport).not.toHaveBeenCalled();
   });
 
+  it("reuses cached metadata when JSONB changes object key order", async () => {
+    const report = cachedReport();
+    report.checks = report.checks.map((check) => ({
+      ...check,
+      evidence: {
+        details: check.evidence.details,
+        found: check.evidence.found,
+        filesChecked: check.evidence.filesChecked,
+      },
+    }));
+    vi.mocked(findCachedReport).mockResolvedValue({ report, etag: '"cached-etag"' });
+    fetchMock.mockResolvedValueOnce(Response.json(metadata));
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 304 }));
+    const response = await POST(request());
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(report);
+    expect(saveReport).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("scores and saves a changed tree after conditional revalidation", async () => {
     vi.mocked(findCachedReport).mockResolvedValue({ report: cachedReport(), etag: '"old"' });
     mockRepository([entry("LICENSE")]);
@@ -378,6 +398,34 @@ describe("POST /api/audit persistence", () => {
     expect(await response.json()).toMatchObject({ shareId: "share123", healthScore: 17 });
     expect(new Headers(fetchMock.mock.calls[1][1]?.headers).get("if-none-match")).toBe('"old"');
     expect(saveReport).toHaveBeenCalledWith(expect.objectContaining({ healthScore: 17 }), '"tree-etag"');
+  });
+
+  it("refreshes description, topics, and default branch on 304 without fetching blobs", async () => {
+    const cached = cachedReport();
+    vi.mocked(findCachedReport).mockResolvedValue({ report: cached, etag: '"same-tree"' });
+    fetchMock.mockResolvedValueOnce(Response.json({ ...metadata, default_branch: "next", description: null, topics: [] }));
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 304 }));
+    const response = await POST(request());
+    const updated = await response.json();
+    expect(response.status).toBe(200);
+    expect(updated.defaultBranch).toBe("next");
+    expect(updated.healthScore).toBe(cached.healthScore - 7);
+    expect(updated.checks.find((check: { id: string }) => check.id === "repo-metadata").passed).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(saveReport).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns a controlled 504 when request parsing never completes", async () => {
+    vi.useFakeTimers();
+    try {
+      const incoming = request();
+      vi.spyOn(incoming, "json").mockImplementation(() => new Promise(() => {}));
+      const task = POST(incoming);
+      await vi.advanceTimersByTimeAsync(60_000);
+      const response = await task;
+      expect(response.status).toBe(504);
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally { vi.useRealTimers(); }
   });
 
   it("returns a safe 500 if the cache lookup fails before GitHub", async () => {

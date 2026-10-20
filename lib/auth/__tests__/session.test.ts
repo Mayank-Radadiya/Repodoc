@@ -67,5 +67,6 @@ describe("server-only GitHub session", () => {
     vi.stubEnv("NEXTAUTH_SECRET", "");
     vi.stubEnv("AUTH_SECRET", "");
     expect(await getGitHubSession()).toBeNull();
+    expect(headers).toHaveBeenCalled();
   });
 });

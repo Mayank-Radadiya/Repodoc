@@ -1,8 +1,12 @@
+import { isDeepStrictEqual } from "node:util";
+import { withRequestBudget } from "@/lib/request-budget";
+import { READ_TIMEOUT_MS, RequestDeadlineError } from "@/lib/request-deadline";
 import { GitHubApiError } from "@/lib/github/client";
 import { GitHubService, findReadmeEntry } from "@/lib/github/service";
 import { ScoringEngine } from "@/lib/scoring/engine";
 import { buildPathSet } from "@/lib/scoring/utils";
 import { findCachedReport, saveReport } from "@/lib/reports";
+import { checkRepoMetadata } from "@/lib/scoring/checks/community";
 
 function parseRepository(body: unknown): { owner: string; repo: string } | null {
   if (
@@ -49,7 +53,7 @@ function retryAfter(error: GitHubApiError): string | undefined {
   return String(Math.ceil(seconds));
 }
 
-export async function POST(request: Request): Promise<Response> {
+async function handlePOST(request: Request): Promise<Response> {
   let body: unknown;
   try {
     body = await request.json();
@@ -68,9 +72,33 @@ export async function POST(request: Request): Promise<Response> {
   const { owner, repo } = repository;
   try {
     const cached = await findCachedReport(owner, repo);
-    const data = await GitHubService.getRepoData(owner, repo, cached?.etag);
+    let data = await GitHubService.getRepoData(owner, repo, cached?.etag);
     if (data.tree === null && cached) {
-      return Response.json(cached.report);
+      const metadata = checkRepoMetadata(data);
+      const oldMetadata = cached.report.checks.find((check) => check.id === metadata.id);
+      // A tree ETag does not cover repository settings. Revalidate those without
+      // fetching unchanged blobs or rewriting an identical snapshot.
+      if (oldMetadata && cached.report.defaultBranch === data.defaultBranch &&
+          isDeepStrictEqual(
+            { ...oldMetadata, remediation: oldMetadata.remediation ?? null },
+            { ...metadata, remediation: metadata.remediation ?? null },
+          )) {
+        return Response.json(cached.report);
+      }
+      if (oldMetadata) {
+        const checks = cached.report.checks.map((check) => check.id === metadata.id ? metadata : check);
+        const report = {
+          owner: cached.report.owner, repo: cached.report.repo,
+          rubricVersion: cached.report.rubricVersion,
+          checks, defaultBranch: data.defaultBranch,
+          healthScore: checks.reduce((sum, check) => sum + check.pointsAwarded, 0),
+          generatedAt: new Date().toISOString(),
+        };
+        return Response.json(await saveReport(report, cached.etag));
+      }
+      // A legacy snapshot without the metadata check cannot be reused safely.
+      const refreshed = await GitHubService.getRepoData(owner, repo);
+      data = refreshed;
     }
     if (data.tree === null || data.truncated) {
       return Response.json(
@@ -101,6 +129,7 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json(await saveReport(report, data.etag));
   } catch (error) {
     if (error instanceof GitHubApiError) {
+      if (error.code === "timeout") return Response.json({ error: "GitHub took too long to respond. Check the current operation before retrying." }, { status: 504, headers: { "Cache-Control": "no-store" } });
       if (error.code === "not_found") {
         return Response.json(
           { error: "GitHub repository or resource was not found or is inaccessible." },
@@ -120,5 +149,19 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
     return Response.json({ error: "Unable to complete the repository audit." }, { status: 500 });
+  }
+}
+
+export const maxDuration = 90;
+
+export async function POST(request: Request): Promise<Response> {
+  try {
+    return await withRequestBudget(READ_TIMEOUT_MS, request.signal, () => handlePOST(request));
+  } catch (error) {
+    if (error instanceof RequestDeadlineError) {
+      return Response.json({ error: "The repository audit timed out. Please try again." }, { status: 504, headers: {} });
+    }
+    if (request.signal.aborted) return new Response(null, { status: 499 });
+    throw error;
   }
 }

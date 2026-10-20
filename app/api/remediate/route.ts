@@ -1,3 +1,5 @@
+import { withRequestBudget } from "@/lib/request-budget";
+import { REMEDIATION_TIMEOUT_MS, RequestDeadlineError } from "@/lib/request-deadline";
 import { getGitHubSession } from "@/lib/auth";
 import {
   auditRepository,
@@ -138,7 +140,7 @@ function retryAfter(error: GitHubApiError): string | undefined {
   return String(Math.ceil(seconds));
 }
 
-export async function POST(request: Request): Promise<Response> {
+async function handlePOST(request: Request): Promise<Response> {
   try {
     const session = await getGitHubSession();
     if (!session)
@@ -255,6 +257,7 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
     if (error instanceof GitHubApiError) {
+      if (error.code === "timeout") return Response.json({ error: "GitHub took too long to respond. Check the current operation before retrying." }, { status: 504, headers: { "Cache-Control": "no-store" } });
       switch (error.code) {
         case "unauthorized":
           return json(
@@ -293,5 +296,19 @@ export async function POST(request: Request): Promise<Response> {
       }
     }
     return json({ error: "Unable to complete repository remediation." }, 500);
+  }
+}
+
+export const maxDuration = 300;
+
+export async function POST(request: Request): Promise<Response> {
+  try {
+    return await withRequestBudget(REMEDIATION_TIMEOUT_MS, request.signal, () => handlePOST(request));
+  } catch (error) {
+    if (error instanceof RequestDeadlineError) {
+      return Response.json({ error: "Remediation timed out. Check the repository’s open pull requests before trying again." }, { status: 504, headers: { "Cache-Control": "no-store" } });
+    }
+    if (request.signal.aborted) return new Response(null, { status: 499 });
+    throw error;
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Folder,
   FileText,
@@ -24,18 +24,23 @@ export function TreeTraversalVisual() {
     if (isSimulating) return;
     setIsSimulating(true);
 
+  };
+
+  useEffect(() => {
+    if (!isSimulating) return;
     let idx = 0;
     const interval = setInterval(() => {
       idx = (idx + 1) % MOCK_TREE_NODES.length;
       setSelectedNode(MOCK_TREE_NODES[idx]);
     }, 350);
 
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       clearInterval(interval);
       setSelectedNode(MOCK_TREE_NODES[2]); // return to highlighted missing file
       setIsSimulating(false);
     }, 2100);
-  };
+    return () => { clearInterval(interval); clearTimeout(timeout); };
+  }, [isSimulating]);
 
   return (
     <div className="flex flex-col h-full space-y-4">

@@ -24,6 +24,7 @@ describe("audit request boundary", () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ owner: "OWNER", repo: "repo" }),
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -74,6 +75,6 @@ describe("audit request boundary", () => {
     await expect(
       requestAudit(repository, { fetcher: fetch, signal: controller.signal }),
     ).rejects.toThrow("Failed to fetch");
-    expect(fetch.mock.calls[0][1]?.signal).toBe(controller.signal);
+    expect(fetch.mock.calls[0][1]?.signal?.aborted).toBe(false);
   });
 });

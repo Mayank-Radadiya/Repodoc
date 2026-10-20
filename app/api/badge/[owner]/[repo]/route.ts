@@ -1,3 +1,4 @@
+import { RequestDeadlineError } from "@/lib/request-deadline";
 import {
   auditRepository,
   IncompleteTreeError,
@@ -69,6 +70,9 @@ export async function GET(
       },
     });
   } catch (error) {
+    if (error instanceof RequestDeadlineError || (error instanceof GitHubApiError && error.code === "timeout")) {
+      return Response.json(formatBadgeError("upstream timeout"), { status: 504, headers: { "Cache-Control": "no-store" } });
+    }
     if (error instanceof GitHubApiError) {
       if (error.code === "not_found") {
         return Response.json(formatBadgeError("not found"), {

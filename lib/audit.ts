@@ -1,3 +1,5 @@
+import { withRequestBudget } from "@/lib/request-budget";
+import { READ_TIMEOUT_MS } from "@/lib/request-deadline";
 import "server-only";
 
 import { GitHubService, findReadmeEntry } from "@/lib/github/service";
@@ -68,7 +70,7 @@ export interface AuditRepositoryOptions {
  * Throws IncompleteTreeError if the tree response is truncated or missing.
  * Throws InvalidRepositoryError if owner or repo are invalid.
  */
-export async function auditRepository(
+async function performAudit(
   rawOwner: string,
   rawRepo: string,
   options: AuditRepositoryOptions = {},
@@ -109,4 +111,8 @@ export async function auditRepository(
     description: data.description,
     topics: data.topics,
   });
+}
+
+export function auditRepository(rawOwner: string, rawRepo: string, options: AuditRepositoryOptions = {}): Promise<AuditReport> {
+  return withRequestBudget(READ_TIMEOUT_MS, undefined, () => performAudit(rawOwner, rawRepo, options));
 }

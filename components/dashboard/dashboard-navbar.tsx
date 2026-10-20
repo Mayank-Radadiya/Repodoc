@@ -3,10 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Search } from "lucide-react";
 import { AuthControls } from "@/components/auth/auth-controls";
-import { AuditRepositoryDialog } from "@/components/report/audit-dialog";
 import styles from "./dashboard.module.css";
+
+const AuditRepositoryDialog = dynamic(
+  () => import("@/components/report/audit-dialog").then((module) => module.AuditRepositoryDialog),
+  { loading: () => <span role="status" className="sr-only">Loading audit dialog…</span> },
+);
 
 export interface DashboardNavbarProps {
   section?: string;
@@ -20,12 +25,14 @@ export function DashboardNavbar({
   portalContainer,
 }: DashboardNavbarProps) {
   const [auditOpen, setAuditOpen] = useState(false);
+  const [auditLoaded, setAuditLoaded] = useState(false);
   const auditReturnFocus = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
+        setAuditLoaded(true);
         if (!auditOpen) {
           auditReturnFocus.current =
             document.activeElement instanceof HTMLElement
@@ -40,6 +47,7 @@ export function DashboardNavbar({
   }, [auditOpen]);
 
   const openAudit = (event?: React.MouseEvent<HTMLElement>) => {
+    setAuditLoaded(true);
     if (!auditOpen) {
       auditReturnFocus.current =
         event?.currentTarget instanceof HTMLElement
@@ -99,11 +107,11 @@ export function DashboardNavbar({
         </nav>
       </header>
 
-      <AuditRepositoryDialog
+      {auditLoaded && <AuditRepositoryDialog
         open={auditOpen}
         onOpenChange={setAuditOpen}
         returnFocus={auditReturnFocus}
-      />
+      />}
     </>
   );
 }

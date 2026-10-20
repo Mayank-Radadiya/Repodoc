@@ -534,7 +534,7 @@ flowchart TD
 
 ## 8. User Identity Synchronization & Database Persistence
 
-Repodoc persists authenticated users in SQLite (development) or PostgreSQL (production) via Prisma ORM:
+Repodoc persists authenticated users in PostgreSQL in development and production via Prisma ORM:
 
 ```prisma
 // prisma/schema.prisma

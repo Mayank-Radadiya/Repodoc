@@ -1,13 +1,10 @@
 // @vitest-environment node
 
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
-import { PrismaClient } from "@prisma/client";
+import { type PrismaClient } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { encode } from "next-auth/jwt";
 import { headers } from "next/headers";
+import { createTestDatabase } from "@/tests/helpers/database";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET, POST } from "@/app/api/auth/[...nextauth]/route";
 import { getGitHubSession } from "@/lib/auth";
@@ -23,11 +20,8 @@ vi.mock("@/lib/db", () => ({
 }));
 vi.mock("next/headers", () => ({ headers: vi.fn() }));
 
-const directory = mkdtempSync(path.join(tmpdir(), "repodoc-auth-"));
-const databasePath = path.join(directory, "test.db");
-writeFileSync(databasePath, "");
-const databaseUrl = `file:${databasePath}`;
-const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
+const testDatabase = createTestDatabase();
+const { prisma } = testDatabase;
 const fetchMock = vi.fn<typeof fetch>();
 const origin = "http://localhost:3000";
 type CookieJar = Map<string, string>;
@@ -82,10 +76,7 @@ async function signIn(jar: CookieJar) {
 }
 
 beforeAll(() => {
-  execFileSync(process.execPath, [
-    path.resolve("node_modules/prisma/build/index.js"), "db", "push", "--skip-generate",
-    "--schema", path.resolve("prisma/schema.prisma"),
-  ], { env: { ...process.env, DATABASE_URL: databaseUrl }, stdio: "pipe" });
+  testDatabase.migrate();
   database.client = prisma;
 }, 30000);
 
@@ -113,11 +104,10 @@ afterEach(() => {
 });
 
 afterAll(async () => {
-  await prisma.$disconnect();
-  rmSync(directory, { recursive: true, force: true });
+  await testDatabase.cleanup();
 });
 
-describe("GitHub OAuth handlers with SQLite persistence", () => {
+describe("GitHub OAuth handlers with PostgreSQL persistence", () => {
   it("serves the built-in sign-in page and advertises the GitHub provider", async () => {
     const jar: CookieJar = new Map();
     const page = await request("/signin", jar);

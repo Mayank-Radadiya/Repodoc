@@ -1,11 +1,8 @@
 // @vitest-environment node
 
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
-import { PrismaClient, type Prisma } from "@prisma/client";
+import { type PrismaClient, type Prisma } from "@prisma/client";
 import { nanoid } from "nanoid";
+import { createTestDatabase } from "@/tests/helpers/database";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/audit/route";
 import { GET } from "@/app/api/report/[shareId]/route";
@@ -25,12 +22,8 @@ vi.mock("nanoid", async (importOriginal) => {
   return { ...actual, nanoid: vi.fn(actual.nanoid) };
 });
 
-const directory = mkdtempSync(path.join(tmpdir(), "repodoc-reports-"));
-const databasePath = path.join(directory, "test.db");
-// Prisma's SQLite schema engine expects the file to exist in this environment.
-writeFileSync(databasePath, "");
-const url = `file:${databasePath}`;
-const prisma = new PrismaClient({ datasources: { db: { url } } });
+const testDatabase = createTestDatabase();
+const { prisma } = testDatabase;
 const fetchMock = vi.fn<typeof fetch>();
 
 function report(owner = "Owner", repo = "Repo"): AuditReport {
@@ -58,10 +51,7 @@ function githubFresh(): void {
 }
 
 beforeAll(() => {
-  execFileSync(process.execPath, [
-    path.resolve("node_modules/prisma/build/index.js"), "db", "push", "--skip-generate",
-    "--schema", path.resolve("prisma/schema.prisma"),
-  ], { env: { ...process.env, DATABASE_URL: url }, stdio: "pipe" });
+  testDatabase.migrate();
   database.client = prisma;
 }, 30000);
 
@@ -82,11 +72,10 @@ afterEach(() => {
 });
 
 afterAll(async () => {
-  await prisma.$disconnect();
-  rmSync(directory, { recursive: true, force: true });
+  await testDatabase.cleanup();
 });
 
-describe("report persistence with SQLite", () => {
+describe("report persistence with PostgreSQL", () => {
   it("reads the latest report by repository, case-insensitively, without ETag or current rubric", async () => {
     const saved = await saveReport({ ...report(), rubricVersion: "0.9.0" }, "");
     const writes = vi.spyOn(prisma.repoReport, "upsert");

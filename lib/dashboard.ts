@@ -1,3 +1,5 @@
+import { withRequestBudget } from "@/lib/request-budget";
+import { READ_TIMEOUT_MS } from "@/lib/request-deadline";
 import "server-only";
 
 import { createOctokit, toGitHubApiError } from "@/lib/github/client";
@@ -48,7 +50,7 @@ export interface DashboardData {
   };
 }
 
-export async function getDashboardData(
+async function loadDashboard(
   token: string,
   username: string,
 ): Promise<DashboardData> {
@@ -86,15 +88,18 @@ export async function getDashboardData(
     joinedAt: u.created_at,
   };
 
-  const reports = await prisma.repoReport.findMany({
-    where: { owner: username.toLowerCase() },
-  });
+  const rawRepos = Array.isArray(reposResponse.data) ? reposResponse.data : [];
+  const reports = rawRepos.length ? await prisma.repoReport.findMany({
+    where: {
+      owner: (u.login || username).toLowerCase(),
+      repo: { in: rawRepos.map((repo) => repo.name.toLowerCase()) },
+    },
+    select: { repo: true, healthScore: true, shareId: true, updatedAt: true },
+  }) : [];
 
   const reportsMap = new Map(
     reports.map((report) => [report.repo.toLowerCase(), report]),
   );
-
-  const rawRepos = Array.isArray(reposResponse.data) ? reposResponse.data : [];
 
   const repositories: DashboardRepoItem[] = rawRepos.map((repo) => {
     const report = reportsMap.get(repo.name.toLowerCase());
@@ -143,4 +148,8 @@ export async function getDashboardData(
       averageScore,
     },
   };
+}
+
+export function getDashboardData(token: string, username: string): Promise<DashboardData> {
+  return withRequestBudget(READ_TIMEOUT_MS, undefined, () => loadDashboard(token, username));
 }

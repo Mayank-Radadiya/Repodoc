@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Info, FolderSearch, RotateCcw } from "lucide-react";
 import type { DashboardData, DashboardRepoItem } from "@/lib/dashboard";
 import { DashboardProfileCard } from "./dashboard-profile-card";
@@ -34,9 +34,29 @@ export function DashboardView({
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [sortBy, setSortBy] = useState<RepoSortOption>("updated");
   const [auditStates, setAuditStates] = useState<Record<number, RepositoryAuditState>>({});
-  const pendingAudits = useRef(new Set<number>());
+  const pendingAudits = useRef(new Map<number, AbortController>());
+  const interruptedAudits = useRef(new Set<number>());
   const resultsHeading = useRef<HTMLHeadingElement>(null);
   const [announcement, setAnnouncement] = useState("");
+  useEffect(() => {
+    let active = true;
+    const requests = pendingAudits.current;
+    const interruptedIds = interruptedAudits.current;
+    const interrupted = new Set(interruptedIds);
+    interruptedIds.clear();
+    queueMicrotask(() => {
+      if (!active || !interrupted.size) return;
+      setAuditStates((previous) => Object.fromEntries(Object.entries(previous).map(([id, state]) => [
+        id, interrupted.has(Number(id)) && state.pending ? { pending: false, error: "Audit interrupted. Try again." } : state,
+      ])));
+    });
+    return () => {
+      active = false;
+      for (const id of requests.keys()) interruptedIds.add(id);
+      for (const controller of requests.values()) controller.abort();
+      requests.clear();
+    };
+  }, []);
 
   const insights = useMemo(() => getDashboardInsights(repos), [repos]);
   const { stats } = insights;
@@ -93,11 +113,13 @@ export function DashboardView({
 
   const handleAudit = async (repo: DashboardRepoItem) => {
     if (pendingAudits.current.has(repo.id)) return;
-    pendingAudits.current.add(repo.id);
+    const controller = new AbortController();
+    pendingAudits.current.set(repo.id, controller);
     setAuditStates((prev) => ({ ...prev, [repo.id]: { pending: true, error: null } }));
     setAnnouncement(`Auditing ${repo.name}…`);
     try {
-      const report = await requestAudit({ owner: repo.owner, repo: repo.name }, { fetcher });
+      const report = await requestAudit({ owner: repo.owner, repo: repo.name }, { fetcher, signal: controller.signal });
+      if (controller.signal.aborted || pendingAudits.current.get(repo.id) !== controller) return;
       setRepos((prev) => prev.map((item) => item.id === repo.id ? {
         ...item,
         hasReport: true,
@@ -108,11 +130,12 @@ export function DashboardView({
       setAuditStates((prev) => ({ ...prev, [repo.id]: { pending: false, error: null, completed: true } }));
       setAnnouncement(`Audit complete for ${repo.name}. Health score ${report.healthScore} out of 100.`);
     } catch (error) {
+      if (controller.signal.aborted || pendingAudits.current.get(repo.id) !== controller) return;
       const message = error instanceof Error ? error.message : "Unable to audit repository. Try again.";
       setAuditStates((prev) => ({ ...prev, [repo.id]: { pending: false, error: message } }));
       setAnnouncement(`Audit failed for ${repo.name}. ${message}`);
     } finally {
-      pendingAudits.current.delete(repo.id);
+      if (pendingAudits.current.get(repo.id) === controller) pendingAudits.current.delete(repo.id);
     }
   };
 

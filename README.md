@@ -72,7 +72,7 @@ sequenceDiagram
     actor Dev as Developer / User
     participant WebUI as Next.js App Router (UI)
     participant API as /api/audit Route
-    participant DB as Prisma (SQLite / Postgres)
+    participant DB as Prisma (PostgreSQL)
     participant GH as GitHub REST / Git Data API
     participant Engine as ScoringEngine (Rubric v1.0)
     participant Shields as Shields.io CDN
@@ -127,7 +127,7 @@ Repodoc/
 ├── docs/                         # In-depth architectural & operational documentation
 │   ├── architecture.md           # System topology, scoring engine & sequence diagrams
 │   ├── authentication.md         # NextAuth v5, OAuth App setup & zero-leak token model
-│   ├── database.md               # Prisma schema, SQLite local dev & PostgreSQL runbook
+│   ├── database.md               # Prisma schema, PostgreSQL setup & migration runbook
 │   ├── deployment.md             # Vercel deployment, security headers (CSP) & production checklist
 │   └── remediation-engine.md     # Git Data API atomic commits, templates & fork fallback
 ├── lib/                          # Core business logic & server-side utilities
@@ -142,13 +142,13 @@ Repodoc/
 │   ├── db.ts                     # Prisma client singleton instance
 │   └── reports.ts                # Report persistence, nanoid shareId generation & ETag caching
 ├── prisma/
-│   ├── schema.prisma             # Data models (User, RepoReport)
-│   └── dev.db                    # Local SQLite database file (gitignored)
+│   ├── schema.prisma             # Local SQLite models (User, RepoReport)
+│   └── production/               # PostgreSQL schema and versioned migrations
 ├── types/                        # Global ambient and shared TypeScript definitions
 ├── auth.ts                       # NextAuth.js v5 route handler & auth() export
 ├── next.config.ts                # Next.js 16 configuration with strict CSP & security headers
 ├── package.json                  # Dependencies & package scripts
-└── vitest.config.ts              # Vitest test runner configuration
+└── vitest.config.mts             # Vitest test runner configuration
 ```
 
 ---
@@ -159,7 +159,8 @@ Follow these steps to clone, configure, and run Repodoc locally on your machine 
 
 ### Prerequisites
 
-- **Bun:** `v1.4+` (recommended) or **Node.js:** `v20.x` or higher
+- **Node.js:** `24.x` and **Bun:** `1.4.3`
+- **PostgreSQL:** `18` (Docker Compose is provided)
 - **Git**
 - A modern web browser
 
@@ -201,10 +202,12 @@ Follow these steps to clone, configure, and run Repodoc locally on your machine 
 
 4. **Initialize the local database:**
 
-   Sync the Prisma schema directly to your local SQLite database (`prisma/dev.db`):
+   Start PostgreSQL 18 and apply the committed migrations (requires Docker):
 
    ```bash
-   npx prisma db push
+   docker compose up -d --wait
+   bun run db:generate
+   bun run db:migrate
    ```
 
 5. **Start the development server:**
@@ -306,7 +309,9 @@ cp .env.example .env
 
 | Variable | Required | Default | Description |
 | :--- | :---: | :--- | :--- |
-| `DATABASE_URL` | **Yes** | `file:./dev.db` | Prisma database connection string. Uses SQLite locally (`file:./dev.db`) and pooled PostgreSQL in production (`postgresql://...`). |
+| `DATABASE_URL` | **Yes** | Local PostgreSQL URL | Runtime connection; use pooled PostgreSQL in production. |
+| `DIRECT_URL` | **Yes** | Local PostgreSQL URL | Direct connection for Prisma migrations. |
+| `TEST_DATABASE_URL` | **For integration tests** | Local disposable PostgreSQL URL | Direct test connection; never use production credentials. |
 | `NEXT_PUBLIC_SITE_URL` | _Optional_ | `https://repodoc.dev` | Canonical public origin used for generating full share URLs, OpenGraph social cards, and badge endpoint links. |
 | `GITHUB_TOKEN` | _Optional_ | `""` | GitHub Personal Access Token (classic or fine-grained with `public_repo` read access). Elevates GitHub API rate limits from 60 req/hr to 5,000 req/hr. |
 | `NEXTAUTH_SECRET` | **For sign-in** | None | 32-byte base64 secret used to encrypt session cookies. Generate with `openssl rand -base64 32`. Alias: `AUTH_SECRET`. |
@@ -323,19 +328,25 @@ cp .env.example .env
 
 ## Development Workflow Commands
 
+Use Node 24 and Bun 1.4.3. Integration tests require `TEST_DATABASE_URL` for disposable PostgreSQL schemas. Install Chromium with `bunx playwright install chromium`. Run `bun run build` before `bun run test:e2e`. The live GitHub integration is opt-in with `RUN_GITHUB_INTEGRATION=1`. See [deployment verification](docs/deployment.md) for the ordered gates.
+
 All essential development, testing, database, and quality assurance commands:
 
 | Command | Tool | Description |
 | :--- | :--- | :--- |
 | `bun dev` / `npm run dev` | Next.js 16 | Start local development server with Turbopack at `http://localhost:3000` |
-| `bun run test:run` / `npm run test:run` | Vitest | Run complete automated test suite (2,220+ unit and integration tests) |
+| `bun run test:run` / `npm run test:run` | Vitest | Run complete automated test suite (unit and integration tests) |
 | `bun run test` / `npm test` | Vitest | Start Vitest test runner in interactive watch mode |
 | `bun run lint` / `npm run lint` | ESLint 9 | Run ESLint static analysis across all TypeScript and React files |
-| `npx tsc --noEmit` | TypeScript 5 | Run complete project type-checking without emitting artifacts |
+| `bun run typecheck` | TypeScript 5 | Run complete project type-checking without emitting artifacts |
 | `bun run build` / `npm run build` | Next.js 16 | Create an optimized production build |
 | `bun run start` / `npm run start` | Next.js 16 | Start the production server locally after running `build` |
-| `npx prisma studio` | Prisma 6 | Open visual database browser for local SQLite records |
-| `npx prisma db push` | Prisma 6 | Synchronize schema changes directly to the local SQLite database |
+| `npx prisma studio` | Prisma 6 | Open visual database browser for PostgreSQL records |
+| `bun run db:migrate` | Prisma 6 | Apply committed PostgreSQL migrations |
+| `bun run db:status` | Prisma 6 | Check migration deployment status |
+| `bun run test:unit` | Vitest | Run unit and component tests without a database |
+| `bun run test:integration` | Vitest | Run integration tests; requires `TEST_DATABASE_URL` |
+| `bun run test:e2e` | Playwright | Run Chromium smoke tests against a completed production build |
 
 ---
 
@@ -347,7 +358,7 @@ For in-depth architectural guides, operational runbooks, and subsystem specifica
 | :--- | :--- |
 | [docs/architecture.md](docs/architecture.md) | System topology, Next.js 16 App Router layout, pure Rubric v1.0 scoring engine, conditional ETag caching, and audit sequence diagrams. |
 | [docs/authentication.md](docs/authentication.md) | NextAuth.js v5 beta architecture, GitHub OAuth App registration, requested scopes (`read:user`, `user:email`, `public_repo`, `workflow`), server-side AES-GCM token isolation, and session invalidation. |
-| [docs/database.md](docs/database.md) | Prisma schema models (`User`, `RepoReport`), local SQLite workflow, and comprehensive production PostgreSQL migration runbook (Neon/Supabase) with connection pooling. |
+| [docs/database.md](docs/database.md) | Prisma schema models (`User`, `RepoReport`), PostgreSQL development setup, versioned migrations, and disposable integration test schemas. |
 | [docs/remediation-engine.md](docs/remediation-engine.md) | 1-click atomic PR remediation pipeline ("Fix All"), Git Data API orchestration (`blobs` → `trees` → `commits` → `refs`), automated personal fork fallback, and template synthesis heuristics. |
 | [docs/deployment.md](docs/deployment.md) | Production Vercel deployment runbook, pre-flight verification checklist, Content Security Policy (CSP) & HTTP security headers, and post-deployment smoke tests. |
 

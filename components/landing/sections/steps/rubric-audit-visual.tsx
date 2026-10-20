@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ScanSearch,
   CheckCircle2,
@@ -78,18 +78,23 @@ export function RubricAuditVisual() {
   const handleReAudit = () => {
     if (isAuditing) return;
     setIsAuditing(true);
+  };
+
+  useEffect(() => {
+    if (!isAuditing) return;
     let i = 0;
     const interval = setInterval(() => {
       i = (i + 1) % AST_CHECKS.length;
       setSelectedCheck(AST_CHECKS[i]);
     }, 350);
 
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       clearInterval(interval);
       setSelectedCheck(AST_CHECKS[3]);
       setIsAuditing(false);
     }, 1800);
-  };
+    return () => { clearInterval(interval); clearTimeout(timeout); };
+  }, [isAuditing]);
 
   return (
     <div className="flex flex-col h-full space-y-4">

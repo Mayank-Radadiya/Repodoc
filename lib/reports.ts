@@ -1,3 +1,5 @@
+import { withRequestBudget } from "./request-budget";
+import { READ_TIMEOUT_MS } from "./request-deadline";
 import "server-only";
 
 import { Prisma, type RepoReport } from "@prisma/client";
@@ -28,7 +30,7 @@ function repositoryKey(owner: string, repo: string) {
 /** Shared reports remain readable regardless of ETag availability or rubric age. */
 export async function findReportByShareId(shareId: string): Promise<PersistedAuditReport | null> {
   if (shareId.length !== 8 || !/^[A-Za-z0-9_-]{8}$/.test(shareId)) return null;
-  const row = await prisma.repoReport.findUnique({ where: { shareId } });
+  const row = await withRequestBudget(READ_TIMEOUT_MS, undefined, () => prisma.repoReport.findUnique({ where: { shareId } }));
   if (!row) return null;
   const report = decodeReport(row);
   if (!report) throw new Error("Stored repository report is invalid.");
@@ -38,7 +40,7 @@ export async function findReportByShareId(shareId: string): Promise<PersistedAud
 /** Read the latest saved report without imposing audit-cache freshness rules. */
 export async function findReportByRepository(owner: string, repo: string): Promise<PersistedAuditReport | null> {
   if (!isRepositoryCoordinates(owner, repo)) return null;
-  const row = await prisma.repoReport.findUnique({ where: { owner_repo: repositoryKey(owner, repo) } });
+  const row = await withRequestBudget(READ_TIMEOUT_MS, undefined, () => prisma.repoReport.findUnique({ where: { owner_repo: repositoryKey(owner, repo) } }));
   if (!row) return null;
   const report = decodeReport(row);
   if (!report) throw new Error("Stored repository report is invalid.");
@@ -50,7 +52,7 @@ export async function findCachedReport(owner: string, repo: string): Promise<{
   report: PersistedAuditReport;
   etag: string;
 } | null> {
-  const row = await prisma.repoReport.findUnique({ where: { owner_repo: repositoryKey(owner, repo) } });
+  const row = await withRequestBudget(READ_TIMEOUT_MS, undefined, () => prisma.repoReport.findUnique({ where: { owner_repo: repositoryKey(owner, repo) } }));
   if (!row || !row.etag || row.rubricVersion !== RUBRIC_VERSION) return null;
   const report = decodeReport(row);
   return report ? { report, etag: row.etag } : null;
@@ -76,6 +78,7 @@ export async function saveReport(report: AuditReport, etag: string): Promise<Per
         where: { owner_repo: key },
         create: { ...key, ...data, shareId: nanoid(8) },
         update: data,
+        select: { shareId: true },
       });
       return { ...report, shareId: saved.shareId };
     } catch (error) {

@@ -62,6 +62,7 @@ describe("fetchDefaultBranch", () => {
       method: "GET",
       cache: "no-store",
       headers: expect.any(Headers),
+      signal: expect.any(AbortSignal),
     });
     const headers = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
     expect(headers.get("accept")).toBe("application/vnd.github+json");
@@ -427,6 +428,7 @@ describe("fetchFileContent", () => {
       method: "GET",
       cache: "no-store",
       headers: expect.any(Headers),
+      signal: expect.any(AbortSignal),
     });
     const headers = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
     expect(headers.get("accept")).toBe("application/vnd.github+json");

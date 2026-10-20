@@ -39,6 +39,7 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
   const request = useRef<AbortController | null>(null);
   const mounted = useRef(false);
   const copying = useRef(false);
+  const reportRef = useRef(report);
 
   const runAudit = useCallback(async () => {
     if (request.current) return;
@@ -51,7 +52,10 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
         { owner, repo },
         { signal: controller.signal },
       );
-      if (mounted.current && request.current === controller) setReport(result);
+      if (mounted.current && request.current === controller) {
+        reportRef.current = result;
+        setReport(result);
+      }
     } catch (cause) {
       if (
         mounted.current &&
@@ -79,7 +83,8 @@ function ReportSession({ owner, repo, initialReport }: ReportControllerProps) {
     queueMicrotask(() => {
       if (!active) return;
       setOrigin(window.location.origin);
-      if (!initialReport) void runAudit();
+      if (!request.current) setPending(false);
+      if (!reportRef.current) void runAudit();
     });
     return () => {
       active = false;

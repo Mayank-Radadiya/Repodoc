@@ -8,6 +8,9 @@ export type { GitHubSession } from "./auth/claims";
 
 /** For server-side GitHub API calls only. Never pass the result to a client. */
 export async function getGitHubSession(): Promise<GitHubSession | null> {
+  // Read request data even when build-time OAuth settings are absent. Otherwise
+  // Cache Components can permanently prerender the anonymous dashboard redirect.
+  const incoming = await headers();
   let settings;
   try {
     settings = getAuthSettings();
@@ -16,7 +19,6 @@ export async function getGitHubSession(): Promise<GitHubSession | null> {
     throw error;
   }
   const { secret, clientId, useSecureCookies } = settings;
-  const incoming = await headers();
   // Accept only the session cookie, not arbitrary Authorization header tokens.
   const cookieHeaders = new Headers({ cookie: incoming.get("cookie") ?? "" });
   const token = await getToken({ req: { headers: cookieHeaders }, secret, secureCookie: useSecureCookies });

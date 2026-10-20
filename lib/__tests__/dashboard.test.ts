@@ -112,6 +112,11 @@ describe("getDashboardData", () => {
 
     const data = await getDashboardData("mock-token", "octocat");
 
+    expect(prisma.repoReport.findMany).toHaveBeenCalledWith({
+      where: { owner: "octocat", repo: { in: ["hello-world", "spoon-knife", "secret-lab"] } },
+      select: { repo: true, healthScore: true, shareId: true, updatedAt: true },
+    });
+
     // Check user data
     expect(data.user).toEqual({
       username: "octocat",
@@ -178,6 +183,7 @@ describe("getDashboardData", () => {
     });
 
     const data = await getDashboardData("mock-token", "ghost");
+    expect(prisma.repoReport.findMany).not.toHaveBeenCalled();
 
     expect(data.user).toEqual({
       username: "ghost",

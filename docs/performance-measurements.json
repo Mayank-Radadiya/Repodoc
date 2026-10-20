@@ -1,0 +1,213 @@
+{
+  "date": "2026-10-20",
+  "comparison": "HEAD versus final working application sources; isolated production builds with shared dependencies and a temporary filesystem-root override",
+  "initialBundleMethod": "Sum each route manifest’s initial chunks once; gzip each chunk separately with Node zlib default settings. These are computed gzip sizes, not observed CDN transfer sizes.",
+  "initialBundles": [
+    {
+      "route": "/",
+      "before": {
+        "route": "/",
+        "rawBytes": 1073181,
+        "gzipBytes": 343294
+      },
+      "after": {
+        "route": "/",
+        "rawBytes": 1072652,
+        "gzipBytes": 343060
+      }
+    },
+    {
+      "route": "/report/[owner]/[repo]",
+      "before": {
+        "route": "/report/[owner]/[repo]",
+        "rawBytes": 1030399,
+        "gzipBytes": 330423
+      },
+      "after": {
+        "route": "/report/[owner]/[repo]",
+        "rawBytes": 1029532,
+        "gzipBytes": 330384
+      }
+    },
+    {
+      "route": "/share/[shareId]",
+      "before": {
+        "route": "/share/[shareId]",
+        "rawBytes": 1001742,
+        "gzipBytes": 320425
+      },
+      "after": {
+        "route": "/share/[shareId]",
+        "rawBytes": 972861,
+        "gzipBytes": 310353
+      }
+    },
+    {
+      "route": "/dashboard",
+      "before": {
+        "route": "/dashboard",
+        "rawBytes": 935441,
+        "gzipBytes": 298539
+      },
+      "after": {
+        "route": "/dashboard",
+        "rawBytes": 904999,
+        "gzipBytes": 288011
+      }
+    }
+  ],
+  "browser": {
+    "modal": {
+      "additionalScriptRequests": 2,
+      "focusRestored": true
+    },
+    "environment": {
+      "node": "v24.22.0",
+      "browser": "156.0.8078.4",
+      "viewport": "1440x1000",
+      "reducedMotion": true,
+      "github": "synthetic GET fixture, writes disabled",
+      "database": "disposable PostgreSQL 18"
+    },
+    "routes": [
+      {
+        "route": "/",
+        "status": 200,
+        "finalPath": "/",
+        "lcp": 176,
+        "cls": 0.00043645833333333335,
+        "longTasks": 4,
+        "jsRequests": 16,
+        "jsEncodedBytes": 343589,
+        "jsDecodedBytes": 1072652,
+        "totalRequests": 28,
+        "sessionRequests": 2,
+        "auditRequests": 0,
+        "domNodes": 1226,
+        "headings": [
+          "From git clone to  defensible audit in seconds. "
+        ]
+      },
+      {
+        "route": "/dashboard",
+        "status": 200,
+        "finalPath": "/dashboard",
+        "lcp": 320,
+        "cls": 0,
+        "longTasks": 0,
+        "jsRequests": 20,
+        "jsEncodedBytes": 363983,
+        "jsDecodedBytes": 1133674,
+        "totalRequests": 34,
+        "sessionRequests": 2,
+        "auditRequests": 0,
+        "domNodes": 4761,
+        "headings": [
+          "Repository overview"
+        ]
+      },
+      {
+        "route": "/report/audit-sample/fixture",
+        "status": 200,
+        "finalPath": "/report/audit-sample/fixture",
+        "lcp": 96,
+        "cls": 0.0006394048996913581,
+        "longTasks": 0,
+        "jsRequests": 22,
+        "jsEncodedBytes": 400435,
+        "jsDecodedBytes": 1241415,
+        "totalRequests": 34,
+        "sessionRequests": 2,
+        "auditRequests": 0,
+        "domNodes": 556,
+        "headings": [
+          "audit-sample/fixture"
+        ]
+      },
+      {
+        "route": "/share/audit001",
+        "status": 200,
+        "finalPath": "/share/audit001",
+        "lcp": 64,
+        "cls": 0,
+        "longTasks": 0,
+        "jsRequests": 21,
+        "jsEncodedBytes": 382481,
+        "jsDecodedBytes": 1190095,
+        "totalRequests": 35,
+        "sessionRequests": 2,
+        "auditRequests": 0,
+        "domNodes": 546,
+        "headings": [
+          "audit-sample/fixture"
+        ]
+      }
+    ],
+    "navigation": {
+      "cycles": 5,
+      "usedHeapBefore": 8432572,
+      "usedHeapAfter": 9869756,
+      "samples": [
+        {
+          "cycles": 10,
+          "usedSize": 10253644,
+          "totalSize": 11091968,
+          "embedderHeapUsedSize": 3460608,
+          "backingStorageSize": 1354533,
+          "documents": 2,
+          "nodes": 1578,
+          "jsEventListeners": 601
+        },
+        {
+          "cycles": 15,
+          "usedSize": 10417812,
+          "totalSize": 11354112,
+          "embedderHeapUsedSize": 3469264,
+          "backingStorageSize": 1354533,
+          "documents": 2,
+          "nodes": 1578,
+          "jsEventListeners": 601
+        },
+        {
+          "cycles": 20,
+          "usedSize": 10524028,
+          "totalSize": 11354112,
+          "embedderHeapUsedSize": 3478976,
+          "backingStorageSize": 1354533,
+          "documents": 2,
+          "nodes": 1578,
+          "jsEventListeners": 601
+        }
+      ]
+    },
+    "pageErrors": []
+  },
+  "failureChecks": [
+    "mobile report has no horizontal overflow",
+    "re-audit shows loading while retaining the saved report",
+    "offline failure retains the saved report and exposes retry",
+    "retry recovers after network failure",
+    "missing share offers the not-found state",
+    "anonymous remediation rejected with 401"
+  ],
+  "verification": {
+    "node": "24.22.0",
+    "fullSuite": {
+      "passed": 2249,
+      "skipped": 1,
+      "failed": 0
+    },
+    "followupWebGLTests": 5,
+    "lint": "passed",
+    "typescript": "passed",
+    "isolatedProductionBuild": "passed",
+    "readinessSmokeTests": 3,
+    "postgresql": "18; disposable database only"
+  },
+  "limits": [
+    "Synthetic GitHub GET fixtures; external writes disabled.",
+    "Local headless Chromium without network/CPU throttling and with reduced motion.",
+    "Observed resource totals include prefetching and dynamic chunks, so differ from initial bundle manifests.",
+    "No hosted deployment, live OAuth, real GitHub PR, or production traffic benchmark."
+  ]
+}

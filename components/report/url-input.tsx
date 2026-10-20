@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useId, useRef } from "react";
+import React, { useState, useId, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowUpRight, GitFork } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
@@ -63,6 +63,17 @@ export function UrlInput({
   const reduceMotion = useReducedMotion();
 
   const inFlight = useRef(false);
+  const request = useRef<AbortController | null>(null);
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => { if (active && !request.current) setIsLoading(false); });
+    return () => {
+      active = false;
+      request.current?.abort();
+      request.current = null;
+      inFlight.current = false;
+    };
+  }, []);
   const inputRef = useRef<HTMLInputElement>(null);
   const generatedId = useId();
   const errorId = `${generatedId}-error`;
@@ -108,11 +119,14 @@ export function UrlInput({
     }
 
     inFlight.current = true;
+    const controller = new AbortController();
+    request.current = controller;
     setError(null);
     setIsLoading(true);
 
     try {
-      const report = await requestAudit(parsed, { fetcher });
+      const report = await requestAudit(parsed, { fetcher, signal: controller.signal });
+      if (request.current !== controller || controller.signal.aborted) return;
       onAuditSuccess?.(report, parsed);
 
       if (redirectToReport) {
@@ -121,6 +135,7 @@ export function UrlInput({
         );
       }
     } catch (err) {
+      if (request.current !== controller || controller.signal.aborted) return;
       const errorMsg =
         err instanceof Error && err.message
           ? err.message
@@ -128,8 +143,11 @@ export function UrlInput({
       setError(errorMsg);
       onAuditError?.(errorMsg);
     } finally {
-      inFlight.current = false;
-      setIsLoading(false);
+      if (request.current === controller) {
+        request.current = null;
+        inFlight.current = false;
+        setIsLoading(false);
+      }
     }
   };
 

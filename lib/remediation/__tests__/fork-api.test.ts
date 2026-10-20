@@ -179,6 +179,7 @@ describe("ensureForkReady", () => {
     },
   );
   it("accepts existing renamed forks and verifies the exact upstream objects", async () => {
+    vi.useFakeTimers();
     await expect(run()).resolves.toEqual({
       owner: "caller",
       repo: "renamed-fork",
@@ -190,7 +191,9 @@ describe("ensureForkReady", () => {
       "/repos/caller/renamed-fork/git/commits/upstream-commit",
       "/repos/caller/renamed-fork/git/trees/upstream-tree",
     ]);
-    expect(requests.slice(2).every(({ signal }) => signal?.aborted)).toBe(true);
+    // Completed requests detach from their parent; verify deadline coverage and cleanup.
+    expect(requests.slice(2).every(({ signal }) => signal instanceof AbortSignal)).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
   });
   it("reuses the returned fork on another submission", async () => {
     await run();

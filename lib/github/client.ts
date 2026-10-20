@@ -4,6 +4,8 @@ import { Octokit } from "octokit";
 import { RequestError } from "@octokit/request-error";
 import type { GitHubTreeResponse, RepoTree, TreeEntry } from "@/lib/types";
 import { README_CANDIDATES } from "@/lib/scoring/checks/documentation";
+import { requestSignal } from "@/lib/request-budget";
+import { GITHUB_REQUEST_TIMEOUT_MS, RequestDeadlineError, withDeadline } from "@/lib/request-deadline";
 
 export interface GitHubRepoMetadata {
   defaultBranch: string;
@@ -26,6 +28,7 @@ export type GitHubErrorCode =
   | "http_error"
   | "network_error"
   | "invalid_input"
+  | "timeout"
   | "invalid_response";
 
 export class GitHubApiError extends Error {
@@ -160,6 +163,9 @@ function isRequestError(error: unknown): error is RequestError {
 
 export function toGitHubApiError(error: unknown): GitHubApiError {
   if (error instanceof GitHubApiError) return error;
+  if (error instanceof RequestDeadlineError) {
+    return new GitHubApiError("timeout", "GitHub took too long to respond. Please try again.");
+  }
 
   if (isRequestError(error)) {
     if (error.response === undefined) {
@@ -232,6 +238,7 @@ export function createOctokit(token?: string, options: { maxRetries?: number } =
     },
     request: {
       fetch: (url: Parameters<typeof fetch>[0], opts: RequestInit = {}): Promise<Response> => {
+        opts.signal?.throwIfAborted();
         return fetch(url, {
           ...opts,
           headers: new Headers(opts.headers),
@@ -250,7 +257,10 @@ export function createOctokit(token?: string, options: { maxRetries?: number } =
     } else {
       delete reqOpts.headers["authorization"];
     }
-    return request(reqOpts);
+    return withDeadline(GITHUB_REQUEST_TIMEOUT_MS, requestSignal(reqOpts.request?.signal), async (signal) => {
+      reqOpts.request = { ...reqOpts.request, signal };
+      return request(reqOpts);
+    });
   });
 
   return octokit;

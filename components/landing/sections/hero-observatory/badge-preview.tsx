@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Copy, Check } from "lucide-react";
 
 export interface BadgePreviewProps {
@@ -11,13 +11,29 @@ export interface BadgePreviewProps {
 
 export function BadgePreview({ fixed, score, badgeColor }: BadgePreviewProps) {
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState(false);
+  const operation = useRef(0);
+  useEffect(() => () => { operation.current++; }, []);
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
-  const handleCopyBadge = () => {
-    navigator.clipboard.writeText(
-      "[![Repo Health](https://img.shields.io/endpoint?url=https://repodoc.dev/api/badge/sample/atlas-cli)](https://repodoc.dev/report/sample/atlas-cli)",
-    );
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyBadge = async () => {
+    const current = ++operation.current;
+    try {
+      await navigator.clipboard.writeText(
+        "[![Repo Health](https://img.shields.io/endpoint?url=https://repodoc.dev/api/badge/sample/atlas-cli)](https://repodoc.dev/report/sample/atlas-cli)",
+      );
+      if (operation.current !== current) return;
+      setCopyError(false);
+      setCopied(true);
+    } catch {
+      if (operation.current !== current) return;
+      setCopied(false);
+      setCopyError(true);
+    }
   };
 
   return (
@@ -57,7 +73,7 @@ export function BadgePreview({ fixed, score, badgeColor }: BadgePreviewProps) {
 
         <button
           type="button"
-          onClick={handleCopyBadge}
+          onClick={() => void handleCopyBadge()}
           className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
         >
           {copied ? (
@@ -68,6 +84,7 @@ export function BadgePreview({ fixed, score, badgeColor }: BadgePreviewProps) {
           {copied ? "Copied snippet" : "Copy Markdown"}
         </button>
       </div>
+      {copyError && <p role="alert" className="text-sm text-slate-700">Could not copy the snippet. Allow clipboard access and try again.</p>}
     </div>
   );
 }

@@ -105,7 +105,9 @@ describe("report server route", () => {
 
   it("offers a safe server retry and a way out of an invalid address", () => {
     const retry = vi.fn();
-    const { unmount } = render(<ReportError retry={retry} />);
+    const reset = vi.fn();
+    const { unmount } = render(<ReportError retry={retry} reset={reset} />);
+    expect(reset).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Try loading again" }));
     expect(retry).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("alert").textContent).not.toContain(

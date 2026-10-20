@@ -1,3 +1,4 @@
+import { RequestDeadlineError } from "@/lib/request-deadline";
 import { findReportByShareId } from "@/lib/reports";
 
 interface RouteContext {
@@ -16,7 +17,8 @@ export async function GET(
       return Response.json({ error: "Report not found." }, { status: 404, headers });
     }
     return Response.json(report, { headers });
-  } catch {
+  } catch (error) {
+    if (error instanceof RequestDeadlineError) return Response.json({ error: "Loading the report timed out. Please try again." }, { status: 504, headers });
     return Response.json(
       { error: "Unable to retrieve the repository report." },
       { status: 500, headers },

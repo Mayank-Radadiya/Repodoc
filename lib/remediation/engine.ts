@@ -1,3 +1,5 @@
+import { withRequestBudget } from "@/lib/request-budget";
+import { REMEDIATION_TIMEOUT_MS } from "@/lib/request-deadline";
 import "server-only";
 
 import { REPODOC_BRANCH } from "@/lib/constants";
@@ -308,11 +310,11 @@ async function execute(
 /** Creates one atomic remediation commit and opens or reuses its pull request. */
 export class RemediationEngine {
   static execute(input: RemediationEngineInput): Promise<RemediationResult> {
-    return execute(input);
+    return withRequestBudget(REMEDIATION_TIMEOUT_MS, undefined, () => execute(input));
   }
 
   execute(input: RemediationEngineInput): Promise<RemediationResult> {
-    return execute(input);
+    return withRequestBudget(REMEDIATION_TIMEOUT_MS, undefined, () => execute(input));
   }
 }
 

@@ -151,6 +151,7 @@ describe("UrlInput component", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ owner: "facebook", repo: "react" }),
+        signal: expect.any(AbortSignal),
       });
     });
 
@@ -193,6 +194,7 @@ describe("UrlInput component", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ owner: "octocat", repo: "Hello-World" }),
+        signal: expect.any(AbortSignal),
       });
       expect(mockPush).toHaveBeenCalledWith("/report/octocat/Hello-World");
     });

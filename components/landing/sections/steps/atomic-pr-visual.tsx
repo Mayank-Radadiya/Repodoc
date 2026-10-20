@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   GitPullRequest,
   CheckCircle2,
@@ -20,15 +20,20 @@ export function AtomicPrVisual() {
     setIsSimulating(true);
     setActiveStage(1);
 
-    setTimeout(() => {
+  };
+
+  useEffect(() => {
+    if (!isSimulating) return;
+    const second = setTimeout(() => {
       setActiveStage(2);
     }, 600);
 
-    setTimeout(() => {
+    const third = setTimeout(() => {
       setActiveStage(3);
       setIsSimulating(false);
     }, 1300);
-  };
+    return () => { clearTimeout(second); clearTimeout(third); };
+  }, [isSimulating]);
 
   return (
     <div className="flex flex-col h-full space-y-4">

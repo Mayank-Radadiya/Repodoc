@@ -14,7 +14,7 @@ Repodoc is engineered around modern full-stack web standards, emphasizing determ
 - **Pure Scoring Engine (`lib/scoring/`):** A zero-network, deterministic domain service that evaluates repository health from memory structures using Abstract Syntax Tree (AST) markdown analysis and manifest heuristics.
 - **GitHub Octokit Facade (`lib/github/`):** Encapsulated client managing single-call recursive Git tree traversals (`GET /git/trees/{sha}?recursive=1`), HTTP ETag conditional revalidations (`304 Not Modified`), and intelligent rate-limit throttling.
 - **Atomic Remediation Engine (`lib/remediation/`):** Orchestrates low-level Git Data API operations (`blobs` &rarr; `tree` &rarr; `commit` &rarr; `ref`) to generate multi-file pull requests in a single atomic commit, featuring automated personal fork fallback for repositories without push permissions.
-- **Prisma 6.x ORM (`lib/db.ts`):** Unified database persistence layer supporting embedded SQLite (`file:./dev.db`) for zero-friction local development and PostgreSQL (e.g. Neon, Supabase) with connection pooling in production.
+- **Prisma 6.x ORM (`lib/db.ts`):** Unified database persistence layer using PostgreSQL in development and production, with a pooled runtime connection and direct migration connection for hosted deployments.
 - **Zero-Leak NextAuth.js v5 Beta (`lib/auth/`):** Session management utilizing AES-GCM encrypted JWT session cookies, isolating user OAuth tokens strictly on the server and preventing token leakage to browser runtimes.
 
 ```
@@ -47,7 +47,7 @@ Repodoc/
 │   └── db.ts                      # Prisma client singleton
 ├── prisma/                        # Database schema and migrations
 │   ├── schema.prisma              # Data models (User, RepoReport)
-│   └── dev.db                     # Local SQLite database (development)
+│   └── migrations/                # Versioned PostgreSQL migrations
 ├── types/                         # Shared TypeScript ambient declarations
 └── docs/                          # Technical deep dives and runbooks
 ```
@@ -95,7 +95,7 @@ flowchart TD
 
   subgraph Persistence["Persistence Layer"]
     PrismaClient["Prisma 6 Client Singleton<br/>(lib/db.ts)"]
-    Database[("SQLite (Local dev.db)<br/>or PostgreSQL (Production)")]
+    Database[("PostgreSQL (Development and Production)")]
   end
 
   subgraph ExternalAPIs["External GitHub Services"]
@@ -425,5 +425,5 @@ GitHub OAuth tokens obtained during sign-in are stored exclusively within AES-GC
 ### Database Connection Lifecycle
 
 The database connection is managed via the Prisma Client singleton in `lib/db.ts`:
-- **Development (SQLite):** Reuses a single Prisma instance attached to `globalThis` across Next.js Hot Module Reload (HMR) cycles to prevent file lock contention on `dev.db`.
+- **Development (PostgreSQL):** Reuses a single Prisma instance attached to `globalThis` across Next.js Hot Module Reload (HMR) cycles to avoid creating a connection pool on every reload.
 - **Production (PostgreSQL):** Connects to managed cloud databases (Neon, Supabase) using connection pooling strings (`?pgbouncer=true` or port 6543) to prevent connection exhaustion in serverless environments.

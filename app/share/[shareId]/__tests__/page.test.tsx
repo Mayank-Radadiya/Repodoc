@@ -124,7 +124,9 @@ describe("shareable report server route", () => {
 
   it("offers retry in error boundary and recovery in not-found", () => {
     const retry = vi.fn();
-    const { unmount } = render(<ShareError retry={retry} />);
+    const reset = vi.fn();
+    const { unmount } = render(<ShareError retry={retry} reset={reset} />);
+    expect(reset).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Try loading again" }));
     expect(retry).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("alert").textContent).toContain(

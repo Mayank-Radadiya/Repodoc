@@ -1,8 +1,9 @@
+import { READ_TIMEOUT_MS, withDeadline } from "./request-deadline";
 import { isPersistedAuditReport } from "./report-validation";
 import type { ParsedGitHubUrl, PersistedAuditReport } from "./types";
 
 /** Shared browser request boundary; never imports server report/database code. */
-export async function requestAudit(
+async function performRequest(
   repository: ParsedGitHubUrl,
   options: { fetcher?: typeof fetch; signal?: AbortSignal } = {},
 ): Promise<PersistedAuditReport> {
@@ -38,4 +39,8 @@ export async function requestAudit(
     throw new Error("The audit returned an invalid report. Try again.");
   }
   return data;
+}
+
+export async function requestAudit(input: ParsedGitHubUrl, options: { fetcher?: typeof fetch; signal?: AbortSignal } = {}): Promise<PersistedAuditReport> {
+  return await withDeadline(READ_TIMEOUT_MS, options.signal, (signal) => performRequest(input, { ...options, signal }));
 }

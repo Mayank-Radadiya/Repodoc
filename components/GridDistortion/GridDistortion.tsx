@@ -386,6 +386,8 @@ export const GridDistortion: React.FC<GridDistortionProps> = ({
     let last = 0;
     let visible = true;
     let alive = true;
+    let loadFailed = false;
+    let pendingImage: HTMLImageElement | null = null;
 
     const layout = () => {
       const cols = settingsRef.current.grid;
@@ -571,7 +573,7 @@ export const GridDistortion: React.FC<GridDistortionProps> = ({
 
     const frame = (now: number) => {
       raf = 0;
-      if (!alive || !visible) return;
+      if (!alive || !visible || loadFailed) return;
       const s = settingsRef.current;
       const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
       last = now;
@@ -583,17 +585,17 @@ export const GridDistortion: React.FC<GridDistortionProps> = ({
       const peak = simulate(s, dt);
       compose(s);
       render();
-      const busy =
+      const busy = state.loaded && (
         peak > 0 ||
         state.ripples.length > 0 ||
         (s.idle > 0 && !reduce) ||
-        state.reveal < 1;
+        state.reveal < 1);
       if (busy) raf = requestAnimationFrame(frame);
       else last = 0;
     };
 
     const wake = () => {
-      if (raf || !alive || !visible) return;
+      if (raf || !alive || !visible || loadFailed) return;
       raf = requestAnimationFrame(frame);
     };
 
@@ -680,6 +682,12 @@ export const GridDistortion: React.FC<GridDistortionProps> = ({
     };
 
     const load = (src?: string, textValue?: string) => {
+      loadFailed = false;
+      if (pendingImage) {
+        pendingImage.onload = null;
+        pendingImage.onerror = null;
+        pendingImage = null;
+      }
       if (textValue) {
         updateTextTexture();
         if (typeof document !== 'undefined' && 'fonts' in document) {
@@ -692,10 +700,12 @@ export const GridDistortion: React.FC<GridDistortionProps> = ({
       const request = ++state.request;
       if (!src) return;
       const image = new Image();
+      pendingImage = image;
       image.crossOrigin = 'anonymous';
       image.decoding = 'async';
       image.onload = () => {
         if (!alive || request !== state.request) return;
+        canvas.style.opacity = '1';
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, imageTexture);
         gl.texImage2D(
@@ -716,11 +726,22 @@ export const GridDistortion: React.FC<GridDistortionProps> = ({
         layout();
         if (settingsRef.current.intro && !reduce) scramble();
         state.loaded = true;
+        // The texture owns its pixels now; release the decoded source image.
+        image.onload = null;
+        image.onerror = null;
+        pendingImage = null;
         onReadyRef.current?.();
         wake();
       };
       image.onerror = (err) => {
         if (!alive || request !== state.request) return;
+        loadFailed = true;
+        cancelAnimationFrame(raf);
+        raf = 0;
+        canvas.style.opacity = '0';
+        image.onload = null;
+        image.onerror = null;
+        pendingImage = null;
         onErrorRef.current?.(err);
       };
       image.src = src;
@@ -801,6 +822,10 @@ export const GridDistortion: React.FC<GridDistortionProps> = ({
 
     return () => {
       alive = false;
+      if (pendingImage) {
+        pendingImage.onload = null;
+        pendingImage.onerror = null;
+      }
       cancelAnimationFrame(raf);
       controlRef.current = null;
       resizeObserver.disconnect();
@@ -828,7 +853,10 @@ export const GridDistortion: React.FC<GridDistortionProps> = ({
     <div
       ref={rootRef}
       className={`distortion-container${className ? ` ${className}` : ''}`}
-      style={style}
+      style={{
+        ...(imageSrc ? { backgroundColor: '#07152c', backgroundImage: `url(${JSON.stringify(imageSrc)})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
+        ...style,
+      }}
     >
       <canvas
         ref={canvasRef}

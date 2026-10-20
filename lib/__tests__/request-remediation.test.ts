@@ -38,7 +38,7 @@ it("posts only selected template inputs with cookies and an abort signal", async
     expect.objectContaining({
       method: "POST",
       credentials: "same-origin",
-      signal,
+      signal: expect.any(AbortSignal),
       headers: { "Content-Type": "application/json" },
     }),
   );
@@ -194,5 +194,5 @@ it("preserves abort cancellation", async () => {
       signal: controller.signal,
       fetcher: vi.fn().mockRejectedValue(error),
     }),
-  ).rejects.toBe(error);
+  ).rejects.toBe(controller.signal.reason);
 });

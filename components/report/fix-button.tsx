@@ -90,20 +90,32 @@ function FixFlow({
   const [result, setResult] = useState<RemediationResponse | null>(null);
   const [retrySeconds, setRetrySeconds] = useState(0);
   const request = useRef<AbortController | null>(null);
+  const interrupted = useRef(false);
   const pendingCallback = useRef(onPendingChange);
   useEffect(() => {
     pendingCallback.current = onPendingChange;
   }, [onPendingChange]);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active || !interrupted.current) return;
+      interrupted.current = false;
+      setPending(false);
+      setStep("configure");
+      setError(new RemediationRequestError(
+        "The request was interrupted. Its outcome is uncertain. Check the repository's open pull requests before trying again.", 0,
+      ));
+    });
+    return () => {
+      active = false;
       if (request.current) {
+        interrupted.current = true;
         request.current.abort();
         request.current = null;
         pendingCallback.current?.(false);
       }
-    },
-    [],
-  );
+    };
+  }, []);
   useEffect(() => {
     if (!error?.retryAt) return;
     const deadline = error.retryAt;

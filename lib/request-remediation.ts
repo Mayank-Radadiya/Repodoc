@@ -1,3 +1,4 @@
+import { REMEDIATION_TIMEOUT_MS, withDeadline, RequestDeadlineError } from "./request-deadline";
 import type { SupportedLicenseId } from "./templates/licenses";
 import {
   isRemediationFeedbackCode,
@@ -102,7 +103,7 @@ function isResult(
 }
 
 /** Browser boundary: session cookies authenticate; no GitHub credentials here. */
-export async function requestRemediation(
+async function performRequest(
   input: RemediationRequest,
   options: { fetcher?: typeof fetch; signal?: AbortSignal } = {},
 ): Promise<RemediationResponse> {
@@ -174,4 +175,13 @@ export async function requestRemediation(
       response.status,
     );
   return { prUrl: data.prUrl, filesCreated: data.filesCreated };
+}
+
+export async function requestRemediation(input: RemediationRequest, options: { fetcher?: typeof fetch; signal?: AbortSignal } = {}): Promise<RemediationResponse> {
+  try {
+    return await withDeadline(REMEDIATION_TIMEOUT_MS, options.signal, (signal) => performRequest(input, { ...options, signal }));
+  } catch (error) {
+    if (error instanceof RequestDeadlineError) throw new RemediationRequestError("Remediation timed out. Check the repository’s open pull requests before trying again.", 504);
+    throw error;
+  }
 }
